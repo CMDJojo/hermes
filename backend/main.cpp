@@ -9,6 +9,7 @@
 #include <functional>
 #include <iterator>
 #include <chrono>
+#include <sstream>
 
 using TripId = uint64_t;
 using StopId = uint64_t;
@@ -18,6 +19,8 @@ int32_t startTime = 10 * 60 * 60; // 10:00
 int32_t date = 20221110;
 int32_t searchTime = 30 * 60;
 int32_t minTransferTime = 5 * 60;
+
+std::string baseDir = "../data/raw/";
 
 class StopNode;
 
@@ -88,7 +91,7 @@ public:
 
     static void parseCsv(const std::string& filename, const std::function<void(std::vector<std::string>)>& parseLine) {
         std::ifstream filestream;
-        filestream.open(filename);
+        filestream.open(baseDir+filename);
 
         std::string line;
         getline(filestream, line);
@@ -156,7 +159,7 @@ public:
         parseCsv("stops.txt", [this](auto splits){
             StopId stopId = std::stoul(splits[0]);
             stopId = stopId - stopId % 1000;
-            StopNode stopNode{stopId, 0, {}, true, minTransferTime, false};
+            StopNode stopNode{stopId, 0, {}, minTransferTime, false};
             nodes[stopId] = stopNode;
         });
     }
@@ -196,9 +199,13 @@ std::vector<Edge> StopNode::getEdges() {
     // Alternative journeys
     for (TripFrom trip : from) {
         auto &stopTimes = graph.trips[trip.tripId].stopTimes;
-        auto iter = std::ranges::find_if(stopTimes,
-                                         [this](StopTime stopTime) { return stopTime.stopId == stopId; });
-        uint32_t stopSequence = std::distance(stopTimes.begin(), iter) + 1;
+        uint32_t stopSequence = 0;
+        for (int i = 0; i < stopTimes.size(); i++) {
+            if (stopTimes[i].stopId == stopId) {
+                stopSequence = i + 1;
+                break;
+            }
+        }
 
         // Skip if final stop
         if (stopSequence >= stopTimes.size()) continue;
