@@ -19,7 +19,7 @@ namespace http = beast::http;           // from <boost/beast/http.hpp>
 namespace net = boost::asio;            // from <boost/asio.hpp>
 using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 
-std::string publicPath = boost::filesystem::canonical("public").string();
+std::string publicPath = boost::filesystem::weakly_canonical("public").string();
 
 // Return a reasonable mime type based on the extension of a file.
 beast::string_view mime_type(beast::string_view path)  {
