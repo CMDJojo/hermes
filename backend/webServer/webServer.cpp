@@ -158,7 +158,7 @@ void handle_request(
 
         // Attempt to open the file
         http::file_body::value_type body;
-        body.open(filePath.c_str(), beast::file_mode::scan, ec);
+        body.open(reinterpret_cast<const char*>(filePath.c_str()), beast::file_mode::scan, ec);
 
         if (ec) return send(server_error());
 

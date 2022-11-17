@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.16)
 project(webServer)
 
+find_package(Boost)
+include_directories(${Boost_INCLUDE_DIR})
+
 set(CMAKE_CXX_STANDARD 20)
 
 add_library(webServer webServer.cpp webServer.h routeTypes.cpp routeTypes.h sendLambda.h)
@@ -11,3 +14,4 @@ target_link_libraries(webServer ssl)
 target_link_libraries(webServer boost_regex)
 target_link_libraries(webServer boost_coroutine)
 target_link_libraries(webServer boost_filesystem)
+target_link_libraries(webServer boost_beast)
