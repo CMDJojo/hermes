@@ -1,3 +1,18 @@
+# Installera
+Vi använder C++23. Bygg gärna via Cmake. För att installera dependencies på windows använder 
+vi [vcpkg](https://vcpkg.io/en/getting-started.html). Följ instruktionerna på deras hemsida för att ladda ner,
+kör sedan
+```
+vcpkg install boost
+```
+Notera att vcpkg inte ligger på path som standard så man får gå in i katalogen där 
+binärfilen ligger. För att Cmake ska hitta filerna behöver även följande flagga läggas till:
+
+```
+-DCMAKE_TOOLCHAIN_FILE=[path to vcpkg]/scripts/buildsystems/vcpkg.cmake 
+```
+Om du använder CLion, öppna Settings > Build, Execution, Deployment > Cmake.
+
 # En bättre livsstilskarta
 Vid användning:
 * Välj en plats (avgränsning: en hållplats) från karta
@@ -13,3 +28,4 @@ Vid användning:
   - Kommer behöva anropa funktioner från dijkstra-programmet
 * Hitta vilka personer som bor nära en "punkt".
   - En grej att börja testa med om man vill är att visualisera alla personer på en karta för att börja se med.
+
