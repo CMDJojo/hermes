@@ -1,21 +1,21 @@
-#include <iostream>
-#include <vector>
-#include <limits>
-#include <queue>
-#include <unordered_map>
 #include <algorithm>
-#include <set>
+#include <chrono>
 #include <fstream>
 #include <functional>
+#include <iostream>
 #include <iterator>
-#include <chrono>
+#include <limits>
+#include <queue>
+#include <set>
 #include <sstream>
+#include <unordered_map>
+#include <vector>
 
 using TripId = uint64_t;
 using StopId = uint64_t;
 using ServiceId = int32_t;
 
-int32_t startTime = 10 * 60 * 60; // 10:00
+int32_t startTime = 10 * 60 * 60;  // 10:00
 int32_t date = 20221110;
 int32_t searchTime = 30 * 60;
 int32_t minTransferTime = 5 * 60;
@@ -32,16 +32,16 @@ struct TripFrom {
 };
 
 class Edge {
-public:
+   public:
     StopNode* to;
     int32_t weight;
     TripId tripId;
 
-    Edge(StopNode *to, int32_t weight, TripId tripId) : to(to), weight(weight), tripId(tripId) {}
+    Edge(StopNode* to, int32_t weight, TripId tripId) : to(to), weight(weight), tripId(tripId) {}
 };
 
 class StopNode {
-public:
+   public:
     StopId stopId{};
     int32_t travelTime{};
     std::vector<TripFrom> from;
@@ -52,7 +52,7 @@ public:
 };
 
 class StopTime {
-public:
+   public:
     TripId tripId;
     int32_t arrivalTime;
     int32_t departureTime;
@@ -61,13 +61,16 @@ public:
 
     explicit StopTime(int32_t departureTime) : departureTime(departureTime) {}
 
-    StopTime(TripId tripId, int32_t arrivalTime, int32_t departureTime, uint64_t stopId, int32_t stopSequence) : tripId(
-            tripId), arrivalTime(arrivalTime), departureTime(departureTime), stopId(stopId), stopSequence(
-            stopSequence) {}
+    StopTime(TripId tripId, int32_t arrivalTime, int32_t departureTime, uint64_t stopId, int32_t stopSequence)
+        : tripId(tripId),
+          arrivalTime(arrivalTime),
+          departureTime(departureTime),
+          stopId(stopId),
+          stopSequence(stopSequence) {}
 };
 
 struct Trip {
-public:
+   public:
     ServiceId serviceId;
     std::vector<StopTime> stopTimes;
     int32_t directionId;
@@ -75,7 +78,7 @@ public:
 };
 
 class Graph {
-public:
+   public:
     std::unordered_map<StopId, StopNode> nodes;
     std::unordered_map<StopId, std::vector<StopTime>> stops;
     std::unordered_map<TripId, Trip> trips;
@@ -91,7 +94,7 @@ public:
 
     static void parseCsv(const std::string& filename, const std::function<void(std::vector<std::string>)>& parseLine) {
         std::ifstream filestream;
-        filestream.open(baseDir+filename);
+        filestream.open(baseDir + filename);
 
         std::string line;
         getline(filestream, line);
@@ -102,7 +105,7 @@ public:
             if (getline(filestream, line)) {
                 std::stringstream ss(line);
                 std::vector<std::string> splits;
-                while(ss.good()) {
+                while (ss.good()) {
                     std::string elem;
                     getline(ss, elem, ',');
                     splits.push_back(elem);
@@ -118,12 +121,7 @@ public:
 
     void loadGtfs() {
         parseCsv("trips.txt", [this](auto splits) {
-            Trip trip {
-                    std::stoi(splits[1]),
-                    {},
-                    std::stoi(splits[4]),
-                    std::stoul(splits[0])
-            };
+            Trip trip{std::stoi(splits[1]), {}, std::stoi(splits[4]), std::stoul(splits[0])};
 
             TripId tripId = std::stoul(splits[2]);
             trips[tripId] = trip;
@@ -134,29 +132,25 @@ public:
             stopId = stopId - stopId % 1000;
 
             StopTime stopTime{
-                    std::stoul(splits[0]),
-                    parseTime(splits[1]),
-                    parseTime(splits[2]),
-                    stopId,
-                    std::stoi(splits[4]),
+                std::stoul(splits[0]), parseTime(splits[1]), parseTime(splits[2]), stopId, std::stoi(splits[4]),
             };
 
             stops[stopId].push_back(stopTime);
             trips[stopTime.tripId].stopTimes.push_back(stopTime);
         });
 
-        for (auto& [stopId, stopTimes]: stops) {
+        for (auto& [stopId, stopTimes] : stops) {
             auto compare = [](StopTime a, StopTime b) { return a.departureTime < b.departureTime; };
             std::sort(stopTimes.begin(), stopTimes.end(), compare);
         }
 
-        parseCsv("calendar_dates.txt", [this](auto splits){
+        parseCsv("calendar_dates.txt", [this](auto splits) {
             ServiceId serviceId = std::stoi(splits[0]);
             int32_t date = std::stoi(splits[1]);
             calendarDates[serviceId] = date;
         });
 
-        parseCsv("stops.txt", [this](auto splits){
+        parseCsv("stops.txt", [this](auto splits) {
             StopId stopId = std::stoul(splits[0]);
             stopId = stopId - stopId % 1000;
             StopNode stopNode{stopId, 0, {}, minTransferTime, false};
@@ -175,7 +169,7 @@ std::vector<int32_t> extractPath(StopNode* stopNode) {
     while (!current->from.empty()) {
         auto from = current->from[0];
         for (auto node : current->from) {
-            if (node.tripId == currentTrip){
+            if (node.tripId == currentTrip) {
                 from = node;
                 break;
             }
@@ -198,7 +192,7 @@ std::vector<Edge> StopNode::getEdges() {
 
     // Alternative journeys
     for (TripFrom trip : from) {
-        auto &stopTimes = graph.trips[trip.tripId].stopTimes;
+        auto& stopTimes = graph.trips[trip.tripId].stopTimes;
         uint32_t stopSequence = 0;
         for (int i = 0; i < stopTimes.size(); i++) {
             if (stopTimes[i].stopId == stopId) {
@@ -213,15 +207,14 @@ std::vector<Edge> StopNode::getEdges() {
         // Get next stop
         StopTime next = stopTimes[stopSequence];
 
-        outgoingEdges.emplace_back(&graph.nodes[next.stopId], next.arrivalTime - startTime - travelTime,
-                                   trip.tripId);
+        outgoingEdges.emplace_back(&graph.nodes[next.stopId], next.arrivalTime - startTime - travelTime, trip.tripId);
     }
 
-    auto iter = std::lower_bound(stop->begin(), stop->end(), StopTime(startTime + travelTime + minTransferTime),
-                                 compare);
+    auto iter =
+        std::lower_bound(stop->begin(), stop->end(), StopTime(startTime + travelTime + minTransferTime), compare);
 
     for (; iter < stop->end() && iter->departureTime < startTime + travelTime + searchTime; iter++) {
-        Trip *trip = &graph.trips[iter->tripId];
+        Trip* trip = &graph.trips[iter->tripId];
 
         // Max one departure per line and direction
         uint64_t direction = trip->routeId + trip->directionId;
@@ -240,14 +233,13 @@ std::vector<Edge> StopNode::getEdges() {
         // Skip departure if the next stop is the stop that you came from
         if (!from.empty() && next.stopId == from[0].from->stopId) continue;
 
-        outgoingEdges.emplace_back(&graph.nodes[next.stopId], next.arrivalTime - startTime - travelTime,
-                                   iter->tripId);
+        outgoingEdges.emplace_back(&graph.nodes[next.stopId], next.arrivalTime - startTime - travelTime, iter->tripId);
     }
     return outgoingEdges;
 }
 
 void dijkstra(StopNode* start) {
-    auto compare = [](StopNode *a, StopNode *b) { return a->travelTime > b->travelTime; };
+    auto compare = [](StopNode* a, StopNode* b) { return a->travelTime > b->travelTime; };
     std::priority_queue<StopNode*, std::vector<StopNode*>, decltype(compare)> queue;
 
     for (auto& node : graph.nodes) {
@@ -259,14 +251,14 @@ void dijkstra(StopNode* start) {
     queue.push(start);
 
     while (!queue.empty()) {
-        StopNode *node = queue.top();
+        StopNode* node = queue.top();
         queue.pop();
 
         // Ignore duplicates
         if (node->visited) continue;
         node->visited = true;
 
-        for (Edge &edge: node->getEdges()) {
+        for (Edge& edge : node->getEdges()) {
             int32_t newTravelTime = node->travelTime + edge.weight;
             if (newTravelTime < edge.to->travelTime) {
                 edge.to->travelTime = newTravelTime;
