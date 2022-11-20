@@ -102,13 +102,21 @@ std::vector<Edge> StopNode::getEdges(Timetable& graph, const RoutingOptions& opt
     return outgoingEdges;
 }
 
+static StopId stopAreaFromStopPoint(StopId stopId) {
+    return stopId - stopId % 1000 - 1000000000000;
+}
+
+static bool isStopPoint(StopId stopId) {
+    return stopId % 10000000000000 / 1000000000000 == 2;
+}
+
 Timetable::Timetable(const std::string& gtfsPath) {
     for (const auto& t : gtfs::Trip::load(gtfsPath)) {
         trips[t.tripId] = {t.serviceId, {}, t.directionId, t.routeId};
     }
 
     for (const auto& st : gtfs::StopTime::load(gtfsPath)) {
-        StopId stopId = st.stopId - st.stopId % 1000;
+        StopId stopId = stopAreaFromStopPoint(st.stopId);
         StopTime stopTime{st.tripId, st.arrivalTime.timestamp, st.departureTime.timestamp, stopId, st.stopSequence};
 
         stopTimes[stopId].push_back(stopTime);
@@ -125,7 +133,7 @@ Timetable::Timetable(const std::string& gtfsPath) {
     }
 
     for (auto& s : gtfs::Stop::load(gtfsPath)) {
-        StopId stopId = s.stopId - s.stopId % 1000;
-        stops[stopId] = {stopId, 0, {}, 5 * 60, false, s.stopName, s.stopLat, s.stopLon};
+        if (isStopPoint(s.stopId)) continue;
+        stops[s.stopId] = {s.stopId, 0, {}, 5 * 60, false, s.stopName, s.stopLat, s.stopLon};
     }
 }
