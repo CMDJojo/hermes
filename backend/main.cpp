@@ -45,7 +45,7 @@ void printPath(Timetable& timetable, StopId stopId) {
 }
 
 int main() {
-    routing::Timetable timetable("data/raw");
+    routing::Timetable timetable("../../backend/data/raw");
 
     auto start = std::chrono::high_resolution_clock::now();
     timetable.dijkstra(&timetable.stops[9022014001360000], routingOptions);
