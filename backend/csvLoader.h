@@ -9,6 +9,7 @@
 #include <typeinfo>
 #include <utility>
 #include <vector>
+#include <boost/lexical_cast.hpp>
 
 const auto haha_it_broke = EXIT_FAILURE;
 
@@ -43,11 +44,13 @@ std::vector<std::string> split(const std::string& str) {
     return acc;
 }
 
-uint64_t parseu64(const std::string& str) { return std::stoul(str); }
+uint64_t parseu64(const std::string& str) { return boost::lexical_cast<uint64_t>(str); }
 
-int parseInt(const std::string& str) { return std::stoi(str); }
+int32_t parseInt(const std::string& str) { return boost::lexical_cast<int32_t>(str); }
 
-bool parseBool(const std::string& str) { return parseInt(str) % 2 == 1; }
+float parseFloat(const std::string& str) { return boost::lexical_cast<float>(str); }
+
+bool parseBool(const std::string& str) { return !parseInt(str); }
 
 Time parseTime(const std::string& str) {
     std::stringstream ss(str);
@@ -69,6 +72,8 @@ T parse(const std::string& str) {
         return parseInt(str);
     } else if constexpr (std::is_same_v<T, Time>) {
         return parseTime(str);
+    } else if constexpr (std::is_same_v<T, float>) {
+        return parseFloat(str);
     } else if constexpr (std::is_same_v<T, Ignore>) {
         return {};
     } else {
@@ -103,8 +108,9 @@ std::vector<R> load(const std::string& path, bool skipHeader = true) {
             exit(haha_it_broke);
         }
 
-        [&]<std::size_t... Idx>(std::index_sequence<Idx...>) { acc.emplace_back(parse<Args>(vals[Idx])...); }
-        (std::make_index_sequence<sizeof...(Args)>{});
+        [&]<std::size_t... Idx>(std::index_sequence<Idx...>) {
+            acc.emplace_back((parse<Args>(vals[Idx]))...);
+        }(std::make_index_sequence<sizeof...(Args)>{});
     }
 
     return acc;
