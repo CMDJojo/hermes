@@ -10,6 +10,7 @@
 #include <utility>
 #include <vector>
 #include <boost/lexical_cast.hpp>
+#include <chrono>
 
 const auto haha_it_broke = EXIT_FAILURE;
 
