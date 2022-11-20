@@ -121,7 +121,7 @@ Timetable::Timetable(const std::string& gtfsPath) {
     }
 
     for (auto& cd : gtfs::CalendarDate::load(gtfsPath)) {
-        calendarDates[cd.serviceId] = cd.date;
+        calendarDates[cd.serviceId] = cd.date.original;
     }
 
     for (auto& s : gtfs::Stop::load(gtfsPath)) {
