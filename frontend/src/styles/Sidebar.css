@@ -1,0 +1,7 @@
+.Sidebar {
+    top: 0;
+    right: 0;
+    position: absolute;
+    height: 100%;
+    background:#eae2cf;
+}
