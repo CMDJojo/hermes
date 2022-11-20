@@ -80,7 +80,7 @@ struct Person {
 
     static std::vector<Person> load(const std::string &rawPersonPath) {
         std::vector<RawPerson> rawPersons = csvLoader::load<RawPerson, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t>(
-                rawPersonPath + "/Ast_bost.txt");
+                rawPersonPath);
 
         std::vector<Person> persons;
         for (auto p : rawPersons) {
