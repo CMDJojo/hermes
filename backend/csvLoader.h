@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <type_traits>
 #include <typeinfo>
@@ -13,45 +14,11 @@ const auto haha_it_broke = EXIT_FAILURE;
 
 namespace csvLoader {
 
-struct Attribution {
-    uint64_t trip_id;
-    std::string organization_name;
-    bool is_operator;
-
-    Attribution(uint64_t tripId, std::string org, bool op)
-        : trip_id(tripId), organization_name(std::move(org)), is_operator(op) {}
-};
-
 struct Time {
-    uint32_t timestamp;
+    int32_t timestamp;
 };
 
 struct Ignore {};
-
-struct StopTime {
-    uint64_t trip_id;
-    Time arrival_time, departure_time;
-    uint64_t stop_id;
-    int stop_sequence;
-    std::string stop_headsign;
-    int pickup_type;
-    int drop_off_type;
-    Ignore shape_dist_travelled;
-    bool timepoint;
-    StopTime(uint64_t tripId, const csvLoader::Time& arrivalTime, const csvLoader::Time& departureTime, uint64_t stopId,
-             int stopSequence, const std::string& stopHeadsign, int pickupType, int dropOffType,
-             const csvLoader::Ignore& shapeDistTravelled, bool timepoint)
-        : trip_id(tripId),
-          arrival_time(arrivalTime),
-          departure_time(departureTime),
-          stop_id(stopId),
-          stop_sequence(stopSequence),
-          stop_headsign(stopHeadsign),
-          pickup_type(pickupType),
-          drop_off_type(dropOffType),
-          shape_dist_travelled(shapeDistTravelled),
-          timepoint(timepoint) {}
-};
 
 std::vector<std::string> split(const std::string& str) {
     int i = 0;
@@ -87,7 +54,7 @@ Time parseTime(const std::string& str) {
     int32_t h, m, s;
     char c;
     ss >> h >> c >> m >> c >> s;
-    return Time{static_cast<uint32_t>(h * 60 * 60 + m * 60 + s)};
+    return Time{h * 60 * 60 + m * 60 + s};
 }
 
 template <typename T>
