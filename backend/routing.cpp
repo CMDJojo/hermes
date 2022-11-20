@@ -126,6 +126,6 @@ Timetable::Timetable(const std::string& gtfsPath) {
 
     for (auto& s : gtfs::Stop::load(gtfsPath)) {
         StopId stopId = s.stopId - s.stopId % 1000;
-        stops[stopId] = {stopId, 0, {}, 5 * 60, false};
+        stops[stopId] = {stopId, 0, {}, 5 * 60, false, s.stopName, s.stopLat, s.stopLon};
     }
 }

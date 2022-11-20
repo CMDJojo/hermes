@@ -9,7 +9,7 @@ find_package(Boost REQUIRED)
 include_directories(${Boost_INCLUDE_DIR})
 
 add_executable(backend main.cpp csvLoader.h gtfsTypes.h routing.cpp routing.h)
-add_executable(server server.cpp)
+add_executable(server server.cpp csvLoader.h gtfsTypes.h routing.cpp routing.h)
 add_executable(person csvLoader.h gtfsTypes.h personType.h person.cpp gauss-kruger/gausskruger.cpp gauss-kruger/gausskruger.h)
 
 target_link_libraries(server webServer)

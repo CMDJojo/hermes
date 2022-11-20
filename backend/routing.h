@@ -81,6 +81,9 @@ class StopNode {
     std::vector<IncomingTrip> incoming;
     int32_t minTransferTime{};
     bool visited{};
+    std::string name;
+    float lat;
+    float lon;
 
     std::vector<Edge> getEdges(Timetable& graph, const RoutingOptions& options);
 };
