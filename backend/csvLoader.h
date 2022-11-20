@@ -18,6 +18,13 @@ struct Time {
     int32_t timestamp;
 };
 
+struct Date {
+    int32_t original;
+    uint16_t year;
+    uint8_t month;
+    uint8_t day;
+};
+
 struct Ignore {};
 
 std::vector<std::string> split(const std::string& str) {
@@ -43,11 +50,32 @@ std::vector<std::string> split(const std::string& str) {
     return acc;
 }
 
-uint64_t parseu64(const std::string& str) { return std::stoul(str); }
+inline uint64_t parseu64(const std::string& str) {
+    if (str.empty() || str == "\r") return 0;
+    return std::stoul(str);
+}
 
-int parseInt(const std::string& str) { return std::stoi(str); }
+inline int parseInt(const std::string& str) {
+    if (str.empty() || str == "\r") return 0;
+    return std::stoi(str);
+}
 
-bool parseBool(const std::string& str) { return parseInt(str) % 2 == 1; }
+inline double parseDouble(const std::string& str) {
+    if (str.empty() || str == "\r") return 0;
+    return std::stod(str);
+}
+
+inline bool parseBool(const std::string& str) {
+    return parseInt(str) % 2 == 1;
+}
+
+Date parseDate(const std::string& str) {
+    int32_t original = std::stoi(str);
+    uint16_t year = static_cast<uint16_t>(std::stoi(str.substr(0, 4)));
+    uint8_t month = static_cast<uint8_t>(std::stoi(str.substr(4, 2)));
+    uint8_t day = static_cast<uint8_t>(std::stoi(str.substr(6, 2)));
+    return {original, year, month, day};
+}
 
 Time parseTime(const std::string& str) {
     std::stringstream ss(str);
@@ -67,6 +95,10 @@ T parse(const std::string& str) {
         return parseu64(str);
     } else if constexpr (std::is_same_v<T, int32_t>) {
         return parseInt(str);
+    } else if constexpr (std::is_same_v<T, double>) {
+        return parseDouble(str);
+    } else if constexpr (std::is_same_v<T, Date>) {
+        return parseDate(str);
     } else if constexpr (std::is_same_v<T, Time>) {
         return parseTime(str);
     } else if constexpr (std::is_same_v<T, Ignore>) {
