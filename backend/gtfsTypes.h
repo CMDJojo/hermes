@@ -1,11 +1,12 @@
 #pragma once
+
+#include <chrono>
 #include <cstdint>
 #include <string>
 #include <utility>
 #include <vector>
-#include <chrono>
 
-#include "csvLoader.h"
+#include "csvLoaderTypes.h"
 
 using AgencyId = uint64_t;
 using RouteId = uint64_t;
@@ -14,9 +15,8 @@ using TripId = uint64_t;
 using StopId = uint64_t;
 using ServiceId = int32_t;
 
-using namespace csvLoader;
-
 namespace gtfs {
+using namespace csvLoader;
 
 struct Agency {
     AgencyId agencyId;
@@ -34,10 +34,7 @@ struct Agency {
           agencyLang(std::move(agencyLang)),
           agencyFareURL(std::move(agencyFareUrl)) {}
 
-    static std::vector<Agency> load(const std::string& gtfsPath) {
-        return csvLoader::load<Agency, AgencyId, std::string, std::string, std::string, std::string, std::string>(
-            gtfsPath + "/agency.txt");
-    }
+    static std::vector<Agency> load(const std::string& gtfsPath);
 };
 
 struct Attribution {
@@ -47,9 +44,7 @@ struct Attribution {
     Attribution(TripId tripId, std::string organizationName, bool isOperator)
         : tripId(tripId), organizationName(std::move(organizationName)), isOperator(isOperator) {}
 
-    static std::vector<Attribution> load(const std::string& gtfsPath) {
-        return csvLoader::load<Attribution, TripId, std::string, bool>(gtfsPath + "/attributions.txt");
-    }
+    static std::vector<Attribution> load(const std::string& gtfsPath);
 };
 
 struct Calendar {
@@ -69,10 +64,7 @@ struct Calendar {
           startDate(startDate),
           endDate(endDate) {}
 
-    static std::vector<Calendar> load(const std::string& gtfsPath) {
-        return csvLoader::load<Calendar, ServiceId, bool, bool, bool, bool, bool, bool, bool, Date, Date>(
-            gtfsPath + "/calendar.txt");
-    }
+    static std::vector<Calendar> load(const std::string& gtfsPath);
 };
 
 struct CalendarDate {
@@ -83,9 +75,7 @@ struct CalendarDate {
     CalendarDate(ServiceId service_id, Date date, bool exception_type)
         : serviceId(service_id), date(date), exceptionType(exception_type) {}
 
-    static std::vector<CalendarDate> load(const std::string& gtfsPath) {
-        return csvLoader::load<CalendarDate, ServiceId, Date, bool>(gtfsPath + "/calendar_dates.txt");
-    }
+    static std::vector<CalendarDate> load(const std::string& gtfsPath);
 };
 
 struct FeedInfo {
@@ -98,10 +88,7 @@ struct FeedInfo {
           feedLang(std::move(feedLang)),
           feedVersion(std::move(feedVersion)) {}
 
-    static std::vector<FeedInfo> load(const std::string& gtfsPath) {
-        return csvLoader::load<FeedInfo, std::string, std::string, std::string, std::string, std::string>(
-            gtfsPath + "/feed_info.txt");
-    }
+    static std::vector<FeedInfo> load(const std::string& gtfsPath);
 };
 
 struct Route {
@@ -119,10 +106,7 @@ struct Route {
           routeType(routeType),
           routeDesc(std::move(routeDesc)) {}
 
-    static std::vector<Route> load(const std::string& gtfsPath) {
-        return csvLoader::load<Route, RouteId, AgencyId, std::string, std::string, int, std::string>(gtfsPath +
-                                                                                                     "/routes.txt");
-    }
+    static std::vector<Route> load(const std::string& gtfsPath);
 };
 
 struct Shape {
@@ -137,9 +121,7 @@ struct Shape {
           shapePtSequence(shapePtSequence),
           shapeDistTravelled(shapeDistTravelled) {}
 
-    static std::vector<Shape> load(const std::string& gtfsPath) {
-        return csvLoader::load<Shape, ShapeId, double, double, int, double>(gtfsPath + "/shapes.txt");
-    }
+    static std::vector<Shape> load(const std::string& gtfsPath);
 };
 
 struct StopTime {
@@ -168,10 +150,7 @@ struct StopTime {
           shapeDistTravelled(shape_dist_travelled),
           timepoint(timepoint) {}
 
-    static std::vector<StopTime> load(const std::string& gtfsPath) {
-        return csvLoader::load<StopTime, TripId, Time, Time, StopId, int, std::string, int, int, Ignore, bool>(
-            gtfsPath + "/stop_times.txt");
-    }
+    static std::vector<StopTime> load(const std::string& gtfsPath);
 };
 
 struct Stop {
@@ -183,7 +162,7 @@ struct Stop {
     Ignore parentStation;
     Ignore platformCode;
 
-    Stop(StopId stop_id, std::string  stop_name, float stop_lat, float stop_lon, int32_t location_type,
+    Stop(StopId stop_id, std::string stop_name, float stop_lat, float stop_lon, int32_t location_type,
          const Ignore& parent_station, const Ignore& platform_code)
         : stopId(stop_id),
           stopName(std::move(stop_name)),
@@ -193,10 +172,7 @@ struct Stop {
           parentStation(parent_station),
           platformCode(platform_code) {}
 
-    static std::vector<Stop> load(const std::string& gtfsPath) {
-        return csvLoader::load<Stop, StopId, std::string, float, float, int32_t, Ignore, Ignore>(gtfsPath +
-                                                                                                   "/stops.txt");
-    }
+    static std::vector<Stop> load(const std::string& gtfsPath);
 };
 
 struct Transfer {
@@ -214,9 +190,7 @@ struct Transfer {
           fromTripId(fromTripId),
           toTripId(toTripId) {}
 
-    static std::vector<Transfer> load(const std::string& gtfsPath) {
-        return csvLoader::load<Transfer, StopId, StopId, int, int, TripId, TripId>(gtfsPath + "/transfers.txt");
-    }
+    static std::vector<Transfer> load(const std::string& gtfsPath);
 };
 
 struct Trip {
@@ -236,120 +210,8 @@ struct Trip {
           directionId(direction_id),
           shapeId(shape_id) {}
 
-    static std::vector<Trip> load(const std::string& gtfsPath) {
-        return csvLoader::load<Trip, uint64_t, ServiceId, TripId, std::string, int32_t, uint64_t>(gtfsPath +
-                                                                                                  "/trips.txt");
-    }
+    static std::vector<Trip> load(const std::string& gtfsPath);
 };
 
-void test() {
-    std::string p = "data/raw";
-
-    auto startAll = std::chrono::high_resolution_clock::now();
-    std::cout << "[TEST] Loading all GTFS types" << std::endl;
-    {
-        std::cout << "Loading Agency...";
-        auto start = std::chrono::high_resolution_clock::now();
-        auto payload = Agency::load(p);
-        auto stop = std::chrono::high_resolution_clock::now();
-
-        auto duration = duration_cast<std::chrono::microseconds>(stop - start);
-        std::cout << duration.count() << " μs (" << payload.size() << " elements)" << std::endl;
-    }
-
-    {
-        std::cout << "Loading Attribution...";
-        auto start = std::chrono::high_resolution_clock::now();
-        auto payload = Attribution::load(p);
-        auto stop = std::chrono::high_resolution_clock::now();
-
-        auto duration = duration_cast<std::chrono::microseconds>(stop - start);
-        std::cout << duration.count() << " μs (" << payload.size() << " elements)" << std::endl;
-    }
-
-    {
-        std::cout << "Loading Calendar...";
-        auto start = std::chrono::high_resolution_clock::now();
-        auto payload = Calendar::load(p);
-        auto stop = std::chrono::high_resolution_clock::now();
-
-        auto duration = duration_cast<std::chrono::microseconds>(stop - start);
-        std::cout << duration.count() << " μs (" << payload.size() << " elements)" << std::endl;
-    }
-
-    {
-        std::cout << "Loading CalendarDate...";
-        auto start = std::chrono::high_resolution_clock::now();
-        auto payload = CalendarDate::load(p);
-        auto stop = std::chrono::high_resolution_clock::now();
-
-        auto duration = duration_cast<std::chrono::microseconds>(stop - start);
-        std::cout << duration.count() << " μs (" << payload.size() << " elements)" << std::endl;
-    }
-
-    {
-        std::cout << "Loading FeedInfo...";
-        auto start = std::chrono::high_resolution_clock::now();
-        auto payload = FeedInfo::load(p);
-        auto stop = std::chrono::high_resolution_clock::now();
-
-        auto duration = duration_cast<std::chrono::microseconds>(stop - start);
-        std::cout << duration.count() << " μs (" << payload.size() << " elements)" << std::endl;
-    }
-
-    {
-        std::cout << "Loading Route...";
-        auto start = std::chrono::high_resolution_clock::now();
-        auto payload = Route::load(p);
-        auto stop = std::chrono::high_resolution_clock::now();
-
-        auto duration = duration_cast<std::chrono::microseconds>(stop - start);
-        std::cout << duration.count() << " μs (" << payload.size() << " elements)" << std::endl;
-    }
-
-    {
-        std::cout << "Loading Shape...";
-        auto start = std::chrono::high_resolution_clock::now();
-        auto payload = Shape::load(p);
-        auto stop = std::chrono::high_resolution_clock::now();
-
-        auto duration = duration_cast<std::chrono::microseconds>(stop - start);
-        std::cout << duration.count() << " μs (" << payload.size() << " elements)" << std::endl;
-    }
-
-    {
-        std::cout << "Loading StopTime...";
-        auto start = std::chrono::high_resolution_clock::now();
-        auto payload = StopTime::load(p);
-        auto stop = std::chrono::high_resolution_clock::now();
-
-        auto duration = duration_cast<std::chrono::microseconds>(stop - start);
-        std::cout << duration.count() << " μs (" << payload.size() << " elements)" << std::endl;
-    }
-
-    {
-        std::cout << "Loading Transfer...";
-        auto start = std::chrono::high_resolution_clock::now();
-        auto payload = Transfer::load(p);
-        auto stop = std::chrono::high_resolution_clock::now();
-
-        auto duration = duration_cast<std::chrono::microseconds>(stop - start);
-        std::cout << duration.count() << " μs (" << payload.size() << " elements)" << std::endl;
-    }
-
-    {
-        std::cout << "Loading Trip...";
-        auto start = std::chrono::high_resolution_clock::now();
-        auto payload = Trip::load(p);
-        auto stop = std::chrono::high_resolution_clock::now();
-
-        auto duration = duration_cast<std::chrono::microseconds>(stop - start);
-        std::cout << duration.count() << " μs (" << payload.size() << " elements)" << std::endl;
-    }
-
-    auto stopAll = std::chrono::high_resolution_clock::now();
-    auto duration = duration_cast<std::chrono::milliseconds>(stopAll - startAll);
-    std::cout << "[TEST] Test finished in " << duration.count() << "ms" << std::endl;
-}
-
+void test();
 }  // namespace gtfs

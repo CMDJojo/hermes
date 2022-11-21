@@ -8,8 +8,16 @@ add_subdirectory(webServer)
 find_package(Boost REQUIRED COMPONENTS filesystem coroutine json)
 include_directories(${Boost_INCLUDE_DIR})
 
-add_executable(backend main.cpp csvLoader.h gtfsTypes.h routing.cpp routing.h)
-add_executable(server server.cpp csvLoader.h gtfsTypes.h routing.cpp routing.h)
+add_executable(backend main.cpp
+        csvLoader.h csvLoaderTypes.h
+        gtfsTypes.h gtfsTypes.cpp
+        routing.h routing.cpp
+        test.h test.cpp)
+add_executable(server server.cpp
+        csvLoader.h csvLoaderTypes.h
+        gtfsTypes.h gtfsTypes.cpp
+        routing.h routing.cpp
+        test.h test.cpp)
 add_executable(person csvLoader.h gtfsTypes.h personType.h person.cpp gauss-kruger/gausskruger.cpp gauss-kruger/gausskruger.h)
 
 target_link_libraries(server webServer)

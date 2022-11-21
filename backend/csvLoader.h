@@ -15,19 +15,6 @@ const auto haha_it_broke = EXIT_FAILURE;
 
 namespace csvLoader {
 
-struct Time {
-    int32_t timestamp;
-};
-
-struct Date {
-    int32_t original;
-    uint16_t year;
-    uint8_t month;
-    uint8_t day;
-};
-
-struct Ignore {};
-
 std::vector<std::string> split(const std::string& str) {
     int i = 0;
     int ptr = 0;
