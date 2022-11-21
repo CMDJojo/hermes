@@ -3,5 +3,8 @@
     right: 0;
     position: absolute;
     height: 100%;
-    background:#eae2cf;
+    box-sizing: border-box;
+    padding: 0.5rem;
+    background:#fefefe;
+    box-shadow: -3px 0px 3px rgba(0, 0, 0, 0.117);
 }
