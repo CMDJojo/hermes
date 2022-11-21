@@ -9,7 +9,6 @@
 #include <typeinfo>
 #include <utility>
 #include <vector>
-#include <boost/lexical_cast.hpp>
 #include <chrono>
 
 const auto haha_it_broke = EXIT_FAILURE;
@@ -54,22 +53,24 @@ std::vector<std::string> split(const std::string& str) {
 
 inline uint64_t parseu64(const std::string& str) {
     if (str.empty() || str == "\r") return 0;
-    return boost::lexical_cast<uint64_t>(str);
+    return std::stoull(str);
+    static_assert(sizeof(unsigned long long) == sizeof (uint64_t));
 }
 
 inline int parseInt(const std::string& str) {
     if (str.empty() || str == "\r") return 0;
-    return boost::lexical_cast<int32_t>(str);
+    return std::stoi(str);
+    static_assert(sizeof(int) == sizeof (int32_t));
 }
 
 inline double parseDouble(const std::string& str) {
     if (str.empty() || str == "\r") return 0;
-    return boost::lexical_cast<double>(str);
+    return std::stod(str);
 }
 
 inline float parseFloat(const std::string& str) {
     if (str.empty() || str == "\r") return 0;
-    return boost::lexical_cast<float>(str);
+    return std::stof(str);
 }
 
 inline bool parseBool(const std::string& str) {

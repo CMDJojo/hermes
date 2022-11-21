@@ -3,6 +3,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <chrono>
 
 #include "csvLoader.h"
 
@@ -176,16 +177,16 @@ struct StopTime {
 struct Stop {
     StopId stopId;
     std::string stopName;
-    Ignore stopLat;
-    Ignore stopLon;
+    float stopLat;
+    float stopLon;
     int32_t locationType;
     Ignore parentStation;
     Ignore platformCode;
 
-    Stop(StopId stop_id, const std::string& stop_name, const Ignore& stop_lat, const Ignore& stop_lon,
-         int32_t location_type, const Ignore& parent_station, const Ignore& platform_code)
+    Stop(StopId stop_id, std::string  stop_name, float stop_lat, float stop_lon, int32_t location_type,
+         const Ignore& parent_station, const Ignore& platform_code)
         : stopId(stop_id),
-          stopName(stop_name),
+          stopName(std::move(stop_name)),
           stopLat(stop_lat),
           stopLon(stop_lon),
           locationType(location_type),
@@ -193,7 +194,7 @@ struct Stop {
           platformCode(platform_code) {}
 
     static std::vector<Stop> load(const std::string& gtfsPath) {
-        return csvLoader::load<Stop, StopId, std::string, Ignore, Ignore, int32_t, Ignore, Ignore>(gtfsPath +
+        return csvLoader::load<Stop, StopId, std::string, float, float, int32_t, Ignore, Ignore>(gtfsPath +
                                                                                                    "/stops.txt");
     }
 };
