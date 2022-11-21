@@ -1,0 +1,16 @@
+.Menu {
+    position: absolute;
+    z-index: 1000;
+    box-sizing: border-box;
+    padding: 1rem;
+}
+
+.Menu h1 {
+    line-height: normal;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.Menu .intro {
+    max-width: 25rem;
+}
