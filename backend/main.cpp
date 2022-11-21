@@ -15,11 +15,11 @@ using namespace routing;
 
 const routing::RoutingOptions routingOptions = {10 * 60 * 60, 20221110, 30 * 60, 5 * 50};
 
-std::vector<int32_t> extractPath(Timetable& timetable, StopNode* stopNode) {
+std::vector<std::string> extractPath(Timetable& timetable, StopNode* stopNode) {
     if (stopNode->incoming.empty()) return {};
     StopNode* current = stopNode;
     TripId currentTrip = current->incoming.front().tripId;
-    std::vector<int32_t> legs;
+    std::vector<std::string> legs;
     while (!current->incoming.empty()) {
         auto from = current->incoming[0];
         for (auto node : current->incoming) {
@@ -29,7 +29,8 @@ std::vector<int32_t> extractPath(Timetable& timetable, StopNode* stopNode) {
             }
         }
         currentTrip = from.tripId;
-        int32_t line = (timetable.trips[currentTrip].routeId / 100000) % 100;
+        RouteId currentRouteId = timetable.trips[currentTrip].routeId;
+        std::string line = currentTrip == WALK ? "Walk" : timetable.routes[currentRouteId].routeShortName;
         legs.push_back(line);
         current = from.from;
     }
@@ -40,7 +41,7 @@ std::vector<int32_t> extractPath(Timetable& timetable, StopNode* stopNode) {
 void printPath(Timetable& timetable, StopId stopId) {
     auto path = extractPath(timetable, &timetable.stops[stopId]);
     std::stringstream result;
-    std::copy(path.begin(), path.end(), std::ostream_iterator<int>(result, ", "));
+    std::copy(path.begin(), path.end(), std::ostream_iterator<std::string>(result, ", "));
 
     std::cout << result.str() << std::endl;
 }

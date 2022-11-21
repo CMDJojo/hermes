@@ -97,6 +97,7 @@ struct Route {
     std::string routeShortName, routeLongName;
     int routeType;
     std::string routeDesc;
+    Route() = default;
     Route(RouteId routeId, AgencyId agencyId, std::string routeShortName, std::string routeLongName, int routeType,
           std::string routeDesc)
         : routeId(routeId),

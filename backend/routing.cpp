@@ -37,7 +37,7 @@ void Timetable::dijkstra(StopNode* start, const RoutingOptions& options) {
                 edge.to->travelTime = newTravelTime;
                 edge.to->incoming.insert(edge.to->incoming.begin(), IncomingTrip(node, edge.tripId));
                 queue.push(edge.to);
-            } else if (newTravelTime < edge.to->travelTime + edge.to->minTransferTime) {
+            } else if (newTravelTime < edge.to->travelTime + options.minTransferTime) {
                 // Alternative journey that may result in fewer transfers and therefore faster travel time.
                 edge.to->incoming.emplace_back(node, edge.tripId);
             }
@@ -52,8 +52,13 @@ std::vector<Edge> StopNode::getEdges(Timetable& graph, const RoutingOptions& opt
     std::vector<Edge> outgoingEdges;
     std::set<uint64_t> outgoingDirections;
 
+    // Walk to another stop
+    for (Edge transfer : transfers) outgoingEdges.push_back(transfer);
+
     // Alternative journeys
     for (IncomingTrip trip : incoming) {
+        if (trip.tripId == WALK) continue;
+
         auto& stopTimes = graph.trips[trip.tripId].stopTimes;
         uint32_t stopSequence = 0;
         for (int i = 0; i < stopTimes.size(); i++) {
@@ -73,8 +78,8 @@ std::vector<Edge> StopNode::getEdges(Timetable& graph, const RoutingOptions& opt
                                    trip.tripId);
     }
 
-    auto iter = std::lower_bound(stop->begin(), stop->end(), StopTime(options.startTime + travelTime + minTransferTime),
-                                 compare);
+    auto iter = std::lower_bound(stop->begin(), stop->end(),
+                                 StopTime(options.startTime + travelTime + options.minTransferTime), compare);
 
     for (; iter < stop->end() && iter->departureTime < options.startTime + travelTime + options.searchTime; iter++) {
         Trip* trip = &graph.trips[iter->tripId];
@@ -102,13 +107,9 @@ std::vector<Edge> StopNode::getEdges(Timetable& graph, const RoutingOptions& opt
     return outgoingEdges;
 }
 
-static StopId stopAreaFromStopPoint(StopId stopId) {
-    return stopId - stopId % 1000 - 1000000000000;
-}
+static StopId stopAreaFromStopPoint(StopId stopId) { return stopId - stopId % 1000 - 1000000000000; }
 
-static bool isStopPoint(StopId stopId) {
-    return stopId % 10000000000000 / 1000000000000 == 2;
-}
+static bool isStopPoint(StopId stopId) { return stopId % 10000000000000 / 1000000000000 == 2; }
 
 Timetable::Timetable(const std::string& gtfsPath) {
     for (const auto& t : gtfs::Trip::load(gtfsPath)) {
@@ -134,6 +135,26 @@ Timetable::Timetable(const std::string& gtfsPath) {
 
     for (auto& s : gtfs::Stop::load(gtfsPath)) {
         if (isStopPoint(s.stopId)) continue;
-        stops[s.stopId] = {s.stopId, 0, {}, 5 * 60, false, s.stopName, s.stopLat, s.stopLon};
+        stops[s.stopId] = {s.stopId, 0, {}, false, s.stopName, s.stopLat, s.stopLon};
+    }
+
+    for (auto& t : gtfs::Transfer::load(gtfsPath)) {
+        if (t.transferType != 2) continue;
+
+        StopId from = stopAreaFromStopPoint(t.fromStopId);
+        StopId to = stopAreaFromStopPoint(t.toStopId);
+
+        if (from == to) continue;
+
+        Edge transfer = {&stops[to], t.minTransferTime, WALK};
+
+        auto& transfers = stops[from].transfers;
+        if (!std::any_of(transfers.begin(), transfers.end(), [to](auto t) { return t.to->stopId == to; })) {
+            stops[from].transfers.push_back(transfer);
+        }
+    }
+    
+    for (gtfs::Route& r : gtfs::Route::load(gtfsPath)) {
+        routes[r.routeId] = r;    
     }
 }

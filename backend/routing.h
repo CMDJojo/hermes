@@ -4,11 +4,11 @@
 #include <unordered_map>
 #include <vector>
 
-using TripId = uint64_t;
-using StopId = uint64_t;
-using ServiceId = int32_t;
+#include "gtfsTypes.h"
 
 namespace routing {
+
+const TripId WALK = 0;
 
 class StopTime {
    public:
@@ -49,7 +49,7 @@ struct Trip {
     ServiceId serviceId;
     std::vector<StopTime> stopTimes;
     int32_t directionId;
-    uint64_t routeId;
+    RouteId routeId;
 };
 
 struct RoutingOptions {
@@ -68,6 +68,7 @@ class Timetable {
     std::unordered_map<StopId, std::vector<StopTime>> stopTimes;
     std::unordered_map<TripId, Trip> trips;
     std::unordered_map<ServiceId, int32_t> calendarDates;
+    std::unordered_map<RouteId, gtfs::Route> routes;
 
     Timetable(const std::string& gtfsPath);
 
@@ -79,11 +80,11 @@ class StopNode {
     StopId stopId{};
     int32_t travelTime{};
     std::vector<IncomingTrip> incoming;
-    int32_t minTransferTime{};
     bool visited{};
     std::string name;
     float lat;
     float lon;
+    std::vector<Edge> transfers;
 
     std::vector<Edge> getEdges(Timetable& graph, const RoutingOptions& options);
 };
