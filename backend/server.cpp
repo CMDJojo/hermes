@@ -16,7 +16,7 @@ int main() {
 
     get("/", [](auto context) { return "Hello World!"; });
 
-    get((std::regex) "/djikstra/(\\d+)", [&timetable, &routingOptions](auto context) {
+    get((std::regex) "/graphFrom/(\\d+)", [&timetable, &routingOptions](auto context) {
         context.response.set(http::field::content_type, "application/json");
         context.response.set(http::field::access_control_allow_origin, "*");
         auto match = std::stoull(context.match[1].str());
