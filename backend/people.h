@@ -1,13 +1,14 @@
 #pragma once
 
-#include "csvLoader.h"
-#include "hilbert/hilbert.h"
-#include "gauss-kruger/gausskruger.h"
+#include <algorithm>
 #include <boost/functional/hash.hpp>
+#include <cmath>
 #include <iostream>
 #include <vector>
-#include <algorithm>
-#include <cmath>
+
+#include "csvLoader.h"
+#include "gauss-kruger/gausskruger.h"
+#include "hilbert/hilbert.h"
 
 struct DMSCoord;
 
@@ -23,19 +24,30 @@ struct MeterCoord {
 };
 
 struct DMSCoord {
-    double  latitude,longitude;
+    double latitude, longitude;
     DMSCoord() = default;
-    DMSCoord( double latitude,double longitude):  latitude(latitude),longitude(longitude) {}
+    DMSCoord(double latitude, double longitude) : latitude(latitude), longitude(longitude) {}
     bool operator==(const DMSCoord& rhs) const { return latitude == rhs.latitude && longitude == rhs.longitude; }
     bool operator!=(const DMSCoord& rhs) const { return !(rhs == *this); }
     [[nodiscard]] MeterCoord toMeter() const;
 };
 
-template <> struct std::hash<MeterCoord> {
+template <>
+struct std::hash<MeterCoord> {
     std::size_t operator()(MeterCoord const& c) const noexcept {
         std::size_t res = 0;
         boost::hash_combine(res, c.x);
         boost::hash_combine(res, c.y);
+        return res;
+    }
+};
+
+template <>
+struct std::hash<DMSCoord> {
+    std::size_t operator()(DMSCoord const& c) const noexcept {
+        std::size_t res = 0;
+        boost::hash_combine(res, c.latitude);
+        boost::hash_combine(res, c.longitude);
         return res;
     }
 };
@@ -77,17 +89,17 @@ struct RawPerson {
     int32_t XKOORD_Bost;
     int32_t YKOORD_Bost;
 
-    RawPerson(int32_t kon,
-              int32_t Lan_Ast,
-              int32_t Kommun_Ast,
-              int32_t XKOORD_Ast,
-              int32_t YKOORD_Ast,
-              int32_t Lan_Bost,
-              int32_t Kommun_Bost,
-              int32_t XKOORD_Bost,
-              int32_t YKOORD_Bost) : kon(kon), Lan_Ast(Lan_Ast), Kommun_Ast(Kommun_Ast), XKOORD_Ast(XKOORD_Ast),
-                                     YKOORD_Ast(YKOORD_Ast), Lan_Bost(Lan_Bost), Kommun_Bost(Kommun_Bost),
-                                     XKOORD_Bost(XKOORD_Bost), YKOORD_Bost(YKOORD_Bost) {}
+    RawPerson(int32_t kon, int32_t Lan_Ast, int32_t Kommun_Ast, int32_t XKOORD_Ast, int32_t YKOORD_Ast,
+              int32_t Lan_Bost, int32_t Kommun_Bost, int32_t XKOORD_Bost, int32_t YKOORD_Bost)
+        : kon(kon),
+          Lan_Ast(Lan_Ast),
+          Kommun_Ast(Kommun_Ast),
+          XKOORD_Ast(XKOORD_Ast),
+          YKOORD_Ast(YKOORD_Ast),
+          Lan_Bost(Lan_Bost),
+          Kommun_Bost(Kommun_Bost),
+          XKOORD_Bost(XKOORD_Bost),
+          YKOORD_Bost(YKOORD_Bost) {}
 };
 
 struct Person {
@@ -102,14 +114,14 @@ struct Person {
 
     Person(int home_hilbert_index) : home_hilbert_index(home_hilbert_index) {}
 
-    Person(bool is_female,
-           County work_county,
-           Municipality work_municipality, MeterCoord work_coord,
-           County home_county,
-           Municipality home_municipality, MeterCoord home_coord,
-           int home_hilbert_index) : is_female(is_female), work_county(work_county),
-                                     work_municipality(work_municipality),
-                                     work_coord(work_coord), home_county(home_county),
-                                     home_municipality(home_municipality),
-                                     home_coord(home_coord), home_hilbert_index(home_hilbert_index) {}
+    Person(bool is_female, County work_county, Municipality work_municipality, MeterCoord work_coord,
+           County home_county, Municipality home_municipality, MeterCoord home_coord, int home_hilbert_index)
+        : is_female(is_female),
+          work_county(work_county),
+          work_municipality(work_municipality),
+          work_coord(work_coord),
+          home_county(home_county),
+          home_municipality(home_municipality),
+          home_coord(home_coord),
+          home_hilbert_index(home_hilbert_index) {}
 };
