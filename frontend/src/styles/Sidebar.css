@@ -42,6 +42,6 @@
 
 .Sidebar .content {
     display: flex;
-    padding: 0.5rem;
+    padding: 1rem;
     flex-direction: column;
 }
