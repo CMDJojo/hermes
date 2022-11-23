@@ -10,6 +10,7 @@
 #include <utility>
 #include <vector>
 #include <chrono>
+#include "csvLoaderTypes.h"
 
 const auto haha_it_broke = EXIT_FAILURE;
 
