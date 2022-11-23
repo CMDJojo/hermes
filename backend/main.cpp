@@ -9,7 +9,6 @@
 #include <vector>
 
 #include "routing.h"
-#include "test.h"
 
 using namespace routing;
 
@@ -47,7 +46,6 @@ void printPath(Timetable& timetable, StopId stopId) {
 }
 
 int main() {
-    test::runThenExit();
     routing::Timetable timetable("../../backend/data/raw");
 
     auto start = std::chrono::high_resolution_clock::now();
