@@ -4,3 +4,5 @@ cmake-build-release
 cmake-build-debug-visual-studio
 data/raw/
 data/caches
+
+.vs

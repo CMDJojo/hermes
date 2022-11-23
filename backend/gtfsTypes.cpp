@@ -1,6 +1,7 @@
 #include "gtfsTypes.h"
 
 #include "csvLoader.h"
+#include <functional>
 
 namespace gtfs {
 
@@ -47,7 +48,6 @@ std::vector<Trip> Trip::load(const std::string& gtfsPath) {
     return csvLoader::load<Trip, uint64_t, ServiceId, TripId, std::string, int32_t, uint64_t>(gtfsPath + "/trips.txt");
 }
 
-#include "functional"
 template <typename T>
 void testLoad(std::function<std::vector<T>(const std::string&)> loader, const std::string& name) {
     std::cout << "[TEST] Loading type: " << name << std::endl;

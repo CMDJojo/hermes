@@ -11,15 +11,18 @@ include_directories(${Boost_INCLUDE_DIR})
 add_executable(backend main.cpp
         csvLoader.h csvLoaderTypes.h
         gtfsTypes.h gtfsTypes.cpp
-        routing.h routing.cpp)
+        routing.h routing.cpp
+        routingCacher.cpp routingCacher.h)
 add_executable(server server.cpp
         csvLoader.h csvLoaderTypes.h
         gtfsTypes.h gtfsTypes.cpp
-        routing.h routing.cpp)
+        routing.h routing.cpp
+        routingCacher.cpp routingCacher.h)
 add_executable(test test.cpp
         csvLoader.h csvLoaderTypes.h
         gtfsTypes.h gtfsTypes.cpp
-        routing.h routing.cpp)
+        routing.h routing.cpp
+        routingCacher.cpp routingCacher.h)
 
 add_executable(person
         csvLoader.h
