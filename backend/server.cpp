@@ -9,12 +9,14 @@ const auto doc_root = std::make_shared<std::string>(".");
 const auto threads = 1;
 
 int main() {
-    routing::Timetable timetable("data/raw");
+    std::cout << "Loading timetable" << std::endl;
+    routing::Timetable timetable("../data/raw");
 
     get("/", [](auto context) { return "Hello World!"; });
 
     get("/stops", [&timetable](auto context) {
         context.response.set(http::field::content_type, "application/geo+json");
+        context.response.set(http::field::access_control_allow_origin, "*");
 
         std::vector<boost::json::value> stops;
         std::transform(timetable.stops.begin(), timetable.stops.end(), std::back_inserter(stops),
@@ -42,7 +44,7 @@ int main() {
 
     get((std::regex) ".*", [](auto context) { return "Not found"; });
 
-    std::cout << "Starting server" << std::endl;
+    std::cout << "Starting server at " << address << ":" << port << std::endl;
 
     startServer(address, port, doc_root, threads);
 }
