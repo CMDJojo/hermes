@@ -18,3 +18,7 @@ void runThenExit() {
     exit(0);
 }
 }  // namespace test
+
+int main() {
+    test::runThenExit();
+}
