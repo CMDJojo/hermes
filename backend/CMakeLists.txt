@@ -24,8 +24,9 @@ add_executable(test test.cpp
 add_executable(person
         csvLoader.h
         gtfsTypes.h
-        personType.h person.cpp
-        gauss-kruger/gausskruger.cpp gauss-kruger/gausskruger.h)
+        people.h people.cpp
+        gauss-kruger/gausskruger.cpp gauss-kruger/gausskruger.h
+        hilbert/hilbert.cpp hilbert/hilbert.h)
 
 target_link_libraries(server webServer)
 
