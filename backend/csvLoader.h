@@ -16,7 +16,7 @@ const auto haha_it_broke = EXIT_FAILURE;
 
 namespace csvLoader {
 
-std::vector<std::string> split(const std::string& str) {
+static std::vector<std::string> split(const std::string& str) {
     int i = 0;
     int ptr = 0;
     char c;
@@ -65,7 +65,7 @@ inline bool parseBool(const std::string& str) {
     return !parseInt(str);
 }
 
-Date parseDate(const std::string& str) {
+static Date parseDate(const std::string& str) {
     int32_t original = std::stoi(str);
     uint16_t year = static_cast<uint16_t>(std::stoi(str.substr(0, 4)));
     uint8_t month = static_cast<uint8_t>(std::stoi(str.substr(4, 2)));
@@ -73,7 +73,7 @@ Date parseDate(const std::string& str) {
     return {original, year, month, day};
 }
 
-Time parseTime(const std::string& str) {
+static Time parseTime(const std::string& str) {
     std::stringstream ss(str);
     int32_t h, m, s;
     char c;
