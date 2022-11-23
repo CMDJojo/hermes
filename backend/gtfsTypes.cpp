@@ -49,33 +49,36 @@ std::vector<Trip> Trip::load(const std::string& gtfsPath) {
 
 #include "functional"
 template <typename T>
-void executeTestLoad(std::function<std::vector<T>(const std::string&)> loader, const std::string& name) {
+void testLoad(std::function<std::vector<T>(const std::string&)> loader, const std::string& name) {
     std::cout << "[TEST] Loading type: " << name << std::endl;
     auto start = std::chrono::high_resolution_clock::now();
     auto payload = loader("data/raw");
     auto stop = std::chrono::high_resolution_clock::now();
     auto duration = duration_cast<std::chrono::microseconds>(stop - start).count();
     auto items = payload.size();
-    std::cout << duration << "items / " << items << "μs / " << (duration / items) << "μs/item" << std::endl;
+    std::cout << "[TEST] " << items << "items / ";
+    std::cout << duration << "μs / ";
+    std::cout << (duration / items) << "μs/item";
+    std::cout << std::endl;
 }
 
-#define testLoad(name) executeTestLoad<name>(name::load, #name)
+#define TEST_LOAD(name) testLoad<name>(name::load, #name)
 
 void test() {
     auto startAll = std::chrono::high_resolution_clock::now();
     std::cout << "[TEST] Loading all GTFS types" << std::endl;
 
-    testLoad(Agency);
-    testLoad(Attribution);
-    testLoad(Calendar);
-    testLoad(CalendarDate);
-    testLoad(FeedInfo);
-    testLoad(Route);
-    testLoad(Shape);
-    testLoad(StopTime);
-    testLoad(Stop);
-    testLoad(Transfer);
-    testLoad(Trip);
+    TEST_LOAD(Agency);
+    TEST_LOAD(Attribution);
+    TEST_LOAD(Calendar);
+    TEST_LOAD(CalendarDate);
+    TEST_LOAD(FeedInfo);
+    TEST_LOAD(Route);
+    TEST_LOAD(Shape);
+    TEST_LOAD(StopTime);
+    TEST_LOAD(Stop);
+    TEST_LOAD(Transfer);
+    TEST_LOAD(Trip);
 
     auto stopAll = std::chrono::high_resolution_clock::now();
     auto duration = duration_cast<std::chrono::milliseconds>(stopAll - startAll);
