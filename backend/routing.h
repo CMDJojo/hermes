@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -57,9 +58,15 @@ struct RoutingOptions {
     int32_t date;
     int32_t searchTime;
     int32_t minTransferTime;
-    
+
     RoutingOptions(int32_t start_time, int32_t date, int32_t search_time, int32_t min_transfer_time)
         : startTime(start_time), date(date), searchTime(search_time), minTransferTime(min_transfer_time) {}
+};
+
+struct StopState {
+    int32_t travelTime = std::numeric_limits<int32_t>::max();
+    std::vector<IncomingTrip> incoming;
+    bool visited = false;
 };
 
 class Timetable {
@@ -67,26 +74,23 @@ class Timetable {
     std::unordered_map<StopId, StopNode> stops;
     std::unordered_map<StopId, std::vector<StopTime>> stopTimes;
     std::unordered_map<TripId, Trip> trips;
-    std::unordered_map<ServiceId, int32_t> calendarDates;
+    std::unordered_map<ServiceId, std::set<int32_t>> calendarDates;
     std::unordered_map<RouteId, gtfs::Route> routes;
 
     Timetable(const std::string& gtfsPath);
 
-    void dijkstra(StopNode* start, const RoutingOptions& options);
+    std::unordered_map<StopId, StopState> dijkstra(StopId start, const RoutingOptions& options);
 };
 
 class StopNode {
    public:
     StopId stopId{};
-    int32_t travelTime{};
-    std::vector<IncomingTrip> incoming;
-    bool visited{};
     std::string name;
     float lat;
     float lon;
     std::vector<Edge> transfers;
 
-    std::vector<Edge> getEdges(Timetable& graph, const RoutingOptions& options);
+    std::vector<Edge> getEdges(Timetable& timetable, const RoutingOptions& options, StopState* state);
 };
 
 }  // namespace routing

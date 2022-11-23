@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <functional>
+#include <iostream>
 #include <limits>
 #include <queue>
 #include <set>
@@ -11,42 +12,47 @@
 
 using namespace routing;
 
-void Timetable::dijkstra(StopNode* start, const RoutingOptions& options) {
-    auto compare = [](StopNode* a, StopNode* b) { return a->travelTime > b->travelTime; };
-    std::priority_queue<StopNode*, std::vector<StopNode*>, decltype(compare)> queue;
+std::unordered_map<StopId, StopState> Timetable::dijkstra(StopId start, const RoutingOptions& options) {
+    std::unordered_map<StopId, StopState> state;
 
-    for (auto& node : stops) {
-        node.second.travelTime = std::numeric_limits<int32_t>::max();
-        node.second.visited = false;
-    }
+    auto compare = [](std::pair<StopNode*, StopState*> a, std::pair<StopNode*, StopState*> b) {
+        return a.second->travelTime > b.second->travelTime;
+    };
+    std::priority_queue<std::pair<StopNode*, StopState*>, std::vector<std::pair<StopNode*, StopState*>>,
+                        decltype(compare)>
+        queue;
 
-    start->travelTime = 0;
-    queue.push(start);
+    state[start].travelTime = 0;
+
+    queue.emplace(&stops[start], &state[start]);
 
     while (!queue.empty()) {
-        StopNode* node = queue.top();
+        auto [node, nodeState] = queue.top();
         queue.pop();
 
         // Ignore duplicates
-        if (node->visited) continue;
-        node->visited = true;
+        if (nodeState->visited) continue;
+        nodeState->visited = true;
 
-        for (Edge& edge : node->getEdges(*this, options)) {
-            int32_t newTravelTime = node->travelTime + edge.cost;
-            if (newTravelTime < edge.to->travelTime) {
-                edge.to->travelTime = newTravelTime;
-                edge.to->incoming.insert(edge.to->incoming.begin(), IncomingTrip(node, edge.tripId));
-                queue.push(edge.to);
-            } else if (newTravelTime < edge.to->travelTime + options.minTransferTime) {
+        for (Edge& edge : node->getEdges(*this, options, nodeState)) {
+            int32_t newTravelTime = nodeState->travelTime + edge.cost;
+            StopState& toState = state[edge.to->stopId];
+            if (newTravelTime < toState.travelTime) {
+                toState.travelTime = newTravelTime;
+                toState.incoming.insert(toState.incoming.begin(), IncomingTrip(node, edge.tripId));
+                queue.emplace(edge.to, &toState);
+            } else if (newTravelTime < toState.travelTime + options.minTransferTime) {
                 // Alternative journey that may result in fewer transfers and therefore faster travel time.
-                edge.to->incoming.emplace_back(node, edge.tripId);
+                toState.incoming.emplace_back(node, edge.tripId);
             }
         }
     }
+
+    return state;
 }
 
-std::vector<Edge> StopNode::getEdges(Timetable& graph, const RoutingOptions& options) {
-    auto stop = &graph.stopTimes[stopId];
+std::vector<Edge> StopNode::getEdges(Timetable& timetable, const RoutingOptions& options, StopState* state) {
+    auto stop = &timetable.stopTimes[stopId];
     auto compare = [](StopTime a, StopTime b) { return a.departureTime < b.departureTime; };
 
     std::vector<Edge> outgoingEdges;
@@ -56,10 +62,10 @@ std::vector<Edge> StopNode::getEdges(Timetable& graph, const RoutingOptions& opt
     for (Edge transfer : transfers) outgoingEdges.push_back(transfer);
 
     // Alternative journeys
-    for (IncomingTrip trip : incoming) {
+    for (IncomingTrip trip : state->incoming) {
         if (trip.tripId == WALK) continue;
 
-        auto& stopTimes = graph.trips[trip.tripId].stopTimes;
+        auto& stopTimes = timetable.trips[trip.tripId].stopTimes;
         uint32_t stopSequence = 0;
         for (int i = 0; i < stopTimes.size(); i++) {
             if (stopTimes[i].stopId == stopId) {
@@ -74,23 +80,25 @@ std::vector<Edge> StopNode::getEdges(Timetable& graph, const RoutingOptions& opt
         // Get next stop
         StopTime next = stopTimes[stopSequence];
 
-        outgoingEdges.emplace_back(&graph.stops[next.stopId], next.arrivalTime - options.startTime - travelTime,
-                                   trip.tripId);
+        outgoingEdges.emplace_back(&timetable.stops[next.stopId],
+                                   next.arrivalTime - options.startTime - state->travelTime, trip.tripId);
     }
 
-    auto iter = std::lower_bound(stop->begin(), stop->end(),
-                                 StopTime(options.startTime + travelTime + options.minTransferTime), compare);
+    int32_t timeAtStop = options.startTime + state->travelTime + options.minTransferTime;
 
-    for (; iter < stop->end() && iter->departureTime < options.startTime + travelTime + options.searchTime; iter++) {
-        Trip* trip = &graph.trips[iter->tripId];
+    auto iter = std::lower_bound(stop->begin(), stop->end(), StopTime(timeAtStop), compare);
+
+    for (; iter < stop->end() && iter->departureTime < timeAtStop + options.searchTime; iter++) {
+        Trip* trip = &timetable.trips[iter->tripId];
 
         // Max one departure per line and direction
         uint64_t direction = trip->routeId + trip->directionId;
         if (outgoingDirections.contains(direction)) continue;
-        outgoingDirections.insert(direction);
 
         // Check date for departure
-        if (graph.calendarDates[trip->serviceId] == options.date) continue;
+        if (!timetable.calendarDates[trip->serviceId].contains(options.date)) continue;
+
+        outgoingDirections.insert(direction);
 
         // Skip if final stop
         if (iter->stopSequence >= trip->stopTimes.size()) continue;
@@ -99,10 +107,10 @@ std::vector<Edge> StopNode::getEdges(Timetable& graph, const RoutingOptions& opt
         StopTime next = trip->stopTimes[iter->stopSequence];
 
         // Skip departure if the next stop is the stop that you came from
-        if (!incoming.empty() && next.stopId == incoming[0].from->stopId) continue;
+        if (!state->incoming.empty() && next.stopId == state->incoming[0].from->stopId) continue;
 
-        outgoingEdges.emplace_back(&graph.stops[next.stopId], next.arrivalTime - options.startTime - travelTime,
-                                   iter->tripId);
+        outgoingEdges.emplace_back(&timetable.stops[next.stopId],
+                                   next.arrivalTime - options.startTime - state->travelTime, iter->tripId);
     }
     return outgoingEdges;
 }
@@ -130,12 +138,12 @@ Timetable::Timetable(const std::string& gtfsPath) {
     }
 
     for (auto& cd : gtfs::CalendarDate::load(gtfsPath)) {
-        calendarDates[cd.serviceId] = cd.date.original;
+        calendarDates[cd.serviceId].insert(cd.date.original);
     }
 
     for (auto& s : gtfs::Stop::load(gtfsPath)) {
         if (isStopPoint(s.stopId)) continue;
-        stops[s.stopId] = {s.stopId, 0, {}, false, s.stopName, s.stopLat, s.stopLon};
+        stops[s.stopId] = {s.stopId, s.stopName, s.stopLat, s.stopLon};
     }
 
     for (auto& t : gtfs::Transfer::load(gtfsPath)) {
@@ -153,8 +161,8 @@ Timetable::Timetable(const std::string& gtfsPath) {
             stops[from].transfers.push_back(transfer);
         }
     }
-    
+
     for (gtfs::Route& r : gtfs::Route::load(gtfsPath)) {
-        routes[r.routeId] = r;    
+        routes[r.routeId] = r;
     }
 }
