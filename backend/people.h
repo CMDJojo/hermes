@@ -3,16 +3,41 @@
 #include "csvLoader.h"
 #include "hilbert/hilbert.h"
 #include "gauss-kruger/gausskruger.h"
+#include <boost/functional/hash.hpp>
 #include <iostream>
 #include <vector>
 #include <algorithm>
 #include <cmath>
 
-struct Coord {
+struct DMSCoord;
+
+struct MeterCoord {
     int x, y;
 
-    Coord() = default;
-    Coord(int x, int y) : x(x), y(y) {}
+    MeterCoord() = default;
+    MeterCoord(int x, int y) : x(x), y(y) {}
+    bool operator==(const MeterCoord& rhs) const { return x == rhs.x && y == rhs.y; }
+    bool operator!=(const MeterCoord& rhs) const { return !(rhs == *this); }
+
+    [[nodiscard]] DMSCoord toDMS() const;
+};
+
+struct DMSCoord {
+    double  latitude,longitude;
+    DMSCoord() = default;
+    DMSCoord( double latitude,double longitude):  latitude(latitude),longitude(longitude) {}
+    bool operator==(const DMSCoord& rhs) const { return latitude == rhs.latitude && longitude == rhs.longitude; }
+    bool operator!=(const DMSCoord& rhs) const { return !(rhs == *this); }
+    [[nodiscard]] MeterCoord toMeter() const;
+};
+
+template <> struct std::hash<MeterCoord> {
+    std::size_t operator()(MeterCoord const& c) const noexcept {
+        std::size_t res = 0;
+        boost::hash_combine(res, c.x);
+        boost::hash_combine(res, c.y);
+        return res;
+    }
 };
 
 enum class County : int32_t {
@@ -69,21 +94,19 @@ struct Person {
     bool is_female;
     County work_county;
     Municipality work_municipality;
-    Coord work_coord;
+    MeterCoord work_coord;
     County home_county;
     Municipality home_municipality;
-    Coord home_coord;
+    MeterCoord home_coord;
     int64_t home_hilbert_index;
 
     Person(int home_hilbert_index) : home_hilbert_index(home_hilbert_index) {}
 
     Person(bool is_female,
            County work_county,
-           Municipality work_municipality,
-           Coord work_coord,
+           Municipality work_municipality, MeterCoord work_coord,
            County home_county,
-           Municipality home_municipality,
-           Coord home_coord,
+           Municipality home_municipality, MeterCoord home_coord,
            int home_hilbert_index) : is_female(is_female), work_county(work_county),
                                      work_municipality(work_municipality),
                                      work_coord(work_coord), home_county(home_county),
