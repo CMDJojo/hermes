@@ -18,9 +18,10 @@ using namespace routing;
 /*
  * {
  *      stopId [string]: {
- *          time [i32],
+ *          time: [i32],
  *          incoming: {
  *              from: stopId [u64],
+ *              fromStr: string,
  *              trip: tripId [u64],
  *              tripStr: string
  *          }
@@ -39,6 +40,7 @@ std::string toJson(std::unordered_map<StopId, StopState> map) {
         std::transform(entry.second.incoming.begin(), entry.second.incoming.end(), std::back_inserter(incomingTrips),
                        [](IncomingTrip trip) {
                            boost::json::value v = {{"from", trip.from->stopId},
+                                                   {"fromStr", std::to_string(trip.from->stopId)},
                                                    {"trip", trip.tripId},
                                                    {"tripStr", std::to_string(trip.tripId)}};
                            return v;
@@ -48,25 +50,6 @@ std::string toJson(std::unordered_map<StopId, StopState> map) {
         finalObj.emplace(std::to_string(entry.first), val);
     });
 
-    /*std::vector<boost::json::value> vals;
-    vals.reserve(map.size());
-    std::transform(map.begin(), map.end(), std::back_inserter(vals), [](const std::pair<StopId, StopState>& entry) {
-        std::vector<boost::json::value> incomingTrips;
-        incomingTrips.reserve(entry.second.incoming.size());
-
-        std::transform(entry.second.incoming.begin(), entry.second.incoming.end(), std::back_inserter(incomingTrips),
-                       [](IncomingTrip trip) {
-                           boost::json::value v = {{"from", trip.from->stopId},
-                                                   {"trip", trip.tripId},
-                                                   {"tripStr", std::to_string(trip.tripId)}};
-                           return v;
-                       });
-
-        boost::json::value val = {
-            {std::to_string(entry.first), {{"time", entry.second.travelTime}, {"incoming", incomingTrips}}}};
-        return val;
-    });*/
-
     return serialize(finalObj);
 }
 
@@ -75,6 +58,7 @@ std::string toJson(std::unordered_map<StopId, StopState> map) {
  *          time: [i32],
  *          incoming: {
  *              from: stopId [u64],
+ *              fromStr: string,
  *              trip: tripId [u64],
  *              tripStr: string
  *          }

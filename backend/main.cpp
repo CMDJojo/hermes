@@ -7,6 +7,7 @@
 #include <set>
 #include <sstream>
 #include <vector>
+#include <boost/json/src.hpp>
 
 #include "routing.h"
 #import "routingCacher.h"

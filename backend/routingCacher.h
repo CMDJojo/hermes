@@ -19,6 +19,7 @@ using namespace routing;
  *          time [i32],
  *          incoming: {
  *              from: stopId [u64],
+ *              fromStr: string,
  *              trip: tripId [u64],
  *              tripStr: string
  *          }
