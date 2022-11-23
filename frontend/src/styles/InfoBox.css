@@ -1,11 +1,16 @@
 .InfoBox {
+    position: relative;
     width:100%;
     box-sizing: border-box;
     padding: 0.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.092);
 }
 
 
 .InfoBox h2 {
- font-size: 1.1rem;
- font-weight: bold;
+    margin-top: 0.2rem;
+    line-height: normal;
+    font-size: 1.1rem;
+    font-weight: bold;
 }
