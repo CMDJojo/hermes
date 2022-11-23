@@ -12,7 +12,7 @@ struct Coord {
     int x, y;
 
     Coord() = default;
-    Coord(double x, double y) : x(x), y(y) {}
+    Coord(int x, int y) : x(x), y(y) {}
 };
 
 enum class County : int32_t {
