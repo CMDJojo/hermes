@@ -10,7 +10,7 @@
 #include <boost/json/src.hpp>
 
 #include "routing.h"
-#import "routingCacher.h"
+#include "routingCacher.h"
 
 using namespace routing;
 
@@ -52,7 +52,7 @@ void printPath(Timetable& timetable, StopId stopId, std::unordered_map<StopId, S
 }
 
 int main() {
-    routing::Timetable timetable("../../backend/data/raw");
+    routing::Timetable timetable("data/raw");
 
     auto start = std::chrono::high_resolution_clock::now();
     auto result = timetable.dijkstra(9021014001360000, routingOptions);
