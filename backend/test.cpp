@@ -3,13 +3,17 @@
 #include <iostream>
 
 #include "gtfsTypes.h"
+#include "routingCacher.h"
 
 namespace test {
-void tests() { gtfs::test(); }
+void tests() {
+    //gtfs::test();
+    routingCacher::test();
+}
 
 void runAllTests() {
     std::cout << "[TEST] Running all tests..." << std::endl;
-    gtfs::test();
+    tests();
     std::cout << "[TEST] All tests finished, exiting..." << std::endl;
 }
 

@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "routing.h"
+#import "routingCacher.h"
 
 using namespace routing;
 
@@ -55,6 +56,13 @@ int main() {
     auto start = std::chrono::high_resolution_clock::now();
     auto result = timetable.dijkstra(9021014001360000, routingOptions);
     auto stop = std::chrono::high_resolution_clock::now();
+
+    auto normalized_map = routingCacher::toPSS(result);
+    auto serialized = routingCacher::toJson(result);
+    std::cout << serialized << std::endl;
+    auto reparsed = routingCacher::fromJson(serialized);
+    std::cout << (normalized_map == reparsed ? "EQUAL" : "NOT EQUAL") << std::endl;
+    exit(0);
 
     auto duration = duration_cast<std::chrono::microseconds>(stop - start);
     std::cout << duration.count() << " μs" << std::endl;
