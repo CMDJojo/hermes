@@ -2,7 +2,7 @@ import { useRef, useState, useEffect, LegacyRef } from 'react';
 import { Map as MapLibreGL } from 'maplibre-gl';
 import { Point, Feature, Geometry, GeoJsonProperties } from 'geojson';
 
-import { getStops } from '../api';
+import API from '../api';
 import Stop from '../types/Stop';
 
 import '../styles/Map.css';
@@ -16,14 +16,19 @@ export interface MapProps {
 
 function Map({ onClick }: MapProps) {
   const mapContainer = useRef<string | HTMLElement | null>(null);
+  const api = useRef<API | null>(null);
   const map = useRef<MapLibreGL | null>(null);
   const [view] = useState({ lat: 57.7071367, lon: 11.9662978, zoom: 11 });
 
   useEffect(() => {
+    if (api.current) return;
+
+    api.current = new API();
+
     if (map.current) return; // stops map from intializing more than once
     map.current = new MapLibreGL({
       container: mapContainer.current as string | HTMLElement,
-      style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${
+      style: `https://api.maptiler.com/maps/96d26bc0-1881-4822-a296-78dd505fb161/style.json?key=${
         import.meta.env.VITE_MAPTILER_API_KEY
       }`,
       center: [view.lon, view.lat],
@@ -31,7 +36,7 @@ function Map({ onClick }: MapProps) {
     });
 
     // Add the stops
-    getStops().then(stops => {
+    api.current.stops().then(stops => {
       map.current?.on('load', () => {
         map.current?.loadImage('./pin.png', (error, image) => {
           if (error) throw error;

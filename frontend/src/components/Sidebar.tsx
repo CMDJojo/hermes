@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Stop from '../types/Stop';
 
 import '../styles/Sidebar.css';
+import InfoBox from './InfoBox';
 
 interface SidebarProps {
   active: boolean;
@@ -27,6 +28,10 @@ export default function Sidebar({ active, stop, onClose }: SidebarProps) {
           <div className="content">
             <h2>{stop.name}</h2>
             {stop.id}
+            <InfoBox title="Pendeltid till jobbet">fsdf</InfoBox>
+            <InfoBox title="Hur många använder den här hållplatsen">
+              fsdf
+            </InfoBox>
           </div>
         </motion.div>
       )}
