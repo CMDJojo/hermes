@@ -45,5 +45,6 @@ module.exports = {
     '@typescript-eslint/no-non-null-assertion': 0,
     'max-classes-per-file': 0,
     'import/no-extraneous-dependencies': ['error', { devDependencies: true }],
+    'class-methods-use-this': 0,
   },
 };
