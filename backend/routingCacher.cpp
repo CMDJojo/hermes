@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <fstream>
 
 #include "gtfsTypes.h"
 
@@ -173,6 +174,17 @@ void test() {
         auto serialized = routingCacher::toJson(result);
         auto reparsed = routingCacher::fromJson(serialized);
         auto stopFinal = std::chrono::high_resolution_clock::now();
+
+        std::fstream file{};
+        file.open("sample_file.txt", std::ios_base::out);
+        std::cout << serialized;
+        if(!file.is_open())
+        {
+            std::cout<<"Unable to open the file.\n";
+            exit(-1);
+        }
+        file << serialized;
+        file.close();
 
         auto dijDur = duration_cast<std::chrono::microseconds>(stopDijkstra - start).count();
         auto parseDur = duration_cast<std::chrono::microseconds>(stopFinal - stopDijkstra).count();
