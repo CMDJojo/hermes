@@ -21,6 +21,7 @@ struct MeterCoord {
     bool operator!=(const MeterCoord& rhs) const { return !(rhs == *this); }
 
     [[nodiscard]] DMSCoord toDMS() const;
+    friend std::ostream& operator<<(std::ostream& os, const MeterCoord& coord);
 };
 
 struct DMSCoord {
@@ -30,6 +31,7 @@ struct DMSCoord {
     bool operator==(const DMSCoord& rhs) const { return latitude == rhs.latitude && longitude == rhs.longitude; }
     bool operator!=(const DMSCoord& rhs) const { return !(rhs == *this); }
     [[nodiscard]] MeterCoord toMeter() const;
+    friend std::ostream& operator<<(std::ostream& os, const DMSCoord& coord);
 };
 
 template <>

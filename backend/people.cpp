@@ -7,11 +7,21 @@ DMSCoord MeterCoord::toDMS() const {
     return {latitude, longitude};
 }
 
+std::ostream& operator<<(std::ostream& os, const MeterCoord& coord) {
+    os << "{x:" << coord.x << ",y:" << coord.y << "}";
+    return os;
+}
+
 MeterCoord DMSCoord::toMeter() const {
     gausskruger::SWEREF99TM projection;
     double x, y;
     projection.geodeticToGrid(latitude, longitude, x, y);
     return {static_cast<int>(x), static_cast<int>(y)};
+}
+
+std::ostream& operator<<(std::ostream& os, const DMSCoord& coord) {
+    os << "{lat:" << coord.latitude << ",lon:" << coord.longitude << "}";
+    return os;
 }
 
 class People {
