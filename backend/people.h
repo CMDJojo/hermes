@@ -139,7 +139,7 @@ struct Person {
         return is_female == rhs.is_female && work_county == rhs.work_county &&
                work_municipality == rhs.work_municipality && work_coord == rhs.work_coord &&
                home_county == rhs.home_county && home_municipality == rhs.home_municipality &&
-               home_coord == rhs.home_coord && home_hilbert_index == rhs.home_hilbert_index;
+               home_coord == rhs.home_coord;
     }
     bool operator!=(const Person& rhs) const { return !(rhs == *this); }
     bool operator<(const Person& rhs) const {
