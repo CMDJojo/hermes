@@ -2,6 +2,7 @@
 
 #include <unordered_map>
 #include <utility>
+#include <functional>
 
 DMSCoord MeterCoord::toDMS() const {
     gausskruger::SWEREF99TM projection;
@@ -226,19 +227,19 @@ int main() {
     auto start3 = std::chrono::high_resolution_clock::now();
     auto pplFound = people.personsInCircle(DMSCoord(latitude, longitude), radius);
     auto stop3 = std::chrono::high_resolution_clock::now();
-    auto duration3 = duration_cast<std::chrono::nanoseconds>(stop3 - start3).count();
+    auto duration3 = duration_cast<std::chrono::microseconds>(stop3 - start3).count();
     std::cout << "[personsInCircle] Time taken: " << duration3 << "µs " << pplFound.size() << " ppl found" << std::endl;
 
     auto start4 = std::chrono::high_resolution_clock::now();
     auto pplFound2 = people.findPeople(latitude, longitude, radius);
     auto stop4 = std::chrono::high_resolution_clock::now();
-    auto duration4 = duration_cast<std::chrono::nanoseconds>(stop4 - start4).count();
+    auto duration4 = duration_cast<std::chrono::microseconds>(stop4 - start4).count();
     std::cout << "[findPeople] Time taken: " << duration4 << "µs " << pplFound2.size() << " ppl found" << std::endl;
 
     auto start5 = std::chrono::high_resolution_clock::now();
     auto pplFound3 = people.naivePersonsInCircle(DMSCoord(latitude, longitude).toMeter(), radius);
     auto stop5 = std::chrono::high_resolution_clock::now();
-    auto duration5 = duration_cast<std::chrono::nanoseconds>(stop5 - start5).count();
+    auto duration5 = duration_cast<std::chrono::microseconds>(stop5 - start5).count();
     std::cout << "[naivePersonsInCircle] Time taken: " << duration5 << "µs " << pplFound3.size() << " ppl found"
               << std::endl;
 

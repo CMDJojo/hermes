@@ -1,6 +1,7 @@
 #include "test.h"
 
 #include <iostream>
+#include <boost/json/src.hpp>
 
 #include "gtfsTypes.h"
 #include "routingCacher.h"

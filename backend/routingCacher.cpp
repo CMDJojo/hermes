@@ -1,7 +1,7 @@
 #include "routingCacher.h"
 
 #include <boost/json.hpp>
-//#include <boost/json/value.hpp>
+// #include <boost/json/value.hpp>
 #include <cstdint>
 #include <iostream>
 #include <string>
@@ -132,16 +132,56 @@ void test() {
         "}"
         "}";
 
+    std::cout << "input:" << std::endl << str << std::endl << "parse:" << std::endl;
+
     auto res = fromJson(str);
+    std::cout << "[" << std::endl;
     std::for_each(res.begin(), res.end(), [](std::pair<StopId, ParsedStopState> entry) {
-        std::cout << "stop id: " << entry.first << std::endl;
-        std::cout << "time: " << entry.second.travelTime << std::endl;
-        std::cout << "incoming: " << entry.second.incoming.size() << ": [" << std::endl;
+        std::cout << "stop id: " << entry.first;
+        std::cout << ", time: " << entry.second.travelTime << std::endl;
+        std::cout << "incoming [" << entry.second.incoming.size() << "]: {" << std::endl;
         for (auto e : entry.second.incoming) {
             std::cout << "from: " << e.from << ", trip: " << e.tripId << std::endl;
         }
-        std::cout << "]" << std::endl << std::endl;
+        std::cout << "}" << std::endl;
     });
+    std::cout << "]" << std::endl;
+
+    auto tests = {9021014001360000, 9021014005870000, 9021014004470000, 9021014005970000, 9021014005690000,
+                  9021014006300000, 9021014001160000, 9021014003180000, 9021014002470000, 9021014004945000,
+                  9021014004380000, 9021014001950000, 9021014001760000, 9021014004090000, 9021014002130000,
+                  9021014007300000, 9021014006242000, 9021014002850000, 9021014001960000, 9021014001970000,
+                  9021014005280000, 9021014004830000, 9021014003980000, 9021014008000000, 9021014019110000,
+                  9021014003160000, 9021014001035000};
+
+    std::cout << std::endl << "[TEST] Testing with Timetable and routing algorithm... loading timetable" << std::endl;
+    auto startLoad = std::chrono::high_resolution_clock::now();
+    routing::Timetable timetable("data/raw");
+    auto stopLoad = std::chrono::high_resolution_clock::now();
+    routing::RoutingOptions routingOptions = {10 * 60 * 60, 20221118, 30 * 60, 5 * 60};
+    auto loadDuration = duration_cast<std::chrono::milliseconds>(stopLoad - startLoad).count();
+    std::cout << "[TEST] Load done in " << loadDuration << "ms " << std::endl;
+
+    for (auto id : tests) {
+        std::cout << "[TEST] testing id " << id << "...";
+
+        auto start = std::chrono::high_resolution_clock::now();
+        auto result = timetable.dijkstra(9021014001360000, routingOptions);
+        auto stopDijkstra = std::chrono::high_resolution_clock::now();
+
+        auto normalized_map = routingCacher::toPSS(result);
+        auto serialized = routingCacher::toJson(result);
+        auto reparsed = routingCacher::fromJson(serialized);
+        auto stopFinal = std::chrono::high_resolution_clock::now();
+
+        auto dijDur = duration_cast<std::chrono::microseconds>(stopDijkstra - start).count();
+        auto parseDur = duration_cast<std::chrono::microseconds>(stopFinal - stopDijkstra).count();
+
+        auto success = normalized_map == reparsed;
+
+        std::cout << (success ? "[SUCCESS]" : "[FAILURE]");
+        std::cout << " [DIJ=" << dijDur << "µs] [PARSE=" << parseDur << "µs]" << std::endl;
+    }
 }
 bool ParsedIncomingTrip::operator==(const ParsedIncomingTrip& rhs) const {
     return from == rhs.from && tripId == rhs.tripId;
