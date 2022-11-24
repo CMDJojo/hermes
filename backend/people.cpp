@@ -1,8 +1,8 @@
 #include "people.h"
 
+#include <functional>
 #include <unordered_map>
 #include <utility>
-#include <functional>
 
 DMSCoord MeterCoord::toDMS() const {
     gausskruger::SWEREF99TM projection;
@@ -15,6 +15,23 @@ std::ostream& operator<<(std::ostream& os, const MeterCoord& coord) {
     os << "{x:" << coord.x << ",y:" << coord.y << "}";
     return os;
 }
+bool MeterCoord::operator<(const MeterCoord& rhs) const {
+    if (x < rhs.x) return true;
+    if (rhs.x < x) return false;
+    return y < rhs.y;
+}
+bool MeterCoord::operator>(const MeterCoord& rhs) const { return rhs < *this; }
+bool MeterCoord::operator<=(const MeterCoord& rhs) const { return !(rhs < *this); }
+bool MeterCoord::operator>=(const MeterCoord& rhs) const { return !(*this < rhs); }
+
+bool DMSCoord::operator<(const DMSCoord& rhs) const {
+    if (latitude < rhs.latitude) return true;
+    if (rhs.latitude < latitude) return false;
+    return longitude < rhs.longitude;
+}
+bool DMSCoord::operator>(const DMSCoord& rhs) const { return rhs < *this; }
+bool DMSCoord::operator<=(const DMSCoord& rhs) const { return !(rhs < *this); }
+bool DMSCoord::operator>=(const DMSCoord& rhs) const { return !(*this < rhs); }
 
 MeterCoord DMSCoord::toMeter() const {
     gausskruger::SWEREF99TM projection;
@@ -71,8 +88,9 @@ class People {
         }
     }
 
-    static std::vector<MeterCoord> createSquare(MeterCoord low, MeterCoord high, int xRes, int yRes,
-                                         const std::function<bool(MeterCoord)>& pred = constfn<bool, MeterCoord>(true)) {
+    static std::vector<MeterCoord> createSquare(
+        MeterCoord low, MeterCoord high, int xRes, int yRes,
+        const std::function<bool(MeterCoord)>& pred = constfn<bool, MeterCoord>(true)) {
         std::vector<MeterCoord> ret;
         for (int xi = 0; low.x + xi * xRes <= high.x; xi++) {
             for (int yi = 0; low.y + yi * yRes <= high.y; yi++) {
@@ -85,8 +103,9 @@ class People {
         return ret;
     }
 
-    static std::vector<MeterCoord> constrainedSquare(MeterCoord origin, int dx, int dy, int multiple, int offset,
-                                              const std::function<bool(MeterCoord)>& pred = constfn<bool, MeterCoord>(true)) {
+    static std::vector<MeterCoord> constrainedSquare(
+        MeterCoord origin, int dx, int dy, int multiple, int offset,
+        const std::function<bool(MeterCoord)>& pred = constfn<bool, MeterCoord>(true)) {
         // this func takes a coord, lets say {395, 219} and a size, lets say {50, 50} to expand in each direction
         // and generates a list of all MeterCoords within that square, where each coord is constrained to be an
         // offset from a multiple of any real number
@@ -160,9 +179,9 @@ class People {
         return [v](Args... t) { return v; };
     }
 
-    static bool euclideanDistanceLEQ(MeterCoord a, MeterCoord b, int d) {
-        int dx = a.x - b.x;
-        int dy = a.y - b.y;
+    static bool euclideanDistanceLEQ(MeterCoord a, MeterCoord b, int64_t d) {
+        int64_t dx = a.x - b.x;
+        int64_t dy = a.y - b.y;
         return dx * dx + dy * dy <= d * d;
     }
 
@@ -205,7 +224,7 @@ int main() {
     people.buildIndex();
     auto stop2 = std::chrono::high_resolution_clock::now();
     auto duration2 = duration_cast<std::chrono::milliseconds>(stop2 - start2).count();
-    std::cout << "[Index] Time taken: " << duration2 << "ms " << people.indexedPeople.size() << " entries ";
+    std::cout << "[Index] Time taken: " << duration2 << "ms " << people.indexedPeople.size() << " entries, ";
 
     int count = 0;
     for (const auto& entry : people.indexedPeople) {
@@ -216,7 +235,7 @@ int main() {
 
     double latitude = 57.696515;
     double longitude = 11.971184;
-    int radius = 100000;
+    int radius = 5000;
 
     std::cout << "Running comparison, " << DMSCoord(latitude, longitude) << ", radius=" << radius << "m" << std::endl;
 
@@ -239,6 +258,24 @@ int main() {
     std::cout << "[naivePersonsInCircle] Time taken: " << duration5 << "µs " << pplFound3.size() << " ppl found"
               << std::endl;
 
-    std::vector<Person> in_radius = people.findPeople(latitude, longitude, radius);
-    std::cout << in_radius.size() << std::endl;
+    if (pplFound.size() == pplFound3.size()) {
+        std::cout << "same number of ppl found with naive and personsInCircle" << std::endl;
+    } else {
+        std::cout << "different number of ppl found with naive and personsInCircle, finding diff..." << std::endl;
+        std::vector<Person> diff;
+        std::cout << "sorting" << std::endl;
+        std::sort(pplFound3.begin(), pplFound3.end());
+        std::sort(pplFound.begin(), pplFound.end());
+        std::cout << "sorting done" << std::endl;
+        std::set_difference(pplFound3.begin(), pplFound3.end(), pplFound.begin(), pplFound.end(),
+                            std::inserter(diff, diff.begin()));
+        std::cout << "diff done" << std::endl;
+
+        std::for_each(diff.begin(), diff.end(), [&](const Person& item) {
+            std::cout << "included in naive but not in strict: home:" << item.home_coord << std::endl;
+        });
+
+        std::cout << "Occurred during find: " << DMSCoord(latitude, longitude).toMeter() << ", radius=" << radius << "m"
+                  << std::endl;
+    }
 }
