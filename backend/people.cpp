@@ -68,15 +68,11 @@ class People {
             indexedPeople.emplace(person.home_coord, std::vector<Person>{}).first->second.push_back(person);
             // haha explanation: emplace returns (entry, bool) where entry is the entry we want to modify
             // so we get it by .first, then .second gives us the vector we want to insert the person into
-
-            if (person.home_coord.x % 100 != 50 || person.home_coord.y % 100 != 50) {
-                std::cout << "Strange coords? " << person.home_coord << std::endl;
-            }
         }
     }
 
-    std::vector<MeterCoord> createSquare(MeterCoord low, MeterCoord high, int xRes, int yRes,
-                                         std::function<bool(MeterCoord)> pred = constfn<bool, MeterCoord>(true)) {
+    static std::vector<MeterCoord> createSquare(MeterCoord low, MeterCoord high, int xRes, int yRes,
+                                         const std::function<bool(MeterCoord)>& pred = constfn<bool, MeterCoord>(true)) {
         std::vector<MeterCoord> ret;
         for (int xi = 0; low.x + xi * xRes <= high.x; xi++) {
             for (int yi = 0; low.y + yi * yRes <= high.y; yi++) {
@@ -89,8 +85,8 @@ class People {
         return ret;
     }
 
-    std::vector<MeterCoord> constrainedSquare(MeterCoord origin, int dx, int dy, int multiple, int offset,
-                                              std::function<bool(MeterCoord)> pred = constfn<bool, MeterCoord>(true)) {
+    static std::vector<MeterCoord> constrainedSquare(MeterCoord origin, int dx, int dy, int multiple, int offset,
+                                              const std::function<bool(MeterCoord)>& pred = constfn<bool, MeterCoord>(true)) {
         // this func takes a coord, lets say {395, 219} and a size, lets say {50, 50} to expand in each direction
         // and generates a list of all MeterCoords within that square, where each coord is constrained to be an
         // offset from a multiple of any real number
@@ -121,10 +117,10 @@ class People {
         MeterCoord ho = {hr.x / multiple * multiple + offset, hr.y / multiple * multiple + offset};
         MeterCoord hf = {ho.x > hr.x ? ho.x - multiple : ho.x, ho.y > hr.y ? ho.y - multiple : ho.y};
 
-        return createSquare(lf, hf, multiple, multiple, std::move(pred));
+        return createSquare(lf, hf, multiple, multiple, pred);
     }
 
-    std::vector<MeterCoord> constrainedCircle(MeterCoord origin, int radius, int multiple, int offset) {
+    static std::vector<MeterCoord> constrainedCircle(MeterCoord origin, int radius, int multiple, int offset) {
         // same as constrainedSquare but the point must be in a specified radius of the origin
         assert(offset < multiple);
         return constrainedSquare(origin, radius, radius, multiple, offset, euclideanPredicate(origin, radius));
