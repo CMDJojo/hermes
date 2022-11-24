@@ -2,6 +2,21 @@ import axios, { AxiosInstance, AxiosResponse } from 'axios';
 
 type Stops = null;
 
+export type StopID = string;
+export type TripID = string;
+
+export type GraphIncommingEntry = {
+  fromStr: StopID;
+  tripStr: TripID;
+};
+
+export type GraphEntry = {
+  time: number;
+  incoming: GraphIncommingEntry[];
+};
+
+export type Graph = Record<StopID, GraphEntry>;
+
 class APIError extends Error {
   private response: AxiosResponse | null;
 
@@ -12,20 +27,38 @@ class APIError extends Error {
   }
 }
 
+class ServerError extends APIError {
+  constructor(response: AxiosResponse) {
+    super('The server is puckoprogrammerad', response);
+  }
+}
+
+class NotFoundError extends APIError {
+  constructor(response: AxiosResponse) {
+    super('The requested URL could not be found', response);
+  }
+}
+
+class AuthenticationError extends APIError {
+  constructor(response: AxiosResponse) {
+    super('The request could not be authenticated', response);
+  }
+}
+
+class ClientError extends APIError {
+  constructor(response: AxiosResponse) {
+    super('The request failed', response);
+  }
+}
+
 class NoDataError extends APIError {
   constructor(response: AxiosResponse) {
     super('The API call yielded no response', response);
   }
 }
 
-class ServerError extends APIError {
-  constructor() {
-    super('The server is puckoprogrammerad', null);
-  }
-}
-
 class API {
-  private client: AxiosInstance;
+  private readonly client: AxiosInstance;
 
   constructor() {
     this.client = axios.create({
@@ -33,21 +66,53 @@ class API {
       baseURL: import.meta.env.VITE_API_ENDPOINT,
       responseType: 'json',
       timeout: 3000,
-      validateStatus: status => status >= 200 && status < 300,
+    });
+  }
+
+  private static checkError(response: AxiosResponse): APIError | null {
+    if (response.status >= 500) {
+      return new ServerError(response);
+    }
+
+    if (response.status === 404) {
+      return new NotFoundError(response);
+    }
+
+    if (response.status === 403) {
+      return new AuthenticationError(response);
+    }
+
+    if (response.status < 200 || response.status >= 300) {
+      return new ClientError(response);
+    }
+
+    if (!response.data) {
+      return new NoDataError(response);
+    }
+
+    return null;
+  }
+
+  private async getJson<T>(url: string): Promise<T> {
+    return new Promise((resolve, reject) => {
+      this.client({ url }).then(response => {
+        const error = API.checkError(response);
+
+        if (error !== null) {
+          reject(error);
+        }
+
+        resolve(response.data);
+      });
     });
   }
 
   async stops(): Promise<Stops> {
-    return new Promise((resolve, reject) => {
-      this.client({
-        url: '/stops',
-      }).then(response => {
-        if (!response.data) {
-          reject(new NoDataError(response));
-        }
-        resolve(response.data);
-      });
-    });
+    return this.getJson<Stops>('/stops');
+  }
+
+  async graphFrom(): Promise<Graph> {
+    return this.getJson<Graph>('/graphFrom');
   }
 }
 
