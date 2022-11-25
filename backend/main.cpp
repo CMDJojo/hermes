@@ -4,13 +4,11 @@
 #include <functional>
 #include <iostream>
 #include <iterator>
-#include <set>
 #include <sstream>
 #include <vector>
 #include <boost/json/src.hpp>
 
 #include "routing.h"
-#include "routingCacher.h"
 
 using namespace routing;
 
@@ -25,7 +23,7 @@ std::vector<IncomingTrip> extractPath(Timetable& timetable, StopId stopId,
     while (!current->incoming.empty()) {
         IncomingTrip from = current->incoming[0];
         for (const IncomingTrip& node : current->incoming) {
-            if (node.tripId == currentTrip) {
+            if (node.tripId == currentTrip && currentTrip != WALK) {
                 from = node;
                 break;
             }
@@ -44,7 +42,8 @@ void printPath(Timetable& timetable, StopId stopId, std::unordered_map<StopId, S
 
     for (const auto& leg : path) {
         RouteId currentRouteId = timetable.trips[leg.tripId].routeId;
-        result << (leg.tripId == WALK ? "Walk" : timetable.routes[currentRouteId].routeShortName) << ", ";
+        result << (leg.tripId == WALK ? "Walk from " + leg.from->name : timetable.routes[currentRouteId].routeShortName)
+               << ", ";
     }
 
     std::cout << timetable.stops[stopId].name << ": " << graph[stopId].travelTime / 60 << " min" << std::endl;
@@ -54,16 +53,11 @@ void printPath(Timetable& timetable, StopId stopId, std::unordered_map<StopId, S
 int main() {
     routing::Timetable timetable("data/raw");
 
+    std::cout << "Timetable loaded" << std::endl;
+
     auto start = std::chrono::high_resolution_clock::now();
     auto result = timetable.dijkstra(9021014001360000, routingOptions);
     auto stop = std::chrono::high_resolution_clock::now();
-
-    auto normalized_map = routingCacher::toPSS(result);
-    auto serialized = routingCacher::toJson(result);
-    std::cout << serialized << std::endl;
-    auto reparsed = routingCacher::fromJson(serialized);
-    std::cout << (normalized_map == reparsed ? "EQUAL" : "NOT EQUAL") << std::endl;
-    exit(0);
 
     auto duration = duration_cast<std::chrono::microseconds>(stop - start);
     std::cout << duration.count() << " μs" << std::endl;

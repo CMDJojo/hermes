@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <functional>
 #include <iostream>
-#include <limits>
 #include <queue>
 #include <set>
 #include <vector>
@@ -31,61 +30,73 @@ std::unordered_map<StopId, StopState> Timetable::dijkstra(StopId start, const Ro
         queue.pop();
 
         // Ignore duplicates
-        if (nodeState->visited) continue;
+        if (nodeState->visited && !nodeState->revisit) continue;
         nodeState->visited = true;
 
         for (Edge& edge : node->getEdges(*this, options, nodeState)) {
             int32_t newTravelTime = nodeState->travelTime + edge.cost;
             StopState& toState = state[edge.to->stopId];
+
             if (newTravelTime < toState.travelTime) {
                 toState.travelTime = newTravelTime;
-                toState.incoming.insert(toState.incoming.begin(), IncomingTrip(node, edge.tripId));
+                toState.incoming.insert(toState.incoming.begin(), IncomingTrip(node, edge.tripId, edge.stopSequence));
                 queue.emplace(edge.to, &toState);
-            } else if (newTravelTime < toState.travelTime + options.minTransferTime) {
-                // Alternative journey that may result in fewer transfers and therefore faster travel time.
-                toState.incoming.emplace_back(node, edge.tripId);
+
+            } else if (newTravelTime <= toState.travelTime + edge.to->minTransferTime) {
+                // Alternative trips that may result in fewer transfers and therefore faster travel time.
+
+                // Do not add the same trip again when revisiting.
+                if (toState.revisit && std::any_of(toState.incoming.begin(), toState.incoming.end(),
+                                                   [&edge](IncomingTrip t) { return t.tripId == edge.tripId; }))
+                    continue;
+
+                toState.incoming.emplace_back(node, edge.tripId, edge.stopSequence);
+
+                // Revisit the stop if it has already been visited.
+                if (toState.visited) {
+                    toState.revisit = true;
+                    queue.emplace(edge.to, &toState);
+                }
             }
         }
     }
 
+    state[start].incoming.clear();
     return state;
 }
 
 std::vector<Edge> StopNode::getEdges(Timetable& timetable, const RoutingOptions& options, StopState* state) {
     auto stop = &timetable.stopTimes[stopId];
-    auto compare = [](StopTime a, StopTime b) { return a.departureTime < b.departureTime; };
 
     std::vector<Edge> outgoingEdges;
     std::set<uint64_t> outgoingDirections;
 
     // Walk to another stop
-    for (Edge transfer : transfers) outgoingEdges.push_back(transfer);
+    for (Edge transfer : transfersType2) outgoingEdges.push_back(transfer);
 
-    // Alternative journeys
+    // Alternative trips
     for (IncomingTrip trip : state->incoming) {
         if (trip.tripId == WALK) continue;
 
+        // Transfers to trips that is waiting for this trip to arrive
+        handleTransferType1(timetable, options, state, outgoingEdges, trip);
+
         auto& stopTimes = timetable.trips[trip.tripId].stopTimes;
-        uint32_t stopSequence = 0;
-        for (int i = 0; i < stopTimes.size(); i++) {
-            if (stopTimes[i].stopId == stopId) {
-                stopSequence = i + 1;
-                break;
-            }
-        }
 
         // Skip if final stop
-        if (stopSequence >= stopTimes.size()) continue;
+        if (trip.stopSequence >= stopTimes.size()) continue;
 
         // Get next stop
-        StopTime next = stopTimes[stopSequence];
+        StopTime next = stopTimes[trip.stopSequence];
 
         outgoingEdges.emplace_back(&timetable.stops[next.stopId],
-                                   next.arrivalTime - options.startTime - state->travelTime, trip.tripId);
+                                   next.arrivalTime - options.startTime - state->travelTime, trip.tripId,
+                                   next.stopSequence);
     }
 
-    int32_t timeAtStop = options.startTime + state->travelTime + options.minTransferTime;
+    int32_t timeAtStop = options.startTime + state->travelTime + minTransferTime;
 
+    auto compare = [](StopTime a, StopTime b) { return a.departureTime < b.departureTime; };
     auto iter = std::lower_bound(stop->begin(), stop->end(), StopTime(timeAtStop), compare);
 
     for (; iter < stop->end() && iter->departureTime < timeAtStop + options.searchTime; iter++) {
@@ -110,9 +121,34 @@ std::vector<Edge> StopNode::getEdges(Timetable& timetable, const RoutingOptions&
         if (!state->incoming.empty() && next.stopId == state->incoming[0].from->stopId) continue;
 
         outgoingEdges.emplace_back(&timetable.stops[next.stopId],
-                                   next.arrivalTime - options.startTime - state->travelTime, iter->tripId);
+                                   next.arrivalTime - options.startTime - state->travelTime, iter->tripId,
+                                   next.stopSequence);
     }
     return outgoingEdges;
+}
+
+inline void StopNode::handleTransferType1(Timetable& timetable, const RoutingOptions& options, const StopState* state,
+                                          std::vector<Edge>& outgoingEdges, const IncomingTrip& trip) {
+    auto transfers = transfersType1.find(trip.tripId);
+    if (transfers != transfersType1.end()) {
+        for (TripId toTripId : transfers->second) {
+            auto& stopTimes = timetable.trips[toTripId].stopTimes;
+            int32_t stopSequence = 0;
+            for (int i = 0; i < stopTimes.size(); i++) {
+                if (stopTimes[i].stopId == stopId &&
+                    stopTimes[i].departureTime >= options.startTime + state->travelTime) {
+                    stopSequence = i + 1;
+                    break;
+                }
+            }
+
+            StopTime next = stopTimes[stopSequence];
+
+            outgoingEdges.emplace_back(&timetable.stops[next.stopId],
+                                       next.arrivalTime - options.startTime - state->travelTime, toTripId,
+                                       next.stopSequence);
+        }
+    }
 }
 
 static StopId stopAreaFromStopPoint(StopId stopId) { return stopId - stopId % 1000 - 1000000000000; }
@@ -147,18 +183,28 @@ Timetable::Timetable(const std::string& gtfsPath) {
     }
 
     for (auto& t : gtfs::Transfer::load(gtfsPath)) {
-        if (t.transferType != 2) continue;
-
         StopId from = stopAreaFromStopPoint(t.fromStopId);
         StopId to = stopAreaFromStopPoint(t.toStopId);
 
-        if (from == to) continue;
+        if (t.transferType == 1) {
+            if (from != to) continue;
+            stops[from].transfersType1[t.fromTripId].push_back(t.toTripId);
 
-        Edge transfer = {&stops[to], t.minTransferTime, WALK};
+        } else if (t.transferType == 2) {
+            // Set change margin for stop area
+            if (t.fromStopId == t.toStopId && !isStopPoint(t.fromStopId) && t.minTransferTime) {
+                stops[t.fromStopId].minTransferTime = t.minTransferTime;
+                continue;
+            }
 
-        auto& transfers = stops[from].transfers;
-        if (!std::any_of(transfers.begin(), transfers.end(), [to](auto t) { return t.to->stopId == to; })) {
-            stops[from].transfers.push_back(transfer);
+            if (from == to) continue;
+
+            Edge transfer = {&stops[to], t.minTransferTime, WALK, 0};
+
+            auto& transfers = stops[from].transfersType2;
+            if (!std::any_of(transfers.begin(), transfers.end(), [to](auto t) { return t.to->stopId == to; })) {
+                stops[from].transfersType2.push_back(transfer);
+            }
         }
     }
 

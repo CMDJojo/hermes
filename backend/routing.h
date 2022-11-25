@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <limits>
 #include <set>
 #include <string>
 #include <unordered_map>
@@ -34,16 +35,20 @@ class StopNode;
 struct IncomingTrip {
     StopNode* from{};
     TripId tripId{};
+    int32_t stopSequence;
 
-    IncomingTrip(StopNode* from, TripId tripId) : from(from), tripId(tripId) {}
+    IncomingTrip(StopNode* from, TripId trip_id, int32_t stop_sequence)
+        : from(from), tripId(trip_id), stopSequence(stop_sequence) {}
 };
 
 struct Edge {
     StopNode* to;
     int32_t cost;
     TripId tripId;
+    int32_t stopSequence{};
 
-    Edge(StopNode* to, int32_t weight, TripId tripId) : to(to), cost(weight), tripId(tripId) {}
+    Edge(StopNode* to, int32_t cost, TripId trip_id, int32_t stop_sequence)
+        : to(to), cost(cost), tripId(trip_id), stopSequence(stop_sequence) {}
 };
 
 struct Trip {
@@ -67,6 +72,7 @@ struct StopState {
     int32_t travelTime = std::numeric_limits<int32_t>::max();
     std::vector<IncomingTrip> incoming;
     bool visited = false;
+    bool revisit = false;
 };
 
 class Timetable {
@@ -88,9 +94,15 @@ class StopNode {
     std::string name;
     float lat;
     float lon;
-    std::vector<Edge> transfers;
+    std::unordered_map<TripId, std::vector<TripId>> transfersType1;
+    std::vector<Edge> transfersType2;
+    int32_t minTransferTime = 5 * 60;
 
     std::vector<Edge> getEdges(Timetable& timetable, const RoutingOptions& options, StopState* state);
+
+   private:
+    void handleTransferType1(Timetable& timetable, const RoutingOptions& options, const StopState* state,
+                             std::vector<Edge>& outgoingEdges, const IncomingTrip& trip);
 };
 
 }  // namespace routing
