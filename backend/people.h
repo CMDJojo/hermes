@@ -8,7 +8,6 @@
 
 #include "csvLoader.h"
 #include "gauss-kruger/gausskruger.h"
-#include "hilbert/hilbert.h"
 
 struct DMSCoord;
 
@@ -121,20 +120,16 @@ struct Person {
     County home_county;
     Municipality home_municipality;
     MeterCoord home_coord;
-    int64_t home_hilbert_index;
-
-    Person(int home_hilbert_index) : home_hilbert_index(home_hilbert_index) {}
 
     Person(bool is_female, County work_county, Municipality work_municipality, MeterCoord work_coord,
-           County home_county, Municipality home_municipality, MeterCoord home_coord, int home_hilbert_index)
+           County home_county, Municipality home_municipality, MeterCoord home_coord)
         : is_female(is_female),
           work_county(work_county),
           work_municipality(work_municipality),
           work_coord(work_coord),
           home_county(home_county),
           home_municipality(home_municipality),
-          home_coord(home_coord),
-          home_hilbert_index(home_hilbert_index) {}
+          home_coord(home_coord) {}
     bool operator==(const Person& rhs) const {
         return is_female == rhs.is_female && work_county == rhs.work_county &&
                work_municipality == rhs.work_municipality && work_coord == rhs.work_coord &&

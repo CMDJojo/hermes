@@ -49,34 +49,6 @@ class People {
    public:
     People(const std::string& rawPersonPath) {
         people = load(rawPersonPath);
-        auto compare = [](Person a, Person b) { return a.home_hilbert_index < b.home_hilbert_index; };
-        std::sort(people.begin(), people.end(), compare);
-    }
-
-    std::vector<Person> findPeople(double latitude, double longitude, int radius) {
-        std::vector<Person> people_in_radius;
-
-        gausskruger::SWEREF99TM projection;
-        double x, y;
-        projection.geodeticToGrid(latitude, longitude, x, y);
-
-        int hilbert_index = xy2d(pow(2, 30), (int)x, (int)y);
-
-        auto compare = [](Person a, Person b) { return a.home_hilbert_index < b.home_hilbert_index; };
-        auto lower = std::lower_bound(people.begin(), people.end(), Person(hilbert_index), compare);
-
-        auto it = lower;
-        MeterCoord center(x, y);
-
-        while (distance(it->home_coord, center) < radius) {
-            people_in_radius.push_back(*it++);
-        }
-        it = lower - 1;
-        while (distance(it->home_coord, center) < radius) {
-            people_in_radius.push_back(*it--);
-        }
-
-        return people_in_radius;
     }
 
     void buildIndex() {
@@ -202,15 +174,12 @@ class People {
         for (auto p : rawPersons) {
             MeterCoord work_coord = MeterCoord(p.XKOORD_Ast, p.YKOORD_Ast);
             MeterCoord home_coord = MeterCoord(p.XKOORD_Bost, p.YKOORD_Bost);
-            int64_t home_hilbert_index = xy2d(pow(2, 30), home_coord.x, home_coord.y);
 
             people.emplace_back(p.kon - 1, (County)p.Lan_Ast, p.Kommun_Ast, work_coord, (County)p.Lan_Bost,
-                                p.Kommun_Bost, home_coord, home_hilbert_index);
+                                p.Kommun_Bost, home_coord);
         }
         return people;
     }
-
-    int distance(MeterCoord a, MeterCoord b) { return (int)sqrt(pow(a.x - b.x, 2) + pow(a.y - b.y, 2)); }
 };
 
 int main() {
@@ -244,12 +213,6 @@ int main() {
     auto stop3 = std::chrono::high_resolution_clock::now();
     auto duration3 = duration_cast<std::chrono::microseconds>(stop3 - start3).count();
     std::cout << "[personsInCircle] Time taken: " << duration3 << "µs " << pplFound.size() << " ppl found" << std::endl;
-
-    auto start4 = std::chrono::high_resolution_clock::now();
-    auto pplFound2 = people.findPeople(latitude, longitude, radius);
-    auto stop4 = std::chrono::high_resolution_clock::now();
-    auto duration4 = duration_cast<std::chrono::microseconds>(stop4 - start4).count();
-    std::cout << "[findPeople] Time taken: " << duration4 << "µs " << pplFound2.size() << " ppl found" << std::endl;
 
     auto start5 = std::chrono::high_resolution_clock::now();
     auto pplFound3 = people.naivePersonsInCircle(DMSCoord(latitude, longitude).toMeter(), radius);
