@@ -1,7 +1,8 @@
 #include "prox.h"
 #include <algorithm>
-#include <iomanip>
 #include <numbers>
+#include <Windows.h>
+
 
 using namespace gtfs;
 
@@ -27,22 +28,13 @@ public:
         Stop lower(0, "", lowerCoord.latitude, lowerCoord.longitude, 0, Ignore(), Ignore());
         Stop upper(0, "", upperCoord.latitude, upperCoord.longitude, 0, Ignore(), Ignore());
 
-        auto start = std::lower_bound(filteredStops.begin(), filteredStops.end(), lower, [](const Stop& lhs, const Stop& rhs){
-            if (lhs.stopLat < rhs.stopLat) return true;
-            if (lhs.stopLat > rhs.stopLat) return false;
-            return lhs.stopLon < rhs.stopLon;
-        });
+        auto start = std::lower_bound(filteredStops.begin(), filteredStops.end(), lower, stopComparator);
+        auto end = std::next(std::lower_bound(start, filteredStops.end(), upper, stopComparator));
 
-        auto end = std::next(std::lower_bound(start, filteredStops.end(), upper, [](const Stop& lhs, const Stop& rhs){
-            if (lhs.stopLat < rhs.stopLat) return true;
-            if (lhs.stopLat > rhs.stopLat) return false;
-            return lhs.stopLon <= rhs.stopLon;
-        }));
-
+        const double distanceToCompare = pow(range/earthRadius,2);
 
         while (start != end){
-            //std::cout << "lat: " << start->stopLat << "  lon: " << start->stopLon << "  " << start->stopName << std::endl;
-            if (distance(coord.latitude, start->stopLat, coord.longitude, start->stopLon)<range){
+            if (distance2(coord.latitude, start->stopLat, coord.longitude, start->stopLon)< distanceToCompare){
                 found.push_back(*start);
             }
 
@@ -54,6 +46,7 @@ public:
 
     const double earthRadius = 6'371'009; ; //radius of the earth in meters
 
+    // distance between two coordinates, uses square root.
     double distance (double lat1, double lat2, double lon1, double lon2){
         double meanLat = (lat1+lat2)/2;
         double deltaLat = toRadian(lat2-lat1);
@@ -67,11 +60,33 @@ public:
 
     }
 
-    std::vector<Stop> stopsAroundAMeterCoord(MeterCoord mCoord, int range) {
+    // square distance between two coordinates divided by the radius of the earth.
+    double distance2 (double lat1, double lat2, double lon1, double lon2){
+        double meanLat = (lat1+lat2)/2;
+        double deltaLat = toRadian(lat2-lat1);
+        double deltaLon = toRadian(lon2-lon1);
+
+        meanLat = toRadian(meanLat);
+        double c = (pow(deltaLat,2)+pow(cos(meanLat)*(deltaLon),2));
+
+
+        return c;
+
+    }
+
+    std::vector<Stop> stopsAroundMeterCoord(const MeterCoord mCoord, double range) {
+
+        return stopsAroundDMSCoord(mCoord.toDMS(), range);
+    }
+
+    std::vector<Stop> naiveStopsAroundDMSCoord(const DMSCoord coord, double range){
         std::vector<Stop> found;
-        DMSCoord dmsCoord = mCoord.toDMS();
-
-
+        const double distanceToCompare = pow(range/earthRadius,2);
+        for (auto stop : filteredStops){
+            if (distance2(coord.latitude, stop.stopLat, coord.longitude, stop.stopLon) < distanceToCompare) {
+                found.push_back(stop);
+            }
+        }
 
         return found;
     }
@@ -109,18 +124,31 @@ private:
 int main(){
 
     Prox prox("data/raw");
+    SetConsoleOutputCP(CP_UTF8);
     DMSCoord coord = {57.707030,11.967837}; // Brunnsparken
 
-    std::vector<Stop> found = prox.stopsAroundDMSCoord(coord, 300);
-    std::cout.precision(10);
-    std::cout << std::fixed;
+    auto startTime1 = std::chrono::high_resolution_clock::now();
+    std::vector<Stop> found1 = prox.stopsAroundDMSCoord(coord, 1000);
+    auto stopTime1 = std::chrono::high_resolution_clock::now();
+    auto duration1 = duration_cast<std::chrono::microseconds>(stopTime1 - startTime1).count();
+    std::cout << "[stopsAroundDMSCoord] Time taken: " << duration1 << "µs " << found1.size() << " stops found" << std::endl;
 
-    std::cout << std::endl << "Found: " << std::endl;
+    auto startTime2 = std::chrono::high_resolution_clock::now();
+    std::vector<Stop> found2 = prox.naiveStopsAroundDMSCoord(coord, 1000);
+    auto stopTime2 = std::chrono::high_resolution_clock::now();
+    auto duration2 = duration_cast<std::chrono::microseconds>(stopTime2 - startTime2).count();
+    std::cout << "[naiveStopsAroundDMSCoord] Time taken: " << duration2 << "µs " << found2.size() << " stops found" << std::endl;
 
-    for (auto stop : found){
+
+    std::cout << std::endl << "Found1: " << std::endl;
+    for (auto stop : found1){
         std::cout << "lat: " << stop.stopLat << "  lon: " << stop.stopLon << "  " << stop.stopName << std::endl;
     }
 
+    std::cout << std::endl << "Found2: " << std::endl;
+    for (auto stop : found2){
+        std::cout << "lat: " << stop.stopLat << "  lon: " << stop.stopLon << "  " << stop.stopName << std::endl;
+    }
 
     return 0;
 }
