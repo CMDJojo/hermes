@@ -1,9 +1,18 @@
+import { useEffect, useState } from 'react';
 import { MdClose } from 'react-icons/md';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer } from 'recharts';
+import {
+  Bar,
+  BarChart,
+  Tooltip,
+  XAxis,
+  YAxis,
+  ResponsiveContainer,
+} from 'recharts';
 import Stop from '../types/Stop';
 import '../styles/Sidebar.css';
 import InfoBox from './InfoBox';
+import API, { InfoReport } from '../api';
 
 interface SidebarProps {
   active: boolean;
@@ -11,55 +20,23 @@ interface SidebarProps {
   onClose: () => void;
 }
 
-const data = [
-  {
-    name: 'Page A',
-    uv: 4000,
-    pv: 2400,
-    amt: 2400,
-  },
-  {
-    name: 'Page B',
-    uv: 3000,
-    pv: 1398,
-    amt: 2210,
-  },
-  {
-    name: 'Page C',
-    uv: 2000,
-    pv: 9800,
-    amt: 2290,
-  },
-  {
-    name: 'Page D',
-    uv: 2780,
-    pv: 3908,
-    amt: 2000,
-  },
-  {
-    name: 'Page E',
-    uv: 1890,
-    pv: 4800,
-    amt: 2181,
-  },
-  {
-    name: 'Page F',
-    uv: 2390,
-    pv: 3800,
-    amt: 2500,
-  },
-  {
-    name: 'Page G',
-    uv: 3490,
-    pv: 4300,
-    amt: 2100,
-  },
-];
-
 export default function Sidebar({ active, stop, onClose }: SidebarProps) {
+  const [info, setInfo] = useState<InfoReport | null>(null);
+
+  // load the info report about the stop
+  useEffect(() => {
+    if (stop === null) return;
+
+    const api = new API();
+    api
+      .infoReport(`${stop.id}`)
+      .then(setInfo)
+      .catch(() => setInfo(null));
+  }, [stop]);
+
   return (
     <AnimatePresence>
-      {active && stop !== null && (
+      {active && stop !== null && info !== null && (
         <motion.div
           initial={{ translateX: '120%', translateY: -50 }}
           animate={{ translateX: 0, translateY: 0 }}
@@ -71,31 +48,21 @@ export default function Sidebar({ active, stop, onClose }: SidebarProps) {
           </button>
           <div className="content">
             <h1>{stop.name}</h1>
-
+            {stop.id}
+            <br />
+            <strong>avg distance:</strong> {info?.avgDistance}
+            <br />
+            <br />
+            <strong>nr. people:</strong> {info?.nrPeople}
             <div className="infoBoxes">
-              <InfoBox color="#D7EBBA" title="Pendeltid till jobbet">
-                <h1>30 min</h1>
+              <InfoBox color="#D7EBBA" title="Avstånd till jobbet">
                 <ResponsiveContainer width="100%" height={150}>
-                  <AreaChart
-                    width={300}
-                    height={150}
-                    data={data}
-                    margin={{
-                      top: 0,
-                      right: 0,
-                      left: 0,
-                      bottom: 0,
-                    }}
-                  >
+                  <BarChart width={800} height={300} data={info?.distanceStats}>
                     <XAxis dataKey="name" />
-                    <Area
-                      type="monotone"
-                      dataKey="uv"
-                      stroke="#a8b791"
-                      fill="#a8b791"
-                    />
-                    <YAxis />
-                  </AreaChart>
+                    <Tooltip />
+                    <YAxis /* tickFormatter={tick => `${tick}%`} */ />
+                    <Bar dataKey="distance" fill="#8884d8" />
+                  </BarChart>
                 </ResponsiveContainer>
               </InfoBox>
               <InfoBox

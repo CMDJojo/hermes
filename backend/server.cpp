@@ -1,8 +1,9 @@
 #include <boost/json/src.hpp>
 
+#include "people.h"
 #include "routing.h"
-#include "webServer/webServer.h"
 #include "routingCacher.h"
+#include "webServer/webServer.h"
 
 const auto address = net::ip::make_address("0.0.0.0");
 const auto port = static_cast<unsigned short>(8080);
@@ -13,6 +14,12 @@ int main() {
     std::cout << "Loading timetable" << std::endl;
     routing::Timetable timetable("data/raw");
     const routing::RoutingOptions routingOptions = {10 * 60 * 60, 20221118, 30 * 60, 5 * 60};
+
+    std::cout << "Loading people data" << std::endl;
+    People people("data/raw/Ast_bost.txt");
+
+    std::cout << "Building index of people" << std::endl;
+    people.buildIndex();
 
     get("/", [](auto context) { return "Hello World!"; });
 
@@ -47,9 +54,68 @@ int main() {
                            };
                            return feature;
                        });
-        
+
         boost::json::value geoJson = {{"type", "FeatureCollection"}, {"features", stops}};
         return serialize(geoJson);
+    });
+
+    // Generate an info report for a given stop (basically what gets shown in the sidebar).
+    get((std::regex) "/stopInfo/(\\d+)", [&timetable, &people](auto context) {
+        context.response.set(http::field::access_control_allow_origin, "*");
+        context.response.set(http::field::content_type, "application/json");
+
+        auto stopId = std::stoull(context.match[1].str());
+        auto& stop = timetable.stops[stopId];
+        auto stopCoord = DMSCoord(stop.lat, stop.lon);
+
+        // Find every person that lives close (500 metre) to this given stop
+        auto peopleNearby = people.personsInCircle(stopCoord, 500);
+
+        // FIXME: replace the avg distance with travel time when there is a dijkstra function
+        //  that takes arbitrary coordinates and not just stops.
+
+        // Calculate distance stats
+        uint32_t avgDistance = 0;
+        uint32_t distance1km = 0;
+        uint32_t distance5km = 0;
+        uint32_t distance10km = 0;
+        uint32_t distance50km = 0;
+        uint32_t distanceMore = 0;
+
+        for (Person& person : peopleNearby) {
+            float distanceToWork = person.home_coord.distanceTo(person.work_coord);
+
+            avgDistance += distanceToWork;
+
+            // < 1km
+            if (distanceToWork < 1'000) {
+                distance1km += 1;
+            } else if (distanceToWork < 5'000) {
+                distance5km += 1;
+            } else if (distanceToWork < 10'000) {
+                distance10km += 1;
+            } else if (distanceToWork < 50'000) {
+                distance50km += 1;
+            } else {
+                distanceMore += 1;
+            }
+        }
+
+        if (peopleNearby.size() != 0) {
+            avgDistance /= peopleNearby.size();
+        }
+
+
+        boost::json::value info = {{"nrPeople", peopleNearby.size()},
+                                   {"avgDistance", avgDistance},
+                                   {"distanceStats",
+                                    {{{"name", "< 1 km"}, {"distance", distance1km}},
+                                     {{"name", "< 5 km"}, {"distance", distance5km}},
+                                     {{"name", "< 10 km"}, {"distance", distance10km}},
+                                     {{"name", "< 50 km"}, {"distance", distance50km}},
+                                     {{"name", "> +50 km"}, {"distance", distanceMore}}}}};
+
+        return serialize(info);
     });
 
     get((std::regex) ".*", [](auto context) { return "Not found"; });

@@ -17,6 +17,12 @@ export type GraphEntry = {
 
 export type Graph = Record<StopID, GraphEntry>;
 
+export type InfoReport = {
+  nrPeople: number;
+  distanceStats: { name: string; distance: number }[];
+  avgDistance: number;
+};
+
 class APIError extends Error {
   private response: AxiosResponse | null;
 
@@ -111,8 +117,12 @@ class API {
     return this.getJson<Stops>('/stops');
   }
 
-  async graphFrom(): Promise<Graph> {
-    return this.getJson<Graph>('/graphFrom');
+  async graphFrom(stopId: StopID): Promise<Graph> {
+    return this.getJson<Graph>(`/graphFrom/${stopId}`);
+  }
+
+  async infoReport(stopId: StopID): Promise<InfoReport> {
+    return this.getJson<InfoReport>(`/stopInfo/${stopId}`);
   }
 }
 

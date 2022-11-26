@@ -155,7 +155,7 @@ static StopId stopAreaFromStopPoint(StopId stopId) { return stopId - stopId % 10
 
 static bool isStopPoint(StopId stopId) { return stopId % 10000000000000 / 1000000000000 == 2; }
 
-Timetable::Timetable(const std::string& gtfsPath) {
+Timetable:: Timetable(const std::string& gtfsPath) {
     for (const auto& t : gtfs::Trip::load(gtfsPath)) {
         trips[t.tripId] = {t.serviceId, {}, t.directionId, t.routeId};
     }
