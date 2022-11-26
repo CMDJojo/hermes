@@ -1,6 +1,18 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 
-type Stops = null;
+export type Feature = {
+  geometry: {
+    coordinates: [number, number];
+  };
+  id: number;
+  properties: {
+    name: string;
+  };
+};
+
+export type Stops = {
+  features: Feature[];
+};
 
 export type StopID = string;
 export type TripID = string;
@@ -107,7 +119,6 @@ class API {
         if (error !== null) {
           reject(error);
         }
-
         resolve(response.data);
       });
     });

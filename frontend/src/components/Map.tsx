@@ -1,13 +1,11 @@
 import { useRef, useState, useEffect, LegacyRef } from 'react';
 import { Map as MapLibreGL } from 'maplibre-gl';
-import { Point, Feature, Geometry, GeoJsonProperties } from 'geojson';
+import { Feature, Geometry, GeoJsonProperties } from 'geojson';
 
-import API from '../api';
+import API, { Stops } from '../api';
 import Stop from '../types/Stop';
 
 import '../styles/Map.css';
-
-type Pair<T> = [T, T];
 
 export type StopEvent = Feature<Geometry, GeoJsonProperties>;
 export interface MapProps {
@@ -71,21 +69,19 @@ function Map({ onClick }: MapProps) {
 
         // Center the map on the coordinates of any clicked symbol from the 'symbols' layer.
         map.current?.on('click', 'stops', e => {
-          const stopData = e?.features![0];
+          const { features } = e as unknown as Stops;
 
-          const [lon, lat]: [number, number] = (stopData.geometry as Point)
-            ?.coordinates as Pair<number>;
+          const {
+            id,
+            geometry: { coordinates },
+            properties: { name },
+          } = features[0];
 
-          onClick({
-            id: stopData.id as number,
-            name: stopData.properties?.name,
-            lat,
-            lon,
-          });
-          map.current!.flyTo({
-            center: (e?.features?.[0]?.geometry as Point)
-              ?.coordinates as Pair<number>,
-          });
+          const [lon, lat] = coordinates;
+
+          onClick({ id, name, lat, lon });
+
+          map.current!.flyTo({ center: coordinates });
         });
       });
     });
