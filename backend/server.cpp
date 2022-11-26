@@ -101,7 +101,7 @@ int main() {
             }
         }
 
-        if (peopleNearby.size() != 0) {
+        if (!peopleNearby.empty()) {
             avgDistance /= peopleNearby.size();
         }
 
