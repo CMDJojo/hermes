@@ -29,7 +29,7 @@ add_executable(person
         gtfsTypes.h
         people.h people.cpp
         gauss-kruger/gausskruger.cpp gauss-kruger/gausskruger.h
-        hilbert/hilbert.cpp hilbert/hilbert.h)
+)
 
 target_link_libraries(server webServer)
 

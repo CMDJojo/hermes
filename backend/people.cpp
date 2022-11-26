@@ -45,6 +45,11 @@ std::ostream& operator<<(std::ostream& os, const DMSCoord& coord) {
     return os;
 }
 
+template <typename T, typename... Args>
+static std::function<T(Args...)> constfn(T v) {
+    return [v](Args... t) { return v; };
+}
+
 class People {
    public:
     People(const std::string& rawPersonPath) {
@@ -144,11 +149,6 @@ class People {
             }
         }
         return ret;
-    }
-
-    template <typename T, typename... Args>
-    static std::function<T(Args...)> constfn(T v) {
-        return [v](Args... t) { return v; };
     }
 
     static bool euclideanDistanceLEQ(MeterCoord a, MeterCoord b, int64_t d) {
