@@ -31,7 +31,13 @@ add_executable(person
         gtfsTypes.h
         people.h people.cpp
         gauss-kruger/gausskruger.cpp gauss-kruger/gausskruger.h
-)
+        )
+
+add_executable(prox
+        csvLoader.h
+        gtfsTypes.h
+        gauss-kruger/gausskruger.cpp gauss-kruger/gausskruger.h
+        prox.cpp prox.h people.h gtfsTypes.h gtfsTypes.cpp)
 
 target_link_libraries(server webServer)
 
