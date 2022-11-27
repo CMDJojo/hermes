@@ -5,6 +5,7 @@
 #include <cmath>
 #include <iostream>
 #include <vector>
+#include <unordered_map>
 
 #include "csvLoader.h"
 #include "gauss-kruger/gausskruger.h"
@@ -238,6 +239,14 @@ class People {
             }
         }
         return res;
+    }
+
+    static std::vector<MeterCoord> personCoordsInCircle(MeterCoord origin, int radius) {
+        return constrainedCircle(origin, radius, 100, 50);
+    }
+
+    static std::vector<MeterCoord> personCoordsInCircle(DMSCoord origin, int radius) {
+        return constrainedCircle(origin.toMeter(), radius, 100, 50);
     }
 
     std::vector<Person> personsInCircle(MeterCoord origin, int radius) {
