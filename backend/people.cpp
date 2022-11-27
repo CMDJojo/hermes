@@ -195,7 +195,7 @@ void People::test() {
     auto stop2 = std::chrono::high_resolution_clock::now();
     auto duration2 = duration_cast<std::chrono::milliseconds>(stop2 - start2).count();
     std::cout << "[TEST] [Index] Time taken: " << duration2 << "ms " << people.indexedPeople.size() << " entries, ";
-    int count = 0;
+    uint64_t count = 0;
     for (const auto& entry : people.indexedPeople) {
         count += entry.second.size();
     }
