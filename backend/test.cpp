@@ -5,11 +5,13 @@
 
 #include "gtfsTypes.h"
 #include "routingCacher.h"
+#include "people.h"
 
 namespace test {
 void tests() {
-    //gtfs::test();
+    gtfs::test();
     routingCacher::test();
+    People::test();
 }
 
 void runAllTests() {

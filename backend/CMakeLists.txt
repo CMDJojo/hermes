@@ -24,7 +24,9 @@ add_executable(test test.cpp
         csvLoader.h csvLoaderTypes.h
         gtfsTypes.h gtfsTypes.cpp
         routing.h routing.cpp
-        routingCacher.cpp routingCacher.h)
+        routingCacher.cpp routingCacher.h
+        people.h people.cpp
+        gauss-kruger/gausskruger.cpp gauss-kruger/gausskruger.h)
 
 add_executable(person
         csvLoader.h
