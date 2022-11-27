@@ -1,12 +1,8 @@
 #include "prox.h"
 #include <algorithm>
 #include <numbers>
-#include <Windows.h>
-
 
 using namespace gtfs;
-
-
 
 class Prox{
 
@@ -124,7 +120,6 @@ private:
 int main(){
 
     Prox prox("data/raw");
-    SetConsoleOutputCP(CP_UTF8);
     DMSCoord coord = {57.707030,11.967837}; // Brunnsparken
 
     auto startTime1 = std::chrono::high_resolution_clock::now();
