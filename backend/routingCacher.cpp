@@ -3,12 +3,12 @@
 #include <boost/json.hpp>
 // #include <boost/json/value.hpp>
 #include <cstdint>
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <fstream>
 
 #include "gtfsTypes.h"
 
@@ -54,6 +54,21 @@ std::string toJson(std::unordered_map<StopId, StopState> map) {
     return serialize(finalObj);
 }
 
+void printFile(const std::string& str, const std::string& path) {
+    std::fstream file;
+    file.open(path, std::ios_base::out);
+    if (!file.is_open()) {
+        std::cout << "Unable to open output file " << path << std::endl;
+        exit(-1);
+    }
+    file << str;
+    file.close();
+}
+
+void toFile(std::unordered_map<StopId, StopState> map, const std::string& path) {
+    printFile(toJson(std::move(map)), path);
+}
+
 /* {
  *      stopId [string]: {
  *          time: [i32],
@@ -66,6 +81,7 @@ std::string toJson(std::unordered_map<StopId, StopState> map) {
  *      }
  * }
  */
+
 std::unordered_map<StopId, ParsedStopState> fromJson(const std::string& json) {
     std::unordered_map<StopId, ParsedStopState> res;
     auto parsed = boost::json::parse(json);
@@ -175,12 +191,10 @@ void test() {
         auto reparsed = routingCacher::fromJson(serialized);
         auto stopFinal = std::chrono::high_resolution_clock::now();
 
-        std::fstream file{};
-        file.open("sample_file.txt", std::ios_base::out);
-        std::cout << serialized;
-        if(!file.is_open())
-        {
-            std::cout<<"Unable to open the file.\n";
+        std::fstream file;
+        file.open("sample_route_graph.txt", std::ios_base::out);
+        if (!file.is_open()) {
+            std::cout << "Unable to open the file.\n";
             exit(-1);
         }
         file << serialized;
@@ -194,6 +208,26 @@ void test() {
         std::cout << (success ? "[SUCCESS]" : "[FAILURE]");
         std::cout << " [DIJ=" << dijDur << "µs] [PARSE=" << parseDur << "µs]" << std::endl;
     }
+    /*
+    std::cout << "[TEST] Running Dijkstras for all " << timetable.stops.size() << " stops" << std::endl;
+    std::unordered_map<StopId, std::string> allResults;
+
+    auto djSt = std::chrono::high_resolution_clock::now();
+    for (const auto& [key, val] : timetable.stops) {
+        auto result = timetable.dijkstra(key, routingOptions);
+        allResults.emplace(key, toJson(result));
+    }
+    auto djEnd = std::chrono::high_resolution_clock::now();
+
+    auto parseDur = duration_cast<std::chrono::milliseconds>(djEnd - djSt).count();
+    std::cout << "[TEST] Dijkstras + parse took " << parseDur << " ms, outputting to files..." << std::endl;
+    for (const auto& [id, json] : allResults) {
+        printFile(std::to_string(id)+"-graph.txt",json);
+    }
+    auto prEnd = std::chrono::high_resolution_clock::now();
+    auto prDur = duration_cast<std::chrono::milliseconds>(prEnd-djEnd).count();
+    std::cout << "[TEST] Printing graphs took " << prDur << " ms" << std::endl;
+    */
 }
 bool ParsedIncomingTrip::operator==(const ParsedIncomingTrip& rhs) const {
     return from == rhs.from && tripId == rhs.tripId;
