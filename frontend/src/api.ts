@@ -48,7 +48,7 @@ export type InfoReport = {
   nrPeople: number;
   peopleRange: number;
   distanceStats: { name: string; distance: number }[];
-  avgDistance: number;
+  medianDistance: number;
 };
 
 class APIError extends Error {
