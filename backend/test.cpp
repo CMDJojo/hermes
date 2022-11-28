@@ -6,9 +6,11 @@
 #include "gtfsTypes.h"
 #include "people.h"
 #include "routingCacher.h"
+#include "endToEndEvaluator.h"
 
 namespace test {
 void tests() {
+    E2EE::test();
     gtfs::test();
     routingCacher::test();
     People::test();

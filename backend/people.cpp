@@ -35,6 +35,12 @@ bool MeterCoord::operator<=(const MeterCoord& rhs) const { return !(rhs < *this)
 
 bool MeterCoord::operator>=(const MeterCoord& rhs) const { return !(*this < rhs); }
 
+bool MeterCoord::distanceToLEQ(const MeterCoord& b, int d) const {
+    int64_t dx = this->x - b.x;
+    int64_t dy = this->y - b.y;
+    return dx * dx + dy * dy <= d * d;
+}
+
 bool DMSCoord::operator<(const DMSCoord& rhs) const {
     if (latitude < rhs.latitude) return true;
     if (rhs.latitude < latitude) return false;
@@ -129,13 +135,15 @@ std::vector<MeterCoord> People::constrainedSquare(MeterCoord origin, int dx, int
     return createSquare(lf, hf, multiple, multiple, pred);
 }
 
-std::vector<MeterCoord> People::constrainedCircle(MeterCoord origin, int radius, int multiple, int offset) {
+std::vector<MeterCoord> People::constrainedCircle(MeterCoord origin, int radius, int multiple, int offset,
+                                                  const std::function<bool(MeterCoord)>& pred) {
     // same as constrainedSquare but the point must be in a specified radius of the origin
     assert(offset < multiple);
-    return constrainedSquare(origin, radius, radius, multiple, offset, euclideanPredicate(origin, radius));
+    return constrainedSquare(origin, radius, radius, multiple, offset,
+                             combinefns<bool, MeterCoord>(euclideanPredicate(origin, radius), pred, logic_and));
 }
 
-std::vector<Person> People::allPersonsInDomain(const std::vector<MeterCoord>& domain) {
+std::vector<Person> People::allPersonsInDomain(const std::vector<MeterCoord>& domain) const {
     std::vector<Person> res;
     for (auto c : domain) {
         auto search = indexedPeople.find(c);
@@ -154,15 +162,23 @@ std::vector<MeterCoord> People::personCoordsInCircle(DMSCoord origin, int radius
     return constrainedCircle(origin.toMeter(), radius, 100, 50);
 }
 
-std::vector<Person> People::personsInCircle(MeterCoord origin, int radius) {
+std::vector<MeterCoord> People::populatedCoordsInCircle(MeterCoord origin, int radius) const {
+    return constrainedCircle(origin, radius, 100, 50, [&](auto coord){return indexedPeople.contains(coord);});
+}
+
+std::vector<MeterCoord> People::populatedCoordsInCircle(DMSCoord origin, int radius) const {
+    return constrainedCircle(origin.toMeter(), radius, 100, 50, [&](auto coord){return indexedPeople.contains(coord);});
+}
+
+std::vector<Person> People::personsInCircle(MeterCoord origin, int radius) const {
     return allPersonsInDomain(constrainedCircle(origin, radius, 100, 50));
 }
 
-std::vector<Person> People::personsInCircle(DMSCoord origin, int radius) {
+std::vector<Person> People::personsInCircle(DMSCoord origin, int radius) const {
     return personsInCircle(origin.toMeter(), radius);
 }
 
-std::vector<Person> People::naivePersonsInCircle(MeterCoord origin, int radius) {
+std::vector<Person> People::naivePersonsInCircle(MeterCoord origin, int radius) const {
     std::vector<Person> ret;
     for (Person p : people) {
         if (euclideanDistanceLEQ(p.home_coord, origin, radius)) {

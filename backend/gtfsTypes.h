@@ -166,7 +166,7 @@ struct Stop {
     std::string stopName;
     float stopLat;
     float stopLon;
-    int32_t locationType;
+    [[maybe_unused]] int32_t locationType;
     Ignore parentStation;
     Ignore platformCode;
 

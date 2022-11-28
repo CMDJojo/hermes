@@ -21,6 +21,8 @@ struct MeterCoord {
 
     [[nodiscard]] float distanceTo(MeterCoord other) const;
 
+    [[nodiscard]] bool distanceToLEQ(const MeterCoord& b, int d) const;
+
     bool operator==(const MeterCoord& rhs) const { return x == rhs.x && y == rhs.y; }
 
     bool operator!=(const MeterCoord& rhs) const { return !(rhs == *this); }
@@ -180,6 +182,14 @@ static std::function<T(Args...)> constfn(T v) {
     return [v](Args... t) { return v; };
 }
 
+template <typename T, typename... Args>
+static std::function<T(Args...)> combinefns(std::function<T(Args...)> f1, std::function<T(Args...)> f2,
+                                            std::function<T(T, T)> combiner) {
+    return [f1, f2, combiner](Args... args) { return combiner(f1(args...), f2(args...)); };
+}
+
+static std::function<bool(bool, bool)> logic_and = [](auto a, auto b) { return a && b; };
+
 class People {
    public:
     People(const std::string& rawPersonPath, bool alsoBuildIndex = true);
@@ -194,19 +204,25 @@ class People {
         MeterCoord origin, int dx, int dy, int multiple, int offset,
         const std::function<bool(MeterCoord)>& pred = constfn<bool, MeterCoord>(true));
 
-    static std::vector<MeterCoord> constrainedCircle(MeterCoord origin, int radius, int multiple, int offset);
+    static std::vector<MeterCoord> constrainedCircle(
+        MeterCoord origin, int radius, int multiple, int offset,
+        const std::function<bool(MeterCoord)>& pred = constfn<bool, MeterCoord>(true));
 
-    std::vector<Person> allPersonsInDomain(const std::vector<MeterCoord>& domain);
+    std::vector<Person> allPersonsInDomain(const std::vector<MeterCoord>& domain) const;
 
     static std::vector<MeterCoord> personCoordsInCircle(MeterCoord origin, int radius);
 
     static std::vector<MeterCoord> personCoordsInCircle(DMSCoord origin, int radius);
 
-    std::vector<Person> personsInCircle(MeterCoord origin, int radius);
+    std::vector<MeterCoord> populatedCoordsInCircle(MeterCoord origin, int radius) const;
 
-    std::vector<Person> personsInCircle(DMSCoord origin, int radius);
+    std::vector<MeterCoord> populatedCoordsInCircle(DMSCoord origin, int radius) const;
 
-    std::vector<Person> naivePersonsInCircle(MeterCoord origin, int radius);
+    std::vector<Person> personsInCircle(MeterCoord origin, int radius) const;
+
+    std::vector<Person> personsInCircle(DMSCoord origin, int radius) const;
+
+    std::vector<Person> naivePersonsInCircle(MeterCoord origin, int radius) const;
 
     static bool euclideanDistanceLEQ(MeterCoord a, MeterCoord b, int64_t d);
 
