@@ -13,6 +13,9 @@
 #include "gtfsTypes.h"
 #include "boardingStatistics.h"
 
+const auto haha_it_broke = EXIT_FAILURE;
+
+
 namespace routingCacher {
 
     using namespace routing;
@@ -110,6 +113,19 @@ namespace routingCacher {
                        });
 
         return res;
+    }
+
+    std::unordered_map<StopId, ParsedStopState> fromFile(const std::string &path) {
+        std::ifstream file;
+        file.open(path);
+
+        if (!file.is_open()) {
+            std::cerr << "Could not open file " << path << std::endl;
+            exit(haha_it_broke);
+        }
+
+        std::string str(std::istreambuf_iterator<char>{file}, {});
+        return fromJson(str);
     }
 
     std::unordered_map<StopId, ParsedStopState> toPSS(std::unordered_map<StopId, StopState> map) {
@@ -230,14 +246,58 @@ namespace routingCacher {
         auto djEnd = std::chrono::high_resolution_clock::now();
 
         auto parseDur = duration_cast<std::chrono::milliseconds>(djEnd - djSt).count();
-        std::cout << "[TEST] Dijkstras + json conversion took " << parseDur << " ms, outputting to files..." << std::endl;
+        std::cout << "[TEST] Dijkstras + json conversion took " << parseDur << " ms, outputting to files..."
+                  << std::endl;
         for (const auto &[id, json]: allResults) {
-            printFile(json, "data/cache/" + std::to_string(id) + "-graph.txt");
+            printFile(json, "data/idx/" + std::to_string(id) + "-graph.txt");
         }
         auto prEnd = std::chrono::high_resolution_clock::now();
         auto prDur = duration_cast<std::chrono::milliseconds>(prEnd - djEnd).count();
         std::cout << "[TEST] Saving graphs to files took " << prDur << " ms" << std::endl;
 
+        uint64_t targetId = 9021014065802000;
+        int runs = 50;
+        std::cout << "[TEST] Comparing loading path to calculating it... " << runs << " runs" << std::endl;
+
+        uint64_t totalEntriesLoad = 0;
+        uint64_t totalDurLoad = 0;
+        for (int i = 0; i < runs; i++) {
+            auto start = std::chrono::high_resolution_clock::now();
+            auto map = fromFile("data/idx/" + std::to_string(targetId) + "-graph.txt");
+            auto end = std::chrono::high_resolution_clock::now();
+            auto duration = duration_cast<std::chrono::microseconds>(end - start).count();
+            totalEntriesLoad += map.size();
+            totalDurLoad += duration;
+        }
+
+        uint64_t totalEntriesGenerate = 0;
+        uint64_t totalDurGenerate = 0;
+        for (int i = 0; i < runs; i++) {
+            auto start = std::chrono::high_resolution_clock::now();
+            auto map = timetable.dijkstra(targetId, routingOptions);
+            auto end = std::chrono::high_resolution_clock::now();
+            auto duration = duration_cast<std::chrono::microseconds>(end - start).count();
+            totalEntriesGenerate += map.size();
+            totalDurGenerate += duration;
+        }
+
+        double durationLoad = static_cast<double>(totalDurLoad) / static_cast<double>(runs);
+        double durationGenerate = static_cast<double>(totalDurGenerate) / static_cast<double>(runs);
+
+        uint64_t entriesLoad = totalEntriesLoad / runs;
+        uint64_t entriesGenerate = totalEntriesGenerate / runs;
+
+        double improvement = durationLoad / durationGenerate;
+
+        std::cout << "[TEST] [RUNNING DIJKSTRA VS LOADING GRAPH] [DIJKSTRA IS " << improvement << "x FASTER] [LOAD=";
+        std::cout << durationLoad << "µs] [DIJKSTRA=" << durationGenerate << "µs] ";
+
+        if (totalEntriesGenerate == totalEntriesLoad) {
+            std::cout << "[BOTH HAD " << entriesLoad << " ENTRIES]" << std::endl;
+        } else {
+            std::cout << "[LOAD=" << entriesLoad << " ENTRIES] [GENERATE=" << entriesGenerate << " ENTRIES]"
+                      << std::endl;
+        }
     }
 
     bool ParsedIncomingTrip::operator==(const ParsedIncomingTrip &rhs) const {
