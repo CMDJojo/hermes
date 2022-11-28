@@ -28,8 +28,11 @@ bool MeterCoord::operator<(const MeterCoord& rhs) const {
     if (rhs.x < x) return false;
     return y < rhs.y;
 }
+
 bool MeterCoord::operator>(const MeterCoord& rhs) const { return rhs < *this; }
+
 bool MeterCoord::operator<=(const MeterCoord& rhs) const { return !(rhs < *this); }
+
 bool MeterCoord::operator>=(const MeterCoord& rhs) const { return !(*this < rhs); }
 
 bool DMSCoord::operator<(const DMSCoord& rhs) const {
@@ -37,8 +40,11 @@ bool DMSCoord::operator<(const DMSCoord& rhs) const {
     if (rhs.latitude < latitude) return false;
     return longitude < rhs.longitude;
 }
+
 bool DMSCoord::operator>(const DMSCoord& rhs) const { return rhs < *this; }
+
 bool DMSCoord::operator<=(const DMSCoord& rhs) const { return !(rhs < *this); }
+
 bool DMSCoord::operator>=(const DMSCoord& rhs) const { return !(*this < rhs); }
 
 MeterCoord DMSCoord::toMeter() const {
@@ -246,7 +252,7 @@ void People::test() {
         std::cout << durationNaive << "ns] [CCIS=" << durationCCIS << "ns] ";
 
         if (totalPplCCIS == totalPplNaive) {
-            std::cout << "[BOTH FOUND "<<pplFoundNaive<<" ppl]" << std::endl;
+            std::cout << "[BOTH FOUND " << pplFoundNaive << " ppl]" << std::endl;
         } else {
             std::cout << "[NAIVE=" << pplFoundNaive << " ppl] [CCIS=" << pplFoundCCIS << " ppl]" << std::endl;
         }

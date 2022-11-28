@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <boost/json/src.hpp>
 #include <chrono>
 #include <fstream>
 #include <functional>
@@ -6,7 +7,6 @@
 #include <iterator>
 #include <sstream>
 #include <vector>
-#include <boost/json/src.hpp>
 
 #include "routing.h"
 

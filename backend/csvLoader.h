@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <cstdint>
 #include <fstream>
 #include <iostream>
@@ -9,7 +10,7 @@
 #include <typeinfo>
 #include <utility>
 #include <vector>
-#include <chrono>
+
 #include "csvLoaderTypes.h"
 
 const auto haha_it_broke = EXIT_FAILURE;
@@ -42,13 +43,13 @@ static std::vector<std::string> split(const std::string& str) {
 inline uint64_t parseu64(const std::string& str) {
     if (str.empty() || str == "\r") return 0;
     return std::stoull(str);
-    static_assert(sizeof(unsigned long long) == sizeof (uint64_t));
+    static_assert(sizeof(unsigned long long) == sizeof(uint64_t));
 }
 
 inline int parseInt(const std::string& str) {
     if (str.empty() || str == "\r") return 0;
     return std::stoi(str);
-    static_assert(sizeof(int) == sizeof (int32_t));
+    static_assert(sizeof(int) == sizeof(int32_t));
 }
 
 inline double parseDouble(const std::string& str) {
@@ -61,9 +62,7 @@ inline float parseFloat(const std::string& str) {
     return std::stof(str);
 }
 
-inline bool parseBool(const std::string& str) {
-    return !parseInt(str);
-}
+inline bool parseBool(const std::string& str) { return !parseInt(str); }
 
 static Date parseDate(const std::string& str) {
     int32_t original = std::stoi(str);
@@ -129,8 +128,8 @@ std::vector<R> load(const std::string& path, bool skipHeader = true) {
         auto vals = split(line);
         constexpr size_t n = sizeof...(Args);
         if (vals.size() != n) {
-            std::cerr << "[ERROR!] Line does not contain " << n << " elements: "
-                << line << " (file:" << path << ")" <<std::endl;
+            std::cerr << "[ERROR!] Line does not contain " << n << " elements: " << line << " (file:" << path << ")"
+                      << std::endl;
             return {};
         }
 

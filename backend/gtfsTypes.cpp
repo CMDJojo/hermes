@@ -1,7 +1,8 @@
 #include "gtfsTypes.h"
 
-#include "csvLoader.h"
 #include <functional>
+
+#include "csvLoader.h"
 
 namespace gtfs {
 
@@ -9,24 +10,30 @@ std::vector<Agency> Agency::load(const std::string& gtfsPath) {
     return csvLoader::load<Agency, AgencyId, std::string, std::string, std::string, std::string, std::string>(
         gtfsPath + "/agency.txt");
 }
+
 std::vector<Attribution> Attribution::load(const std::string& gtfsPath) {
     return csvLoader::load<Attribution, TripId, std::string, bool>(gtfsPath + "/attributions.txt");
 }
+
 std::vector<Calendar> Calendar::load(const std::string& gtfsPath) {
     return csvLoader::load<Calendar, ServiceId, bool, bool, bool, bool, bool, bool, bool, Date, Date>(gtfsPath +
                                                                                                       "/calendar.txt");
 }
+
 std::vector<CalendarDate> CalendarDate::load(const std::string& gtfsPath) {
     return csvLoader::load<CalendarDate, ServiceId, Date, bool>(gtfsPath + "/calendar_dates.txt");
 }
+
 std::vector<FeedInfo> FeedInfo::load(const std::string& gtfsPath) {
     return csvLoader::load<FeedInfo, std::string, std::string, std::string, std::string, std::string>(gtfsPath +
                                                                                                       "/feed_info.txt");
 }
+
 std::vector<Route> Route::load(const std::string& gtfsPath) {
     return csvLoader::load<Route, RouteId, AgencyId, std::string, std::string, int, std::string>(gtfsPath +
                                                                                                  "/routes.txt");
 }
+
 std::vector<Shape> Shape::load(const std::string& gtfsPath) {
     return csvLoader::load<Shape, ShapeId, double, double, int, double>(gtfsPath + "/shapes.txt");
 }

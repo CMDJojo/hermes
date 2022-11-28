@@ -30,21 +30,26 @@ using namespace routing;
 struct ParsedIncomingTrip {
     StopId from;
     TripId tripId;
+
     bool operator==(const ParsedIncomingTrip& rhs) const;
+
     bool operator!=(const ParsedIncomingTrip& rhs) const;
 };
 
 struct ParsedStopState {
     int32_t travelTime;
     std::vector<ParsedIncomingTrip> incoming;
+
     bool operator==(const ParsedStopState& rhs) const;
+
     bool operator!=(const ParsedStopState& rhs) const;
 };
 
 std::string toJson(std::unordered_map<StopId, StopState> map);
+
 std::unordered_map<StopId, ParsedStopState> fromJson(const std::string& json);
+
 std::unordered_map<StopId, ParsedStopState> toPSS(std::unordered_map<StopId, StopState> map);
 
 void test();
-}  // namespace RoutingCacher
-
+}  // namespace routingCacher

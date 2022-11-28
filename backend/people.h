@@ -16,33 +16,49 @@ struct MeterCoord {
     int x, y;
 
     MeterCoord() = default;
+
     MeterCoord(int x, int y) : x(x), y(y) {}
 
     [[nodiscard]] float distanceTo(MeterCoord other) const;
 
     bool operator==(const MeterCoord& rhs) const { return x == rhs.x && y == rhs.y; }
+
     bool operator!=(const MeterCoord& rhs) const { return !(rhs == *this); }
+
     bool operator<(const MeterCoord& rhs) const;
+
     bool operator>(const MeterCoord& rhs) const;
+
     bool operator<=(const MeterCoord& rhs) const;
+
     bool operator>=(const MeterCoord& rhs) const;
 
     [[nodiscard]] DMSCoord toDMS() const;
+
     friend std::ostream& operator<<(std::ostream& os, const MeterCoord& coord);
 };
 
 struct DMSCoord {
     double latitude, longitude;
+
     DMSCoord() = default;
+
     DMSCoord(double latitude, double longitude) : latitude(latitude), longitude(longitude) {}
+
     bool operator==(const DMSCoord& rhs) const { return latitude == rhs.latitude && longitude == rhs.longitude; }
+
     bool operator!=(const DMSCoord& rhs) const { return !(rhs == *this); }
+
     bool operator<(const DMSCoord& rhs) const;
+
     bool operator>(const DMSCoord& rhs) const;
+
     bool operator<=(const DMSCoord& rhs) const;
+
     bool operator>=(const DMSCoord& rhs) const;
 
     [[nodiscard]] MeterCoord toMeter() const;
+
     friend std::ostream& operator<<(std::ostream& os, const DMSCoord& coord);
 };
 
@@ -134,13 +150,16 @@ struct Person {
           home_county(home_county),
           home_municipality(home_municipality),
           home_coord(home_coord) {}
+
     bool operator==(const Person& rhs) const {
         return is_female == rhs.is_female && work_county == rhs.work_county &&
                work_municipality == rhs.work_municipality && work_coord == rhs.work_coord &&
                home_county == rhs.home_county && home_municipality == rhs.home_municipality &&
                home_coord == rhs.home_coord;
     }
+
     bool operator!=(const Person& rhs) const { return !(rhs == *this); }
+
     bool operator<(const Person& rhs) const {
         if (home_county < rhs.home_county) return true;
         if (rhs.home_county < home_county) return false;
@@ -148,8 +167,11 @@ struct Person {
         if (rhs.home_municipality < home_municipality) return false;
         return home_coord < rhs.home_coord;
     }
+
     bool operator>(const Person& rhs) const { return rhs < *this; }
+
     bool operator<=(const Person& rhs) const { return !(rhs < *this); }
+
     bool operator>=(const Person& rhs) const { return !(*this < rhs); }
 };
 

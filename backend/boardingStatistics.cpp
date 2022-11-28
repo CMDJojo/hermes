@@ -1,34 +1,35 @@
 #include "boardingStatistics.h"
+
+#include <cassert>
+#include <iostream>
+
 #include "csvLoader.h"
 #include "gtfsTypes.h"
 
-#include <iostream>
-#include <cassert>
-
 namespace boarding {
-    std::unordered_map<StopId, int> rawStats{};
+std::unordered_map<StopId, int> rawStats{};
 
-    struct Stat {
-        StopId id;
-        int passengers;
+struct Stat {
+    StopId id;
+    int passengers;
 
-        Stat(StopId id, int passengers) : id(id), passengers(passengers) {}
-    };
+    Stat(StopId id, int passengers) : id(id), passengers(passengers) {}
+};
 
-    void load(const std::string &file) {
-        if (rawStats.empty()) {
-            for (Stat stat: csvLoader::load<Stat, StopId, int>(file)) {
-                rawStats.emplace(stat.id, stat.passengers);
-            }
-        } else {
-            std::cout << "Boarding::load called but file already loaded" << std::endl;
+void load(const std::string& file) {
+    if (rawStats.empty()) {
+        for (Stat stat : csvLoader::load<Stat, StopId, int>(file)) {
+            rawStats.emplace(stat.id, stat.passengers);
         }
+    } else {
+        std::cout << "Boarding::load called but file already loaded" << std::endl;
     }
-
-    bool isImportant(StopId stopId) {
-        assert(!rawStats.empty());
-        return rawStats.contains(stopId);
-    }
-
-    std::unordered_map<StopId, int> getStats() { return rawStats; }
 }
+
+bool isImportant(StopId stopId) {
+    assert(!rawStats.empty());
+    return rawStats.contains(stopId);
+}
+
+std::unordered_map<StopId, int> getStats() { return rawStats; }
+}  // namespace boarding

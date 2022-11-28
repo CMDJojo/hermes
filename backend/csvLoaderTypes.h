@@ -1,4 +1,5 @@
 #pragma once
+
 #include <cstdint>
 
 namespace csvLoader {
@@ -14,4 +15,4 @@ struct Date {
 };
 
 struct Ignore {};
-}
+}  // namespace csvLoader

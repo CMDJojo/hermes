@@ -105,7 +105,6 @@ int main() {
             avgDistance /= peopleNearby.size();
         }
 
-
         boost::json::value info = {{"nrPeople", peopleNearby.size()},
                                    {"avgDistance", avgDistance},
                                    {"distanceStats",

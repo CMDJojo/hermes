@@ -25,6 +25,7 @@ struct Agency {
     std::string agencyTimezone;
     std::string agencyLang;
     std::string agencyFareURL;
+
     Agency(AgencyId agencyId, std::string agencyName, std::string agencyUrl, std::string agencyTimezone,
            std::string agencyLang, std::string agencyFareUrl)
         : agencyId(agencyId),
@@ -41,6 +42,7 @@ struct Attribution {
     TripId tripId;
     std::string organizationName;
     bool isOperator;
+
     Attribution(TripId tripId, std::string organizationName, bool isOperator)
         : tripId(tripId), organizationName(std::move(organizationName)), isOperator(isOperator) {}
 
@@ -51,6 +53,7 @@ struct Calendar {
     ServiceId serviceId;
     bool monday, tuesday, wednesday, thursday, friday, saturday, sunday;
     Date startDate, endDate;
+
     Calendar(ServiceId serviceId, bool monday, bool tuesday, bool wednesday, bool thursday, bool friday, bool saturday,
              bool sunday, const Date& startDate, const Date& endDate)
         : serviceId(serviceId),
@@ -80,6 +83,7 @@ struct CalendarDate {
 
 struct FeedInfo {
     std::string feedId, feedPublisherName, feedPublisherUrl, feedLang, feedVersion;
+
     FeedInfo(std::string feedId, std::string feedPublisherName, std::string feedPublisherUrl, std::string feedLang,
              std::string feedVersion)
         : feedId(std::move(feedId)),
@@ -97,7 +101,9 @@ struct Route {
     std::string routeShortName, routeLongName;
     int routeType;
     std::string routeDesc;
+
     Route() = default;
+
     Route(RouteId routeId, AgencyId agencyId, std::string routeShortName, std::string routeLongName, int routeType,
           std::string routeDesc)
         : routeId(routeId),
@@ -115,6 +121,7 @@ struct Shape {
     double shapePtLat, shapePtLon;
     int shapePtSequence;
     double shapeDistTravelled;
+
     Shape(ShapeId shapeId, double shapePtLat, double shapePtLon, int shapePtSequence, double shapeDistTravelled)
         : shapeId(shapeId),
           shapePtLat(shapePtLat),

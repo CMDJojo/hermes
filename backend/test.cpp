@@ -1,11 +1,11 @@
 #include "test.h"
 
-#include <iostream>
 #include <boost/json/src.hpp>
+#include <iostream>
 
 #include "gtfsTypes.h"
-#include "routingCacher.h"
 #include "people.h"
+#include "routingCacher.h"
 
 namespace test {
 void tests() {
@@ -26,6 +26,4 @@ void runThenExit() {
 }
 }  // namespace test
 
-int main() {
-    test::runThenExit();
-}
+int main() { test::runThenExit(); }
