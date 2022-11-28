@@ -12,9 +12,9 @@
 
 class Prox {
 public:
-    Prox(const std::string& stopsPath);
+    Prox(const std::string &stopsPath);
 
-    std::vector<std::pair<gtfs::Stop, double>> stopsAroundDMSCoord(const DMSCoord& coord, double range);
+    std::vector<std::pair<gtfs::Stop, double>> stopsAroundDMSCoord(const DMSCoord &coord, double range);
 
     std::vector<std::pair<gtfs::Stop, double>> stopsAroundMeterCoord(const MeterCoord mCoord, double range);
 
@@ -39,5 +39,5 @@ private:
 
     static bool isStopPoint(StopId stopId);
 
-    static bool stopComparator(const gtfs::Stop& lhs, const gtfs::Stop& rhs);
+    static bool stopComparator(const gtfs::Stop &lhs, const gtfs::Stop &rhs);
 };

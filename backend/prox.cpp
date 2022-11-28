@@ -8,16 +8,15 @@
 using namespace gtfs;
 
 
-
-Prox::Prox(const std::string& stopsPath) {
+Prox::Prox(const std::string &stopsPath) {
     stops = Stop::load(stopsPath);
     std::sort(stops.begin(), stops.end(),
-              [](const Stop& lhs, const Stop& rhs) { return stopComparator(lhs, rhs); });
+              [](const Stop &lhs, const Stop &rhs) { return stopComparator(lhs, rhs); });
     std::copy_if(stops.begin(), stops.end(), std::back_inserter(filteredStops),
                  [](Stop stop) { return !isStopPoint(stop.stopId); });
 }
 
-std::vector<std::pair<Stop, double>> Prox::stopsAroundDMSCoord(const DMSCoord& coord, double range) {
+std::vector<std::pair<Stop, double>> Prox::stopsAroundDMSCoord(const DMSCoord &coord, double range) {
     std::vector<std::pair<Stop, double>> found;
 
     DMSCoord lowerCoord = {coord.latitude - meterToDegreeLat(range),
@@ -46,9 +45,6 @@ std::vector<std::pair<Stop, double>> Prox::stopsAroundDMSCoord(const DMSCoord& c
 }
 
 
-
-
-  // radius of the earth in meters
 
 // distance between two coordinates, uses square root.
 double Prox::distance(double lat1, double lat2, double lon1, double lon2) {
@@ -82,7 +78,7 @@ double Prox::meterToDegreeLon(double meters, double lat) { return meters / (111'
 
 bool Prox::isStopPoint(StopId stopId) { return stopId % 10000000000000 / 1000000000000 == 2; }
 
-bool Prox::stopComparator(const gtfs::Stop& lhs, const gtfs::Stop& rhs) {
+bool Prox::stopComparator(const gtfs::Stop &lhs, const gtfs::Stop &rhs) {
     if (lhs.stopLat < rhs.stopLat) return true;
     if (rhs.stopLat < lhs.stopLat) return false;
     return lhs.stopLon < rhs.stopLon;
@@ -96,7 +92,7 @@ std::vector<std::pair<Stop, double>> Prox::stopsAroundMeterCoord(const MeterCoor
 std::vector<Stop> Prox::naiveStopsAroundDMSCoord(const DMSCoord coord, double range) {
     std::vector<Stop> found;
     const double distanceToCompare = pow(range / earthRadius, 2);
-    for (auto stop : filteredStops) {
+    for (auto stop: filteredStops) {
         if (distance2(coord.latitude, stop.stopLat, coord.longitude, stop.stopLon) < distanceToCompare) {
             found.push_back(stop);
         }
@@ -104,8 +100,6 @@ std::vector<Stop> Prox::naiveStopsAroundDMSCoord(const DMSCoord coord, double ra
 
     return found;
 }
-
-
 
 
 int main() {
@@ -128,12 +122,13 @@ int main() {
               << std::endl;
 
     std::cout << std::endl << "Found1: " << std::endl;
-    for (auto stopPair : found1) {
-        std::cout << "lat: " << stopPair.first.stopLat << "  lon: " << stopPair.first.stopLon << "  " << stopPair.first.stopName << "  dist: " << stopPair.second  <<std::endl;
+    for (auto stopPair: found1) {
+        std::cout << "lat: " << stopPair.first.stopLat << "  lon: " << stopPair.first.stopLon << "  "
+                  << stopPair.first.stopName << "  dist: " << stopPair.second << std::endl;
     }
 
     std::cout << std::endl << "Found2: " << std::endl;
-    for (auto stop : found2) {
+    for (auto stop: found2) {
         std::cout << "lat: " << stop.stopLat << "  lon: " << stop.stopLon << "  " << stop.stopName << std::endl;
     }
 
