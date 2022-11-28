@@ -13,6 +13,8 @@ binärfilen ligger. För att Cmake ska hitta filerna behöver även följande fl
 ```
 Om du använder CLion, öppna Settings > Build, Execution, Deployment > Cmake.
 
+På macOS kan `boost` installeras via Homebrew: `brew install boost`.
+
 # En bättre livsstilskarta
 Vid användning:
 * Välj en plats (avgränsning: en hållplats) från karta
