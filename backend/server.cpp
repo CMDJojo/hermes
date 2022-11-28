@@ -1,15 +1,25 @@
 #include <boost/json/src.hpp>
 #include <algorithm>
-
+#include <iostream>
 #include "people.h"
 #include "routing.h"
 #include "routingCacher.h"
 #include "webServer/webServer.h"
+#include "binarySearch.h"
 
 const auto address = net::ip::make_address("0.0.0.0");
 const auto port = static_cast<unsigned short>(8080);
 const auto doc_root = std::make_shared<std::string>(".");
 const auto threads = 1;
+
+std::function<BinarySearch::ComparatorResult(const Person&)> constructClosure(float distance) {
+    return [=](const Person& p) {
+        auto d = p.distanceToWork();
+        if (d > distance) return BinarySearch::ComparatorResult::LT;
+        if (d < distance) return BinarySearch::ComparatorResult::GT;
+        return BinarySearch::ComparatorResult::EQ;
+    };
+}
 
 int main() {
     std::cout << "Loading timetable" << std::endl;
@@ -106,16 +116,6 @@ int main() {
         // FIXME: replace the avg distance with travel time when there is a dijkstra function
         //  that takes arbitrary coordinates and not just stops.
 
-        // Calculate distance stats
-        uint32_t avgDistance = 0;
-        uint32_t distance1km = 0;
-        uint32_t distance5km = 0;
-        uint32_t distance10km = 0;
-        uint32_t distance50km = 0;
-        uint32_t distanceMore = 0;
-
-
-
         if (peopleNearby.empty()) {
             boost::json::value info = {{"nrPeople", 0},
                                        {"peopleRange", nearbyPeopleRangeMeter},
@@ -136,30 +136,20 @@ int main() {
 
         uint32_t pseudoMedian =  static_cast<uint32_t>(peopleNearby.at(peopleNearby.size() / 2).distanceToWork());
 
-        for (Person& person : peopleNearby) {
-            float distanceToWork = person.home_coord.distanceTo(person.work_coord);
-
-            if (distanceToWork < 1'000) {
-                distance1km += 1;
-            } else if (distanceToWork < 5'000) {
-                distance5km += 1;
-            } else if (distanceToWork < 10'000) {
-                distance10km += 1;
-            } else if (distanceToWork < 50'000) {
-                distance50km += 1;
-            } else {
-                distanceMore += 1;
-            }
-        }
+        size_t distance1km = BinarySearch::binarySearch<Person>(peopleNearby, constructClosure(1000)).index;
+        size_t distance5km = BinarySearch::binarySearch<Person>(peopleNearby, constructClosure(5000), distance1km, peopleNearby.size()).index;
+        size_t distance10km = BinarySearch::binarySearch<Person>(peopleNearby, constructClosure(10000), distance5km, peopleNearby.size()).index;
+        size_t distance50km = BinarySearch::binarySearch<Person>(peopleNearby, constructClosure(50000), distance10km, peopleNearby.size()).index;
+        size_t distanceMore = peopleNearby.size() - distance50km;
 
         boost::json::value info = {{"nrPeople", peopleNearby.size()},
                                    {"peopleRange", nearbyPeopleRangeMeter},
                                    {"medianDistance", pseudoMedian},
                                    {"distanceStats",
                                     {{{"name", "< 1 km"}, {"distance", distance1km}},
-                                     {{"name", "1-5 km"}, {"distance", distance5km}},
-                                     {{"name", "5-10 km"}, {"distance", distance10km}},
-                                     {{"name", "10-50 km"}, {"distance", distance50km}},
+                                     {{"name", "1-5 km"}, {"distance", distance5km - distance1km}},
+                                     {{"name", "5-10 km"}, {"distance", distance10km - distance5km}},
+                                     {{"name", "10-50 km"}, {"distance", distance50km - distance10km}},
                                      {{"name", "> 50 km"}, {"distance", distanceMore}}}}};
 
         return serialize(info);
@@ -171,3 +161,8 @@ int main() {
 
     startServer(address, port, doc_root, threads);
 }
+
+
+
+
+

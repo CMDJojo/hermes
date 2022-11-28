@@ -16,7 +16,8 @@ add_executable(backend main.cpp
         gauss-kruger/gausskruger.cpp gauss-kruger/gausskruger.h
         people.h people.cpp
         boardingStatistics.cpp boardingStatistics.h
-        endToEndEvaluator.cpp endToEndEvaluator.h)
+        endToEndEvaluator.cpp endToEndEvaluator.h
+        binarySearch.cpp binarySearch.h)
 add_executable(server server.cpp
         csvLoader.h csvLoaderTypes.h
         gtfsTypes.h gtfsTypes.cpp
@@ -25,7 +26,8 @@ add_executable(server server.cpp
         gauss-kruger/gausskruger.cpp gauss-kruger/gausskruger.h
         routingCacher.cpp routingCacher.h
         boardingStatistics.cpp boardingStatistics.h
-        endToEndEvaluator.cpp endToEndEvaluator.h)
+        endToEndEvaluator.cpp endToEndEvaluator.h
+        binarySearch.cpp binarySearch.h)
 
 add_executable(test test.cpp
         csvLoader.h csvLoaderTypes.h
@@ -35,6 +37,7 @@ add_executable(test test.cpp
         people.h people.cpp
         gauss-kruger/gausskruger.cpp gauss-kruger/gausskruger.h
         boardingStatistics.cpp boardingStatistics.h
+        binarySearch.cpp binarySearch.h
         endToEndEvaluator.cpp endToEndEvaluator.h)
 
 add_executable(person
