@@ -114,14 +114,18 @@ class API {
 
   private async getJson<T>(url: string): Promise<T> {
     return new Promise((resolve, reject) => {
-      this.client({ url }).then(response => {
-        const error = API.checkError(response);
+      this.client({ url })
+        .then(response => {
+          const error = API.checkError(response);
 
-        if (error !== null) {
+          if (error !== null) {
+            reject(error);
+          }
+          resolve(response.data);
+        })
+        .catch(error => {
           reject(error);
-        }
-        resolve(response.data);
-      });
+        });
     });
   }
 
