@@ -3,6 +3,7 @@
 #include "gtfsTypes.h"
 
 #include <iostream>
+#include <cassert>
 
 namespace boarding {
     std::unordered_map<StopId, int> rawStats{};
