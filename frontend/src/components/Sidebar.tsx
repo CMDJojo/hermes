@@ -12,28 +12,16 @@ import {
 import Stop from '../types/Stop';
 import '../styles/Sidebar.css';
 import InfoBox from './InfoBox';
-import API, { InfoReport } from '../api';
+import { InfoReport } from '../api';
 
 interface SidebarProps {
   active: boolean;
   stop: Stop | null;
+  info: InfoReport | null;
   onClose: () => void;
 }
 
-export default function Sidebar({ active, stop, onClose }: SidebarProps) {
-  const [info, setInfo] = useState<InfoReport | null>(null);
-
-  // load the info report about the stop
-  useEffect(() => {
-    if (stop === null) return;
-
-    const api = new API();
-    api
-      .infoReport(`${stop.id}`)
-      .then(setInfo)
-      .catch(() => setInfo(null));
-  }, [stop]);
-
+export default function Sidebar({ active, stop, info, onClose }: SidebarProps) {
   return (
     <AnimatePresence>
       {active && stop !== null && (
@@ -50,17 +38,18 @@ export default function Sidebar({ active, stop, onClose }: SidebarProps) {
             <h1 className="heading">{stop.name}</h1>
             <span className="" />
             {info === null ? (
-              <strong>Loading data from server...</strong>
+              <strong>Failed to load data</strong>
             ) : (
               <>
-                <strong>People living within {info?.peopleRange}m: </strong>
-                {info?.nrPeople}
+                <strong>
+                  People living within {info?.peopleRange}m: {info?.nrPeople}{' '}
+                </strong>
                 <div className="infoBoxes">
                   <InfoBox
                     color="#D7EBBA"
                     title="Genomsnittligt avstånd till jobbet"
                   >
-                    <h1>{info?.avgDistance} meter</h1>
+                    <h1>{info?.medianDistance} meter</h1>
                     <ResponsiveContainer width="100%" height={150}>
                       <BarChart
                         width={800}

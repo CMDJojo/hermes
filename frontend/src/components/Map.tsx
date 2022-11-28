@@ -4,15 +4,18 @@ import { Feature, Geometry, GeoJsonProperties } from 'geojson';
 
 import API, { Stops } from '../api';
 import Stop from '../types/Stop';
+import ActiveArea from '../types/ActiveArea';
 
 import '../styles/Map.css';
 
 export type StopEvent = Feature<Geometry, GeoJsonProperties>;
 export interface MapProps {
+  activeStop: Stop | null;
+  activeArea: ActiveArea | null;
   onClick: (event: Stop) => void;
 }
 
-function Map({ onClick }: MapProps) {
+function Map({ onClick, activeStop }: MapProps) {
   const mapContainer = useRef<string | HTMLElement | null>(null);
   const api = useRef<API | null>(null);
   const map = useRef<MapLibreGL | null>(null);
@@ -47,6 +50,7 @@ function Map({ onClick }: MapProps) {
             source: 'stops',
             layout: {
               'icon-image': 'custom-marker',
+              'icon-allow-overlap': true,
               'icon-size': 0.5,
               'text-field': ['get', 'name'],
               'text-font': ['Inter', 'Arial Unicode MS Bold'],
@@ -86,6 +90,29 @@ function Map({ onClick }: MapProps) {
       });
     });
   });
+
+  // When a stop is selected fetch a extra gejson layer with information
+  // about the relative travel time to every other stop
+  useEffect(() => {
+    if (map.current === null) return;
+    if (activeStop === null) return;
+
+    api.current?.relativeTravelTime(activeStop.id.toString()).then(data => {
+      map.current?.addSource('relativeTravelTime', { type: 'geojson', data });
+      map.current?.addLayer({
+        id: 'relativeTravelTime',
+        type: 'symbol',
+        source: 'relativeTravelTime',
+        layout: {
+          'text-field': ['get', 'travelTime'],
+          'text-font': ['Inter', 'Arial Unicode MS Bold'],
+          'text-offset': [0, 3],
+          'text-anchor': 'top',
+          'text-size': 10,
+        },
+      });
+    });
+  }, [activeStop, api, map]);
 
   return (
     <div className="Map">

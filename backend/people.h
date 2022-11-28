@@ -153,6 +153,10 @@ struct Person {
           home_municipality(home_municipality),
           home_coord(home_coord) {}
 
+    float distanceToWork() const {
+        return home_coord.distanceTo(work_coord);
+    }
+
     bool operator==(const Person& rhs) const {
         return is_female == rhs.is_female && work_county == rhs.work_county &&
                work_municipality == rhs.work_municipality && work_coord == rhs.work_coord &&

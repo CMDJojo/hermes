@@ -1,4 +1,5 @@
 #include <boost/json/src.hpp>
+#include <algorithm>
 
 #include "people.h"
 #include "routing.h"
@@ -13,7 +14,7 @@ const auto threads = 1;
 int main() {
     std::cout << "Loading timetable" << std::endl;
     routing::Timetable timetable("data/raw");
-    const routing::RoutingOptions routingOptions = {10 * 60 * 60, 20221118, 30 * 60, 5 * 60};
+    const routing::RoutingOptions routingOptions(10 * 60 * 60, 20221118, 60 * 60);
 
     std::cout << "Loading people data" << std::endl;
     People people("data/raw/Ast_bost.txt");
@@ -113,10 +114,30 @@ int main() {
         uint32_t distance50km = 0;
         uint32_t distanceMore = 0;
 
+
+
+        if (peopleNearby.empty()) {
+            boost::json::value info = {{"nrPeople", 0},
+                                       {"peopleRange", nearbyPeopleRangeMeter},
+                                       {"medianDistance", 0},
+                                       {"distanceStats",
+                                               {{{"name", "< 1 km"}, {"distance", 0}},
+                                                            {{"name", "1-5 km"}, {"distance", 0}},
+                                                            {{"name", "5-10 km"}, {"distance", 0}},
+                                                            {{"name", "10-50 km"}, {"distance", 0}},
+                                                            {{"name", "> 50 km"}, {"distance", 0}}}}};
+
+            return serialize(info);
+        }
+
+        std::sort(peopleNearby.begin(), peopleNearby.end(), [](const Person& p1, const Person& p2) {
+           return p1.distanceToWork() < p2.distanceToWork();
+        });
+
+        uint32_t pseudoMedian =  static_cast<uint32_t>(peopleNearby.at(peopleNearby.size() / 2).distanceToWork());
+
         for (Person& person : peopleNearby) {
             float distanceToWork = person.home_coord.distanceTo(person.work_coord);
-
-            avgDistance += distanceToWork;
 
             if (distanceToWork < 1'000) {
                 distance1km += 1;
@@ -131,13 +152,9 @@ int main() {
             }
         }
 
-        if (!peopleNearby.empty()) {
-            avgDistance /= peopleNearby.size();
-        }
-
         boost::json::value info = {{"nrPeople", peopleNearby.size()},
                                    {"peopleRange", nearbyPeopleRangeMeter},
-                                   {"avgDistance", avgDistance},
+                                   {"medianDistance", pseudoMedian},
                                    {"distanceStats",
                                     {{{"name", "< 1 km"}, {"distance", distance1km}},
                                      {{"name", "1-5 km"}, {"distance", distance5km}},
