@@ -7,4 +7,6 @@ add_custom_target (
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-#file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/dist/ DESTINATION ${CMAKE_BINARY_DIR}/backend/public)
+add_custom_command(TARGET frontend POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_CURRENT_SOURCE_DIR}/dist ${CMAKE_BINARY_DIR}/backend/public)
