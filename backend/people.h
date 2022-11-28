@@ -182,7 +182,7 @@ static std::function<T(Args...)> constfn(T v) {
 
 class People {
    public:
-    People(const std::string& rawPersonPath);
+    People(const std::string& rawPersonPath, bool alsoBuildIndex = true);
 
     void buildIndex();
 

@@ -59,9 +59,20 @@ std::ostream& operator<<(std::ostream& os, const DMSCoord& coord) {
     return os;
 }
 
-People::People(const std::string& rawPersonPath) { people = load(rawPersonPath); }
+People::People(const std::string& rawPersonPath, bool alsoBuildIndex) {
+    people = load(rawPersonPath);
+    if (alsoBuildIndex) {
+        buildIndex();
+    }
+}
 
 void People::buildIndex() {
+    if (!indexedPeople.empty()) {
+        std::cerr << "People::buildIndex was called on a People object which was already indexed, skipping indexing"
+                  << std::endl;
+        return;
+    }
+
     for (auto person : people) {
         // dont ask
         indexedPeople.emplace(person.home_coord, std::vector<Person>{}).first->second.push_back(person);
@@ -190,7 +201,7 @@ void People::test() {
     std::cout << "[TEST] Loading People..." << std::endl;
 
     auto start = std::chrono::high_resolution_clock::now();
-    People people("data/raw/Ast_bost.txt");
+    People people("data/raw/Ast_bost.txt", false);
     auto stop = std::chrono::high_resolution_clock::now();
     auto duration = duration_cast<std::chrono::milliseconds>(stop - start).count();
     std::cout << "[TEST] [Load] Time taken: " << duration << "ms " << people.people.size() << " entries, indexing..."

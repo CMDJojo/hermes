@@ -18,9 +18,6 @@ int main() {
     std::cout << "Loading people data" << std::endl;
     People people("data/raw/Ast_bost.txt");
 
-    std::cout << "Building index of people" << std::endl;
-    people.buildIndex();
-
     get("/", [](auto context) { return "Hello World!"; });
 
     get((std::regex) "/graphFrom/(\\d+)", [&timetable, &routingOptions](auto context) {
