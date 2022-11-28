@@ -49,6 +49,7 @@ int main() {
                                {"id", stop.stopId},
                                {"properties",
                                 {
+                                    {"name", stop.name},
                                     {"travelTime", routing::prettyTravelTime(state.travelTime)},
                                 }},
                                {"geometry",
