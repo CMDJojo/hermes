@@ -106,4 +106,5 @@ class StopNode {
                              std::vector<Edge>& outgoingEdges, const IncomingTrip& trip);
 };
 
+std::string prettyTravelTime(int32_t time);
 }  // namespace routing

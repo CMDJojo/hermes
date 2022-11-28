@@ -31,6 +31,39 @@ int main() {
         return routingCacher::toJson(result);
     });
 
+    get((std::regex) "/travelTimeLayer/(\\d+)", [&timetable, &routingOptions](auto context) {
+        context.response.set(http::field::content_type, "application/geo+json");
+        context.response.set(http::field::access_control_allow_origin, "*");
+
+        auto match = std::stoull(context.match[1].str());
+        auto graph = timetable.dijkstra(match, routingOptions);
+
+        std::vector<boost::json::value> stops;
+        std::transform(graph.begin(), graph.end(), std::back_inserter(stops),
+                       [&timetable](const std::pair<StopId, routing::StopState>& entry) {
+                           routing::StopState state = entry.second;
+                           routing::StopNode stop = timetable.stops[entry.first];
+
+                           boost::json::value feature = {
+                               {"type", "Feature"},
+                               {"id", stop.stopId},
+                               {"properties",
+                                {
+                                    {"name", stop.name},
+                                    {"travelTime", routing::prettyTravelTime(state.travelTime)},
+                                }},
+                               {"geometry",
+                                {
+                                    {"type", "Point"},
+                                    {"coordinates", {stop.lon, stop.lat}},
+                                }},
+                           };
+                           return feature;
+                       });
+        boost::json::value geoJson = {{"type", "FeatureCollection"}, {"features", stops}};
+        return serialize(geoJson);
+    });
+
     get("/stops", [&timetable](auto context) {
         context.response.set(http::field::content_type, "application/geo+json");
         context.response.set(http::field::access_control_allow_origin, "*");

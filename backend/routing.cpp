@@ -212,3 +212,15 @@ Timetable::Timetable(const std::string& gtfsPath) {
         routes[r.routeId] = r;
     }
 }
+
+std::string routing::prettyTravelTime(int32_t time) {
+    if (time < 60) {
+        return "< 1 min";
+    }
+    auto min = time / 60;
+    if (min < 60) {
+        return std::to_string(min) + " min";
+    } else {
+        return std::to_string(min / 60) + " h " + std::to_string(min % 60) + " min";
+    }
+}
