@@ -109,10 +109,10 @@ int main() {
                                    {"avgDistance", avgDistance},
                                    {"distanceStats",
                                     {{{"name", "< 1 km"}, {"distance", distance1km}},
-                                     {{"name", "< 5 km"}, {"distance", distance5km}},
-                                     {{"name", "< 10 km"}, {"distance", distance10km}},
-                                     {{"name", "< 50 km"}, {"distance", distance50km}},
-                                     {{"name", "> +50 km"}, {"distance", distanceMore}}}}};
+                                     {{"name", "1-5 km"}, {"distance", distance5km}},
+                                     {{"name", "5-10 km"}, {"distance", distance10km}},
+                                     {{"name", "10-50 km"}, {"distance", distance50km}},
+                                     {{"name", "> 50 km"}, {"distance", distanceMore}}}}};
 
         return serialize(info);
     });
