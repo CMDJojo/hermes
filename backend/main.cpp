@@ -12,7 +12,7 @@
 
 using namespace routing;
 
-const routing::RoutingOptions routingOptions = {10 * 60 * 60, 20221118, 30 * 60, 5 * 60};
+const routing::RoutingOptions routingOptions(10 * 60 * 60, 20221118, 60 * 60);
 
 std::vector<IncomingTrip> extractPath(Timetable& timetable, StopId stopId,
                                       std::unordered_map<StopId, StopState>& graph) {

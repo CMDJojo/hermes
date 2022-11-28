@@ -14,7 +14,7 @@ const auto threads = 1;
 int main() {
     std::cout << "Loading timetable" << std::endl;
     routing::Timetable timetable("data/raw");
-    const routing::RoutingOptions routingOptions = {10 * 60 * 60, 20221118, 30 * 60, 5 * 60};
+    const routing::RoutingOptions routingOptions(10 * 60 * 60, 20221118, 60 * 60);
 
     std::cout << "Loading people data" << std::endl;
     People people("data/raw/Ast_bost.txt");

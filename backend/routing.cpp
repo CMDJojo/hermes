@@ -11,6 +11,10 @@
 
 using namespace routing;
 
+inline int32_t getMinTransferTime(const RoutingOptions& options, StopNode* stop) {
+    return options.overrideMinTransferTime ? options.minTransferTime : stop->minTransferTime;
+}
+
 std::unordered_map<StopId, StopState> Timetable::dijkstra(StopId start, const RoutingOptions& options) {
     std::unordered_map<StopId, StopState> state;
 
@@ -42,7 +46,7 @@ std::unordered_map<StopId, StopState> Timetable::dijkstra(StopId start, const Ro
                 toState.incoming.insert(toState.incoming.begin(), IncomingTrip(node, edge.tripId, edge.stopSequence));
                 queue.emplace(edge.to, &toState);
 
-            } else if (newTravelTime <= toState.travelTime + edge.to->minTransferTime) {
+            } else if (newTravelTime <= toState.travelTime + getMinTransferTime(options, edge.to)) {
                 // Alternative trips that may result in fewer transfers and therefore faster travel time.
 
                 // Do not add the same trip again when revisiting.
@@ -94,7 +98,7 @@ std::vector<Edge> StopNode::getEdges(Timetable& timetable, const RoutingOptions&
                                    next.stopSequence);
     }
 
-    int32_t timeAtStop = options.startTime + state->travelTime + minTransferTime;
+    int32_t timeAtStop = options.startTime + state->travelTime + getMinTransferTime(options, this);
 
     auto compare = [](StopTime a, StopTime b) { return a.departureTime < b.departureTime; };
     auto iter = std::lower_bound(stop->begin(), stop->end(), StopTime(timeAtStop), compare);
@@ -179,7 +183,7 @@ Timetable::Timetable(const std::string& gtfsPath) {
 
     for (auto& s : gtfs::Stop::load(gtfsPath)) {
         if (isStopPoint(s.stopId)) continue;
-        stops[s.stopId] = {s.stopId, s.stopName, s.stopLat, s.stopLon};
+        stops[s.stopId] = StopNode(s.stopId, s.stopName, s.stopLat, s.stopLon);
     }
 
     for (auto& t : gtfs::Transfer::load(gtfsPath)) {
@@ -199,7 +203,7 @@ Timetable::Timetable(const std::string& gtfsPath) {
 
             if (from == to) continue;
 
-            Edge transfer = {&stops[to], t.minTransferTime, WALK, 0};
+            Edge transfer(&stops[to], t.minTransferTime, WALK, 0);
 
             auto& transfers = stops[from].transfersType2;
             if (!std::any_of(transfers.begin(), transfers.end(), [to](auto t) { return t.to->stopId == to; })) {
