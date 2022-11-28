@@ -43,7 +43,7 @@ add_executable(prox
         csvLoader.h
         gtfsTypes.h
         gauss-kruger/gausskruger.cpp gauss-kruger/gausskruger.h
-        prox.cpp prox.h people.h gtfsTypes.h gtfsTypes.cpp
+        prox.cpp prox.h people.h people.cpp gtfsTypes.h gtfsTypes.cpp
         boardingStatistics.cpp boardingStatistics.h)
 
 target_link_libraries(server webServer)
