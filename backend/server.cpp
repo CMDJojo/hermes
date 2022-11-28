@@ -68,8 +68,9 @@ int main() {
         auto& stop = timetable.stops[stopId];
         auto stopCoord = DMSCoord(stop.lat, stop.lon);
 
-        // Find every person that lives close (500 metre) to this given stop
-        auto peopleNearby = people.personsInCircle(stopCoord, 500);
+        // Find every person that lives close (500 meter) to this given stop
+        auto nearbyPeopleRangeMeter = 500;
+        auto peopleNearby = people.personsInCircle(stopCoord, nearbyPeopleRangeMeter);
 
         // FIXME: replace the avg distance with travel time when there is a dijkstra function
         //  that takes arbitrary coordinates and not just stops.
@@ -87,7 +88,6 @@ int main() {
 
             avgDistance += distanceToWork;
 
-            // < 1km
             if (distanceToWork < 1'000) {
                 distance1km += 1;
             } else if (distanceToWork < 5'000) {
@@ -106,6 +106,7 @@ int main() {
         }
 
         boost::json::value info = {{"nrPeople", peopleNearby.size()},
+                                   {"peopleRange", nearbyPeopleRangeMeter},
                                    {"avgDistance", avgDistance},
                                    {"distanceStats",
                                     {{{"name", "< 1 km"}, {"distance", distance1km}},

@@ -17,20 +17,21 @@ export type Stops = {
 export type StopID = string;
 export type TripID = string;
 
-export type GraphIncommingEntry = {
+export type GraphIncomingEntry = {
   fromStr: StopID;
   tripStr: TripID;
 };
 
 export type GraphEntry = {
   time: number;
-  incoming: GraphIncommingEntry[];
+  incoming: GraphIncomingEntry[];
 };
 
 export type Graph = Record<StopID, GraphEntry>;
 
 export type InfoReport = {
   nrPeople: number;
+  peopleRange: number;
   distanceStats: { name: string; distance: number }[];
   avgDistance: number;
 };
