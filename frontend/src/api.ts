@@ -14,6 +14,21 @@ export type Stops = {
   features: Feature[];
 };
 
+export type FeatureWithTime = {
+  geometry: {
+    coordinates: [number, number];
+  };
+  id: number;
+  properties: {
+    name: string;
+    travelTime: string;
+  };
+};
+
+export type RelativeTravelTime = {
+  features: FeatureWithTime[];
+};
+
 export type StopID = string;
 export type TripID = string;
 
@@ -131,6 +146,10 @@ class API {
 
   async stops(): Promise<Stops> {
     return this.getJson<Stops>('/stops');
+  }
+
+  async relativeTravelTime(stopId: StopID): Promise<RelativeTravelTime> {
+    return this.getJson<RelativeTravelTime>(`/travelTimeLayer/${stopId}`);
   }
 
   async graphFrom(stopId: StopID): Promise<Graph> {
