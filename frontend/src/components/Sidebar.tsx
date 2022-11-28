@@ -28,7 +28,6 @@ export default function Sidebar({ active, stop, onClose }: SidebarProps) {
     if (stop === null) return;
 
     const api = new API();
-    setInfo(null);
     api
       .infoReport(`${stop.id}`)
       .then(setInfo)
@@ -48,20 +47,20 @@ export default function Sidebar({ active, stop, onClose }: SidebarProps) {
             <MdClose className="closeIcon" size="1.5rem" />
           </button>
           <div className="content">
-            <h1>{stop.name}</h1>
-            Stop ID: {stop.id}
-            <br />
+            <h1 className="heading">{stop.name}</h1>
+            <span className="" />
             {info === null ? (
               <strong>Loading data from server...</strong>
             ) : (
               <>
-                <strong>Average distance:</strong> {info?.avgDistance}
-                <br />
-                <br />
                 <strong>People living within {info?.peopleRange}m: </strong>
                 {info?.nrPeople}
                 <div className="infoBoxes">
-                  <InfoBox color="#D7EBBA" title="Avstånd till jobbet">
+                  <InfoBox
+                    color="#D7EBBA"
+                    title="Genomsnittligt avstånd till jobbet"
+                  >
+                    <h1>{info?.avgDistance} meter</h1>
                     <ResponsiveContainer width="100%" height={150}>
                       <BarChart
                         width={800}
@@ -75,11 +74,8 @@ export default function Sidebar({ active, stop, onClose }: SidebarProps) {
                       </BarChart>
                     </ResponsiveContainer>
                   </InfoBox>
-                  <InfoBox
-                    color="#9AD2CB"
-                    title="Hur många använder den här hållplatsen"
-                  >
-                    <h1>20%</h1>
+                  <InfoBox title="Debug" color="#eee">
+                    Stop ID: {stop.id}
                   </InfoBox>
                 </div>
               </>

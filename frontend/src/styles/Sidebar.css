@@ -12,6 +12,14 @@
     border-radius: 1.2rem;
 }
 
+.Sidebar h1 {
+    line-height: normal;
+}
+
+.Sidebar .heading {
+    margin-top: 0;
+}
+
 .Sidebar .closeButton {
     position: absolute;
     top: 1rem;
