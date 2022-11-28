@@ -17,7 +17,6 @@ const auto haha_it_broke = EXIT_FAILURE;
 
 
 namespace routingCacher {
-
     using namespace routing;
 
 /*
@@ -64,8 +63,8 @@ namespace routingCacher {
         std::fstream file;
         file.open(path, std::ios_base::out);
         if (!file.is_open()) {
-            std::cout << "Unable to open output file " << path << std::endl;
-            exit(-1);
+            std::cout << "[ERROR!] Unable to open output file " << path << std::endl;
+            return;
         }
         file << str;
         file.close();
@@ -120,8 +119,8 @@ namespace routingCacher {
         file.open(path);
 
         if (!file.is_open()) {
-            std::cerr << "Could not open file " << path << std::endl;
-            exit(haha_it_broke);
+            std::cerr << "[ERROR!] Could not open file " << path << std::endl;
+            return {};
         }
 
         std::string str(std::istreambuf_iterator<char>{file}, {});
@@ -213,15 +212,6 @@ namespace routingCacher {
             auto serialized = routingCacher::toJson(result);
             auto reparsed = routingCacher::fromJson(serialized);
             auto stopFinal = std::chrono::high_resolution_clock::now();
-
-            std::fstream file;
-            file.open("sample_route_graph.txt", std::ios_base::out);
-            if (!file.is_open()) {
-                std::cout << "Unable to open the file.\n";
-                exit(-1);
-            }
-            file << serialized;
-            file.close();
 
             auto dijDur = duration_cast<std::chrono::microseconds>(stopDijkstra - start).count();
             auto parseDur = duration_cast<std::chrono::microseconds>(stopFinal - stopDijkstra).count();

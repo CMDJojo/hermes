@@ -114,8 +114,8 @@ std::vector<R> load(const std::string& path, bool skipHeader = true) {
     file.open(path);
 
     if (!file.is_open()) {
-        std::cerr << "Could not open file " << path << std::endl;
-        exit(haha_it_broke);
+        std::cerr << "[ERROR!] Could not open file " << path << std::endl;
+        return {};
     }
 
     std::vector<R> acc;
@@ -129,8 +129,9 @@ std::vector<R> load(const std::string& path, bool skipHeader = true) {
         auto vals = split(line);
         constexpr size_t n = sizeof...(Args);
         if (vals.size() != n) {
-            std::cerr << "Line does not contain " << n << " elements: " << line << std::endl;
-            exit(haha_it_broke);
+            std::cerr << "[ERROR!] Line does not contain " << n << " elements: "
+                << line << " (file:" << path << ")" <<std::endl;
+            return {};
         }
 
         [&]<std::size_t... Idx>(std::index_sequence<Idx...>) { acc.emplace_back(parse<Args>(vals[Idx])...); }
