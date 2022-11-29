@@ -212,21 +212,21 @@ class People {
         MeterCoord origin, int radius, int multiple, int offset,
         const std::function<bool(MeterCoord)>& pred = constfn<bool, MeterCoord>(true));
 
-    std::vector<Person> allPersonsInDomain(const std::vector<MeterCoord>& domain) const;
+    [[nodiscard]] std::vector<Person> allPersonsInDomain(const std::vector<MeterCoord>& domain) const;
 
     static std::vector<MeterCoord> personCoordsInCircle(MeterCoord origin, int radius);
 
     static std::vector<MeterCoord> personCoordsInCircle(DMSCoord origin, int radius);
 
-    std::vector<MeterCoord> populatedCoordsInCircle(MeterCoord origin, int radius) const;
+    [[nodiscard]] std::vector<MeterCoord> populatedCoordsInCircle(MeterCoord origin, int radius) const;
 
-    std::vector<MeterCoord> populatedCoordsInCircle(DMSCoord origin, int radius) const;
+    [[nodiscard]] std::vector<MeterCoord> populatedCoordsInCircle(DMSCoord origin, int radius) const;
 
-    std::vector<Person> personsInCircle(MeterCoord origin, int radius) const;
+    [[nodiscard]] std::vector<Person> personsInCircle(MeterCoord origin, int radius) const;
 
-    std::vector<Person> personsInCircle(DMSCoord origin, int radius) const;
+    [[nodiscard]] std::vector<Person> personsInCircle(DMSCoord origin, int radius) const;
 
-    std::vector<Person> naivePersonsInCircle(MeterCoord origin, int radius) const;
+    [[nodiscard]] std::vector<Person> naivePersonsInCircle(MeterCoord origin, int radius) const;
 
     static bool euclideanDistanceLEQ(MeterCoord a, MeterCoord b, int64_t d);
 
