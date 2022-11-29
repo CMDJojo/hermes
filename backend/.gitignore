@@ -1,5 +1,7 @@
 cmake-build-debug
 cmake-build-release
+cmake-build-debug-coverage
+cmake-build-release-coverage
 
 cmake-build-debug-visual-studio
 data/raw/
