@@ -27,7 +27,8 @@ add_executable(server server.cpp
         routingCacher.cpp routingCacher.h
         boardingStatistics.cpp boardingStatistics.h
         endToEndEvaluator.cpp endToEndEvaluator.h
-        binarySearch.cpp binarySearch.h)
+        binarySearch.cpp binarySearch.h
+        prox.cpp prox.h)
 
 add_executable(test test.cpp
         csvLoader.h csvLoaderTypes.h
@@ -38,7 +39,8 @@ add_executable(test test.cpp
         gauss-kruger/gausskruger.cpp gauss-kruger/gausskruger.h
         boardingStatistics.cpp boardingStatistics.h
         binarySearch.cpp binarySearch.h
-        endToEndEvaluator.cpp endToEndEvaluator.h)
+        endToEndEvaluator.cpp endToEndEvaluator.h
+        prox.cpp prox.h)
 
 add_executable(person
         csvLoader.h
@@ -47,13 +49,6 @@ add_executable(person
         gauss-kruger/gausskruger.cpp gauss-kruger/gausskruger.h
         boardingStatistics.cpp boardingStatistics.h
         endToEndEvaluator.cpp endToEndEvaluator.h)
-
-add_executable(prox
-        csvLoader.h
-        gtfsTypes.h
-        gauss-kruger/gausskruger.cpp gauss-kruger/gausskruger.h
-        prox.cpp prox.h people.h people.cpp gtfsTypes.h gtfsTypes.cpp
-        boardingStatistics.cpp boardingStatistics.h)
 
 target_link_libraries(server webServer)
 
