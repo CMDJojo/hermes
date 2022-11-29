@@ -32,21 +32,22 @@ namespace BinarySearch {
 
     template<typename T>
     SearchResult binarySearch(const std::vector<T>& vec, std::function<ComparatorResult(const T& item)>comparator, size_t low_bound, size_t high_bound) {
-        size_t middle;
-
-        do {
+        size_t middle = 0;
+        high_bound--;
+        while (low_bound < high_bound) {
             middle = (low_bound + high_bound) / 2;
             ComparatorResult result = comparator(vec[middle]);
             if (result == ComparatorResult::LT) {
-                high_bound = middle - 1;
+                high_bound = middle;
             } else if (result == ComparatorResult::GT) {
                 low_bound = middle + 1;
             } else {
                 return SearchResult(middle, ResultStatus::Found);
             }
-        } while (low_bound < high_bound);
-
-        return SearchResult(middle, ResultStatus::NotFound);
+        }
+        ComparatorResult result = comparator(vec[middle]);
+        if (result == ComparatorResult::LT) return SearchResult(middle, ResultStatus::NotFound);
+        return SearchResult(middle + 1, ResultStatus::NotFound);
     }
 
 }
