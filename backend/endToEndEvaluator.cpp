@@ -4,7 +4,7 @@
 
 #include "routing.h"
 
-E2EE::E2EE(const People& people, routing::Timetable timetable) : people(people), timetable(std::move(timetable)) {}
+E2EE::E2EE(const People& people, routing::Timetable timetable) : people(people), timetable(std::move(timetable)), prox("data/raw"){}
 
 E2EE::Stats E2EE::evaluatePerformanceAtPoint(MeterCoord origin, StopId interestingStop, E2EE::Options opts) {
     Stats ret{};
@@ -28,35 +28,35 @@ E2EE::Stats E2EE::evaluatePerformanceAtPoint(MeterCoord origin, StopId interesti
 
     // find all coords where ppl live within range
     std::vector<MeterCoord> populatedCoords = people.populatedCoordsInCircle(origin, opts.moveableDistance);
+    ret.uniqueSpots = populatedCoords.size();
 
     // for each coord someone lives in, calculate what stops they might go to and time taken to do so
-    std::unordered_map<MeterCoord, std::vector<std::pair<StopId, int32_t>>> walkableStops;
-    for (auto coord : populatedCoords) walkableStops.emplace(coord, closeEnoughStuff(coord, opts));
+    std::unordered_map<MeterCoord, std::vector<std::pair<StopId, double>>> walkableStops;
+    walkableStops.reserve(populatedCoords.size());
+
+    for (auto coord : populatedCoords)
+    walkableStops.emplace(coord, prox.stopsIDAndDistanceMultipliedWithAFactorWhichInFactIsJustTheWalkSpeedWithinACertainRangeInclusiveButRounded(coord, opts.moveableDistance, opts.moveSpeed));
 
     struct TemporaryPath {
         int32_t currentTime;
         StopId firstStop;
         int32_t timeAtFirstStop;
-        StopId secondStop;
-        int32_t timeAtSecondStop;
-        int32_t timeAtEnd;
         std::unordered_map<StopId, int32_t> secondTimes;
-
-        PersonPath toPersonPath() {
-            return PersonPath{firstStop, timeAtFirstStop, secondStop, timeAtSecondStop, timeAtEnd};
-        }
     };
 
     std::unordered_map<StopId, std::unordered_map<StopId, routing::StopState>> dijkstraCache;
 
-    routing::RoutingOptions routingOptions = {opts.startTime, 20221118, 30 * 60, 5 * 60};
+    routing::RoutingOptions& routingOptions = opts.routingOptions;
     uint64_t unreachableTargets = 0;
     int n = 0;
+    int i = 0;
     for (auto person : filteredPersons) {
-        if (++n % 100 == 0) std::cout << "Testing person " << n << std::endl;
+        if (++n % 1000 == 0) std::cout << "Testing person " << n << std::endl;
 
         // all possible targets
-        std::vector<std::pair<StopId, int32_t>> possibleVTGoals = closeEnoughStuff(person.work_coord, opts);
+        std::vector<std::pair<StopId, double>> possibleVTGoals =
+            prox.stopsIDAndDistanceMultipliedWithAFactorWhichInFactIsJustTheWalkSpeedWithinACertainRangeInclusiveButRounded(person.work_coord, opts.moveableDistance, opts.moveSpeed);
+            //closeEnoughStuff(timetable.stops, person.work_coord, opts);
         if (possibleVTGoals.empty()) {
             unreachableTargets++;
             continue;
@@ -69,12 +69,14 @@ E2EE::Stats E2EE::evaluatePerformanceAtPoint(MeterCoord origin, StopId interesti
             // routingOptions.startTime = opts.startTime + fscTime;
             // auto dijRes = timetable.dijkstra(fscID, routingOptions);
             if (!dijkstraCache.contains(fscID)) {
+                if (++i % 10 == 0) std::cout << "Dijkstra " << i << std::endl;
                 dijkstraCache.insert_or_assign(fscID, timetable.dijkstra(fscID, routingOptions));
             }
 
-            std::unordered_map<StopId, routing::StopState> dijRes = dijkstraCache[fscID];
+            std::unordered_map<StopId, routing::StopState>& dijRes = dijkstraCache[fscID];
 
             std::unordered_map<StopId, int32_t> secondTimes;
+            secondTimes.reserve(possibleVTGoals.size());
 
             for (auto [escID, escTime] : possibleVTGoals) {
                 if (dijRes.contains(escID)) {
@@ -83,27 +85,29 @@ E2EE::Stats E2EE::evaluatePerformanceAtPoint(MeterCoord origin, StopId interesti
             }
 
             // 5 days lol
-            TemporaryPath path{fscTime, fscID, fscTime, 0, 0, 0, secondTimes};
+            TemporaryPath path{static_cast<int32_t>(fscTime), fscID, static_cast<int32_t>(fscTime), secondTimes};
 
             firstStops.push_back(path);
         }
 
-        TemporaryPath fastest = {60 * 60 * 24 * 5, 0, 0, {}};
+        // fastest way to the end
+        PersonPath fastest{0,0,0,0,60*60*24*5};
 
-        // map second stop to whichever temporary path comes there faster
-        std::unordered_map<StopId, TemporaryPath> fastestHere;
         for (auto [sscID, sscTime] : possibleVTGoals) {
             for (const auto& tp : firstStops) {
                 // if second is reachable from first
                 if (tp.secondTimes.contains(sscID)) {
-                    TemporaryPath newPath = {tp.currentTime + tp.secondTimes.at(sscID) + sscTime,
-                                             tp.firstStop,
-                                             tp.timeAtFirstStop,
-                                             sscID,
-                                             tp.currentTime + tp.secondTimes.at(sscID),
-                                             tp.currentTime + tp.secondTimes.at(sscID) + sscTime,
-                                             {}};
-                    if (newPath.currentTime < fastest.currentTime) {
+
+                    auto sta = tp.secondTimes.at(sscID);
+                    PersonPath newPath {
+                        tp.firstStop,
+                        tp.timeAtFirstStop,
+                        sscID,
+                        tp.currentTime + sta,
+                        tp.currentTime + sta + static_cast<int32_t>(sscTime)
+                    };
+
+                    if (newPath.timeAtEnd < fastest.timeAtEnd) {
                         fastest = newPath;
                     }
                 }
@@ -125,29 +129,15 @@ E2EE::Stats E2EE::evaluatePerformanceAtPoint(MeterCoord origin, StopId interesti
             ret.distNumberOfEndStops.insert_or_assign(key, next);
         }
 
-        PersonPath personPath = fastest.toPersonPath();
-        ret.allPaths.push_back(personPath);
+        ret.allPaths.push_back(fastest);
 
-        if (personPath.firstStop == interestingStop) {
+        if (fastest.firstStop == interestingStop) {
             ret.hasThisAsOptimal++;
         }
         ret.personsCanGoWithBus++;
     }
 
     return ret;
-}
-
-std::vector<std::pair<StopId, int32_t>> E2EE::closeEnoughStuff(const MeterCoord& pt, const Options& opts) {
-    std::vector<std::pair<StopId, int32_t>> timeToWalkToStops;
-    for (auto [id, node] : timetable.stops) {
-        DMSCoord c(node.lat, node.lon);
-        if (pt.distanceToLEQ(c.toMeter(), opts.moveableDistance)) {
-            double dist = c.toMeter().distanceTo(pt);
-            double time = dist / opts.moveSpeed;
-            timeToWalkToStops.emplace_back(node.stopId, time);
-        }
-    }
-    return timeToWalkToStops;
 }
 
 std::ostream& operator<<(std::ostream& os, const E2EE::PersonPath& path) {
@@ -181,7 +171,8 @@ void E2EE::test() {
     double longitude = 11.983399;
     auto originCoord = DMSCoord(latitude, longitude).toMeter();
 
-    E2EE::Options opts = {1, 100, 0, 60 * 60 * 10};
+    routing::RoutingOptions ropts = {60*60*10, 20221118, 30*60, 5*60};
+    E2EE::Options opts = {0.6, 1500, 0, ropts};
 
     E2EE obj(people, timetable);
 
@@ -207,9 +198,10 @@ void E2EE::test() {
 }
 
 std::ostream& operator<<(std::ostream& os, const E2EE::Stats& stats) {
-    os << "Stats {" << stats.personsWithinRange << " persons within range, " << stats.excludedWithinMinimumRange
-       << " excluded due to work being within minimum range, " << stats.personsCanGoWithBus << " could go with bus, "
-       << stats.hasThisAsOptimal << " had this as optimal stop within range, n:o start stop dist: {";
+    os << "Stats {" << stats.personsWithinRange << " persons within range, living in " << stats.uniqueSpots
+       << "unique spots, " << stats.excludedWithinMinimumRange << " excluded due to work being within minimum range, "
+       << stats.personsCanGoWithBus << " could go with bus, " << stats.hasThisAsOptimal
+       << " had this as optimal stop within range, n:o start stop dist: {";
 
     for (auto [num, ppl] : stats.distNumberOfStartStops) {
         os << num << ":" << ppl << ",";

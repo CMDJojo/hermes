@@ -2,11 +2,11 @@
 #include <ostream>
 
 #include "people.h"
+#include "prox.h"
 #include "routing.h"
 
 class E2EE {
    public:
-
     struct PersonPath {
         StopId firstStop;
         int32_t timeAtFirstStop;
@@ -22,6 +22,7 @@ class E2EE {
         uint64_t personsWithinRange;
         uint64_t excludedWithinMinimumRange;
         uint64_t personsCanGoWithBus;
+        uint64_t uniqueSpots;
 
         std::unordered_map<uint64_t, int> distNumberOfStartStops;
         std::unordered_map<uint64_t, int> distNumberOfEndStops;
@@ -34,19 +35,17 @@ class E2EE {
     };
 
     struct Options {
-        double moveSpeed; //meter per seconds, very important!!!
+        double moveSpeed;  // meter per seconds, very important!!!
         int moveableDistance;
         int minimumRange;
 
-        int32_t startTime; //seconds since midnight
+        routing::RoutingOptions routingOptions;  // Options to use when outing
     };
 
     const People& people;
+    const Prox prox;
     mutable routing::Timetable timetable;
-    E2EE(const People& people, routing::Timetable  timetable);
+    E2EE(const People& people, routing::Timetable timetable);
     Stats evaluatePerformanceAtPoint(MeterCoord origin, StopId interestingStop, Options opts);
     static void test();
-
-   private:
-    std::vector<std::pair<StopId, int32_t>> closeEnoughStuff(const MeterCoord& pt, const Options& opts);
 };
