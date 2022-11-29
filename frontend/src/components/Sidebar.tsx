@@ -39,14 +39,15 @@ export default function Sidebar({ active, stop, info, onClose }: SidebarProps) {
             <h1 className="heading">{stop.name}</h1>
             <span className="" />
             {info === null ? (
-              <strong>Failed to load data</strong>
+              <strong>Kunde inte ladda data</strong>
             ) : (
               <>
                 <strong>
-                  People living within {info?.peopleRange}m: {info?.nrPeople}{' '}
+                  Boende inom {formatDistance(info?.peopleRange)}:{' '}
+                  {info?.nrPeople}{' '}
                 </strong>
                 <div className="infoBoxes">
-                  <InfoBox color="#D7EBBA" title="Median avstånd till jobbet">
+                  <InfoBox color="#D7EBBA" title="Medianavstånd till arbete">
                     <h1>{formatDistance(info?.medianDistance)}</h1>
                     <ResponsiveContainer width="100%" height={150}>
                       <BarChart

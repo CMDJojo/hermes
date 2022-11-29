@@ -39,27 +39,90 @@ function Map({ onClick, activeStop }: MapProps) {
     // Add the stops
     api.current.stops().then(stops => {
       map.current?.on('load', () => {
-        map.current?.loadImage('./pin.png', (error, image) => {
-          if (error) throw error;
-          map.current?.addImage('custom-marker', image!);
+        map.current?.loadImage(
+          './map_marker_vasttrafik.png',
+          (error, image) => {
+            if (error) throw error;
+            map.current?.addImage('custom-marker', image!);
 
-          map.current?.addSource('stops', { type: 'geojson', data: stops });
-          map.current?.addLayer({
-            id: 'stops',
-            type: 'symbol',
-            source: 'stops',
-            layout: {
-              'icon-image': 'custom-marker',
-              'icon-allow-overlap': true,
-              'icon-size': 0.5,
-              'text-field': ['get', 'name'],
-              'text-font': ['Inter', 'Arial Unicode MS Bold'],
-              'text-offset': [0, 1],
-              'text-anchor': 'top',
-              'text-size': 10,
-            },
-          });
-        });
+            // map.current?.addSource('stops', { type: 'geojson', data: stops });
+            map.current?.addSource('stops', {
+              type: 'geojson',
+              data: stops,
+              cluster: true,
+              clusterMaxZoom: 16,
+              clusterRadius: 70,
+            });
+            map.current?.addLayer({
+              id: 'clusters',
+              type: 'circle',
+              source: 'stops',
+              filter: ['has', 'point_count'],
+              paint: {
+                'circle-color': '#009ddb',
+                'circle-radius': [
+                  'step',
+                  ['get', 'point_count'],
+                  30,
+                  100,
+                  40,
+                  750,
+                  50,
+                ],
+              },
+            });
+            map.current?.addLayer({
+              id: 'clusters-inner',
+              type: 'circle',
+              source: 'stops',
+              filter: ['has', 'point_count'],
+              paint: {
+                'circle-color': '#00394d',
+                'circle-radius': [
+                  'step',
+                  ['get', 'point_count'],
+                  24,
+                  100,
+                  32,
+                  750,
+                  40,
+                ],
+              },
+            });
+            map.current?.addLayer({
+              id: 'cluster-count',
+              type: 'symbol',
+              source: 'stops',
+              filter: ['has', 'point_count'],
+              layout: {
+                'text-field': '{point_count_abbreviated}',
+                'text-font': ['Inter', 'Arial Unicode MS Bold'],
+                'text-size': 13,
+              },
+              paint: {
+                'text-color': '#ffffff',
+              },
+            });
+            map.current?.addLayer({
+              id: 'stops',
+              type: 'symbol',
+              source: 'stops',
+              filter: ['!', ['has', 'point_count']],
+              layout: {
+                'icon-image': 'custom-marker',
+                'icon-allow-overlap': false,
+                'icon-size': 0.75,
+                'icon-anchor': 'bottom',
+                'text-field': ['get', 'name'],
+                'text-font': ['Inter', 'Arial Unicode MS Bold'],
+                'text-offset': [0, 0],
+                'text-anchor': 'top',
+                'text-size': 12,
+                'text-allow-overlap': false,
+              },
+            });
+          }
+        );
 
         // Change the cursor to a pointer when the mouse is over the places layer.
         map.current?.on('mouseenter', 'stops', () => {
@@ -93,26 +156,26 @@ function Map({ onClick, activeStop }: MapProps) {
 
   // When a stop is selected fetch a extra gejson layer with information
   // about the relative travel time to every other stop
-  useEffect(() => {
-    if (map.current === null) return;
-    if (activeStop === null) return;
+  // useEffect(() => {
+  //   if (map.current === null) return;
+  //   if (activeStop === null) return;
 
-    api.current?.relativeTravelTime(activeStop.id.toString()).then(data => {
-      map.current?.addSource('relativeTravelTime', { type: 'geojson', data });
-      map.current?.addLayer({
-        id: 'relativeTravelTime',
-        type: 'symbol',
-        source: 'relativeTravelTime',
-        layout: {
-          'text-field': ['get', 'travelTime'],
-          'text-font': ['Inter', 'Arial Unicode MS Bold'],
-          'text-offset': [0, 3],
-          'text-anchor': 'top',
-          'text-size': 10,
-        },
-      });
-    });
-  }, [activeStop, api, map]);
+  //   api.current?.relativeTravelTime(activeStop.id.toString()).then(data => {
+  //     map.current?.addSource('relativeTravelTime', { type: 'geojson', data });
+  //     map.current?.addLayer({
+  //       id: 'relativeTravelTime',
+  //       type: 'symbol',
+  //       source: 'relativeTravelTime',
+  //       layout: {
+  //         'text-field': ['get', 'travelTime'],
+  //         'text-font': ['Inter', 'Arial Unicode MS Bold'],
+  //         'text-offset': [0, 3],
+  //         'text-anchor': 'top',
+  //         'text-size': 10,
+  //       },
+  //     });
+  //   });
+  // }, [activeStop, api, map]);
 
   return (
     <div className="Map">
