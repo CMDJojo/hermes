@@ -13,6 +13,7 @@ import Stop from '../types/Stop';
 import '../styles/Sidebar.css';
 import InfoBox from './InfoBox';
 import { InfoReport } from '../api';
+import formatDistance from '../utils/format';
 
 interface SidebarProps {
   active: boolean;
@@ -45,11 +46,8 @@ export default function Sidebar({ active, stop, info, onClose }: SidebarProps) {
                   People living within {info?.peopleRange}m: {info?.nrPeople}{' '}
                 </strong>
                 <div className="infoBoxes">
-                  <InfoBox
-                    color="#D7EBBA"
-                    title="Genomsnittligt avstånd till jobbet"
-                  >
-                    <h1>{info?.medianDistance} meter</h1>
+                  <InfoBox color="#D7EBBA" title="Median avstånd till jobbet">
+                    <h1>{formatDistance(info?.medianDistance)}</h1>
                     <ResponsiveContainer width="100%" height={150}>
                       <BarChart
                         width={800}
