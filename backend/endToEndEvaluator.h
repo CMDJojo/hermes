@@ -44,6 +44,7 @@ class E2EE {
     struct Options {
         StopId interestingStop;
         double moveSpeed;  // meter per seconds, very important!!!
+        int searchRange;
         int moveableDistance;
         int minimumRange;
 

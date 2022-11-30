@@ -15,7 +15,7 @@ E2EE::Stats E2EE::evaluatePerformanceAtPoint(MeterCoord origin, E2EE::Options op
     ret.tt = &timetable;
 
     // find all persons within range
-    std::vector<Person> allPersons = people.personsInCircle(origin, opts.moveableDistance);
+    std::vector<Person> allPersons = people.personsInCircle(origin, opts.searchRange);
     ret.personsWithinRange = allPersons.size();
     std::cout << ret.personsWithinRange << " persons within range" << std::endl;
 
@@ -179,7 +179,7 @@ void E2EE::test() {
     auto originCoord = DMSCoord(latitude, longitude).toMeter();
 
     routing::RoutingOptions ropts = {60 * 60 * 10, 20221118, 30 * 60, 5 * 60};
-    E2EE::Options opts = {target, 0.6, 500, 0, ropts};
+    E2EE::Options opts = {target, 0.6, 500, 500, 0, ropts};
 
     E2EE obj(people, timetable);
 
@@ -235,11 +235,11 @@ std::string E2EE::Stats::prettyString() {
     StopId isid = 0;
     if (opts != nullptr && (isid = opts->interestingStop) != 0) {
         is = tt != nullptr ? (tt->stops.at(isid).name) : "[ID:" + std::to_string(isid) + "]";
-        s << "Interesting stop: " + is;
+        s << "Interesting stop: " + is + "\n";
+        s << "Search range: " << opts->searchRange << "m\n";
     } else {
-        s << "Options not present, interestingStop=?";
+        s << "Options not present, interesting stop unknown, search range unknown\n";
     }
-    s << "\n";
 
     s << std::to_string(personsWithinRange) + " persons within range, of which\n";
     s << " * " + std::to_string(uniqueSpots) + " unique living coordinates were found\n";
@@ -248,7 +248,10 @@ std::string E2EE::Stats::prettyString() {
     if (opts != nullptr) s << " (within " << (opts->minimumRange) << " m)";
     uint64_t pplTested = personsWithinRange - excludedWithinMinimumRange;
     s << "\n";
-    s << " * " << PWF(personsCanGoWithBus, pplTested) << " could get to destination by bus\n";
+    s << " * " << PWF(personsCanGoWithBus, pplTested) << " could get to destination by bus";
+    if (opts != nullptr) s << " by walking at most " << opts->moveableDistance << "m";
+    s << "\n";
+
     if (isid != 0)
         s << " * " << PWF(hasThisAsOptimal, personsCanGoWithBus) << " had " << is << " as the optimal first stop\n";
     s << "\n";
