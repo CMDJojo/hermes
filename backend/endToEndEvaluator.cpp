@@ -1,5 +1,6 @@
 #include "endToEndEvaluator.h"
 
+#include <sstream>
 #include <utility>
 
 #include "routing.h"
@@ -7,8 +8,11 @@
 E2EE::E2EE(const People& people, routing::Timetable timetable)
     : people(people), timetable(std::move(timetable)), prox("data/raw") {}
 
-E2EE::Stats E2EE::evaluatePerformanceAtPoint(MeterCoord origin, StopId interestingStop, E2EE::Options opts) {
+E2EE::Stats E2EE::evaluatePerformanceAtPoint(MeterCoord origin, E2EE::Options opts) {
     Stats ret{};
+
+    ret.opts = &opts;
+    ret.tt = &timetable;
 
     // find all persons within range
     std::vector<Person> allPersons = people.personsInCircle(origin, opts.moveableDistance);
@@ -124,7 +128,7 @@ E2EE::Stats E2EE::evaluatePerformanceAtPoint(MeterCoord origin, StopId interesti
 
         ret.allPaths.push_back(fastest);
 
-        if (fastest.firstStop == interestingStop) {
+        if (fastest.firstStop == opts.interestingStop) {
             ret.hasThisAsOptimal++;
         }
         ret.personsCanGoWithBus++;
@@ -136,7 +140,7 @@ E2EE::Stats E2EE::evaluatePerformanceAtPoint(MeterCoord origin, StopId interesti
 std::ostream& operator<<(std::ostream& os, const E2EE::PersonPath& path) {
     os << "Path {firstStop:" << path.firstStop << ",timeAtFirstStop:" << path.timeAtFirstStop
        << ",secondStop:" << path.secondStop << ",timeAtSecondStop:" << path.timeAtSecondStop
-       << ",timeAtEnd:" << path.timeAtEnd << " }";
+       << ",timeAtEnd:" << path.timeAtEnd << "}";
     return os;
 }
 
@@ -147,7 +151,17 @@ std::string E2EE::PersonPath::toNiceString(const routing::Timetable& tt) const {
     return "Walk " + std::to_string(this->timeAtFirstStop) + " s, take bus from " + tt.stops.at(this->firstStop).name +
            " to arrive at " + tt.stops.at(this->secondStop).name + " after " +
            routing::prettyTravelTime(this->timeAtSecondStop) + ". You'll be at work after " +
-           routing::prettyTravelTime(this->timeAtEnd) + ".";
+           routing::prettyTravelTime(this->timeAtEnd);
+}
+
+#define TIME(n) \
+    std::to_string((n) / (60 * 60)) + ":" + ((((n) / 60) % 60) < 10 ? "0" : "") + (std::to_string(((n) / 60) % 60))
+
+std::string E2EE::PersonPath::toNiceString(const routing::Timetable& tt, int32_t timeAtStart) const {
+    if (this->firstStop == 0) return "Invalid path, firstStop doesn't exist";
+    if (this->secondStop == 0) return "Invalid path, secondStop doesn't exist";
+
+    return "Start at " + TIME(timeAtStart) + ": " + toNiceString(tt) + ", at " + TIME(timeAtStart + timeAtEnd);
 }
 
 void E2EE::test() {
@@ -165,14 +179,14 @@ void E2EE::test() {
     auto originCoord = DMSCoord(latitude, longitude).toMeter();
 
     routing::RoutingOptions ropts = {60 * 60 * 10, 20221118, 30 * 60, 5 * 60};
-    E2EE::Options opts = {0.6, 1500, 0, ropts};
+    E2EE::Options opts = {target, 0.6, 500, 0, ropts};
 
     E2EE obj(people, timetable);
 
     std::cout << "[TEST] Calculating..." << std::endl;
 
     auto start = std::chrono::high_resolution_clock::now();
-    Stats s = obj.evaluatePerformanceAtPoint(originCoord, target, opts);
+    Stats s = obj.evaluatePerformanceAtPoint(originCoord, opts);
     auto stop = std::chrono::high_resolution_clock::now();
 
     auto duration = duration_cast<std::chrono::microseconds>(stop - start);
@@ -186,6 +200,9 @@ void E2EE::test() {
         std::cout << path.toNiceString(timetable) << std::endl;
         if (count-- < 0) break;
     }
+
+    std::cout << "[TEST] Testing pretty printer..." << std::endl;
+    std::cout << s.prettyString() << std::endl;
 
     std::cout << "[TEST] Ended" << std::endl;
 }
@@ -206,4 +223,85 @@ std::ostream& operator<<(std::ostream& os, const E2EE::Stats& stats) {
     }
     os << "}, " << stats.allPaths.size() << " paths}";
     return os;
+}
+
+// print with fraction
+#define PWF(n, w) n << " (" << static_cast<uint64_t>(static_cast<double>(n) * 100 / static_cast<double>(w)) << "%)"
+
+std::string E2EE::Stats::prettyString() {
+    std::stringstream s;
+    s << "STATS FOR EVALUATION OF VÄSTTRAFIK PERFORMANCE:\n";
+    std::string is;
+    StopId isid = 0;
+    if (opts != nullptr && (isid = opts->interestingStop) != 0) {
+        is = tt != nullptr ? (tt->stops.at(isid).name) : "[ID:" + std::to_string(isid) + "]";
+        s << "Interesting stop: " + is;
+    } else {
+        s << "Options not present, interestingStop=?";
+    }
+    s << "\n";
+
+    s << std::to_string(personsWithinRange) + " persons within range, of which\n";
+    s << " * " + std::to_string(uniqueSpots) + " unique living coordinates were found\n";
+    s << " * " << PWF(excludedWithinMinimumRange, personsWithinRange)
+      << " persons were discarded due to working too close to home";
+    if (opts != nullptr) s << " (within " << (opts->minimumRange) << " m)";
+    uint64_t pplTested = personsWithinRange - excludedWithinMinimumRange;
+    s << "\n";
+    s << " * " << PWF(personsCanGoWithBus, pplTested) << " could get to destination by bus\n";
+    if (isid != 0)
+        s << " * " << PWF(hasThisAsOptimal, personsCanGoWithBus) << " had " << is << " as the optimal first stop\n";
+    s << "\n";
+    s << allPaths.size() << " paths stored";
+    if (!allPaths.empty()) {
+        s << ", here is a sample of them:";
+        if (tt == nullptr) {
+            for (int i = 0; i < 10 && i < allPaths.size(); i++) {
+                s << "\n" << allPaths[i];
+            }
+        } else if (opts == nullptr) {
+            for (int i = 0; i < 10 && i < allPaths.size(); i++) {
+                s << "\n" << allPaths[i].toNiceString(*tt);
+            }
+        } else {
+            for (int i = 0; i < 10 && i < allPaths.size(); i++) {
+                s << "\n" << allPaths[i].toNiceString(*tt, opts->routingOptions.startTime);
+            }
+        }
+    }
+
+    s << "\n\nOf the people going by Västtrafik, this was the distribution of the number of stops they could walk to "
+         "from "
+         "home";
+    if (opts != nullptr) s << " (less than " << opts->moveableDistance << "m)";
+    s << ":\n";
+    for (auto [nStops, nPpl] : distNumberOfStartStops) {
+        auto postSpace = nStops < 10 ? " " : "";
+
+        int nPreSpace = 10;
+        for (int x = nPpl; x /= 10; nPreSpace--)
+            ;
+        std::stringstream preSpace;
+        for (int x = nPreSpace; x; x--) preSpace << " ";
+
+        s << nStops << postSpace << ": " << preSpace.str() << nPpl << "\n";
+    }
+
+    s << "\nOf the people going by Västtrafik, this was the distribution of the number of stops they could walk to the "
+         "destination from";
+    if (opts != nullptr) s << " (less than " << opts->moveableDistance << "m)";
+    s << ":\n";
+    for (auto [nStops, nPpl] : distNumberOfEndStops) {
+        auto postSpace = nStops < 10 ? " " : "";
+
+        int nPreSpace = 10;
+        for (int x = nPpl; x /= 10; nPreSpace--)
+            ;
+        std::stringstream preSpace;
+        for (int x = nPreSpace; x; x--) preSpace << " ";
+
+        s << nStops << postSpace << ": " << preSpace.str() << nPpl << "\n";
+    }
+
+    return s.str();
 }
