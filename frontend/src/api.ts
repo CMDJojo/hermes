@@ -23,6 +23,11 @@ export type GraphIncomingEntry = {
   tripStr: TripID;
 };
 
+export type TravelTime = {
+  totalNrPeople: number;
+  optimalNrPeople: number;
+};
+
 export type GraphEntry = {
   time: number;
   incoming: GraphIncomingEntry[];
@@ -30,7 +35,7 @@ export type GraphEntry = {
 
 export type Graph = Record<StopID, GraphEntry>;
 
-export type InfoReport = {
+export type TravelDistance = {
   nrPeople: number;
   peopleRange: number;
   distanceStats: { name: string; distance: number }[];
@@ -142,8 +147,12 @@ class API {
     return this.getJson<Graph>(`/graphFrom/${stopId}`);
   }
 
-  async infoReport(stopId: StopID): Promise<InfoReport> {
-    return this.getJson<InfoReport>(`/stopInfo/${stopId}`);
+  async travelDistance(stopId: StopID): Promise<TravelDistance> {
+    return this.getJson<TravelDistance>(`/travelDistance/${stopId}`);
+  }
+
+  async travelTime(stopId: StopID): Promise<TravelTime> {
+    return this.getJson<TravelTime>(`/travelTime/${stopId}`);
   }
 }
 

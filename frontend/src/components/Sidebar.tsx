@@ -12,17 +12,24 @@ import {
 import Stop from '../types/Stop';
 import '../styles/Sidebar.css';
 import InfoBox from './InfoBox';
-import { TravelDistance } from '../api';
+import { TravelDistance, TravelTime } from '../api';
 import formatDistance from '../utils/format';
 
 interface SidebarProps {
   active: boolean;
   stop: Stop | null;
-  info: TravelDistance | null;
+  distanceInfo: TravelDistance | null;
+  timeInfo: TravelTime | null;
   onClose: () => void;
 }
 
-export default function Sidebar({ active, stop, info, onClose }: SidebarProps) {
+export default function Sidebar({
+  active,
+  stop,
+  distanceInfo,
+  timeInfo,
+  onClose,
+}: SidebarProps) {
   return (
     <AnimatePresence>
       {active && stop !== null && (
@@ -38,36 +45,47 @@ export default function Sidebar({ active, stop, info, onClose }: SidebarProps) {
           <div className="content">
             <h1 className="heading">{stop.name}</h1>
             <span className="" />
-            {info === null ? (
-              <strong>Kunde inte ladda data</strong>
-            ) : (
-              <>
-                <strong>
-                  Boende inom {formatDistance(info?.peopleRange)}:{' '}
-                  {info?.nrPeople}{' '}
-                </strong>
-                <div className="infoBoxes">
-                  <InfoBox color="#D7EBBA" title="Medianavstånd till arbete">
-                    <h1>{formatDistance(info?.medianDistance)}</h1>
-                    <ResponsiveContainer width="100%" height={150}>
-                      <BarChart
-                        width={800}
-                        height={300}
-                        data={info?.distanceStats}
-                      >
-                        <XAxis dataKey="name" />
-                        <Tooltip />
-                        <YAxis /* tickFormatter={tick => `${tick}%`} */ />
-                        <Bar dataKey="distance" fill="#889574" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </InfoBox>
-                  <InfoBox title="Debug" color="#eee">
-                    Stop ID: {stop.id}
-                  </InfoBox>
-                </div>
-              </>
+            {distanceInfo !== null && (
+              <strong>
+                Boende inom {formatDistance(distanceInfo?.peopleRange)}:
+                {distanceInfo?.nrPeople}
+              </strong>
             )}
+            <div className="infoBoxes">
+              {distanceInfo !== null && (
+                <InfoBox color="#D7EBBA" title="Medianavstånd till arbete">
+                  <h1>{formatDistance(distanceInfo?.medianDistance)}</h1>
+                  <ResponsiveContainer width="100%" height={150}>
+                    <BarChart
+                      width={800}
+                      height={300}
+                      data={distanceInfo?.distanceStats}
+                    >
+                      <XAxis dataKey="name" />
+                      <Tooltip />
+                      <YAxis /* tickFormatter={tick => `${tick}%`} */ />
+                      <Bar dataKey="distance" fill="#889574" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </InfoBox>
+              )}
+              {timeInfo !== null && (
+                <InfoBox
+                  title="Hur många har den här som bästa hållplats på väg till arbetet?"
+                  color="red"
+                >
+                  <h1>
+                    {Math.round(
+                      (timeInfo.optimalNrPeople / timeInfo.totalNrPeople) * 100
+                    )}
+                    %
+                  </h1>
+                </InfoBox>
+              )}
+              <InfoBox title="Debug" color="#eee">
+                Stop ID: {stop.id}
+              </InfoBox>
+            </div>
           </div>
         </motion.div>
       )}

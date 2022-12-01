@@ -6,6 +6,7 @@
 #include "routingCacher.h"
 #include "webServer/webServer.h"
 #include "binarySearch.h"
+#include "endToEndEvaluator.h"
 
 const auto address = net::ip::make_address("0.0.0.0");
 const auto port = static_cast<unsigned short>(8080);
@@ -28,6 +29,9 @@ int main() {
 
     std::cout << "Loading people data" << std::endl;
     People people("data/raw/Ast_bost.txt");
+
+
+    E2EE endToEndEval(people, timetable);
 
     get("/", [](auto context) { return "Hello World!"; });
 
@@ -98,6 +102,33 @@ int main() {
 
         boost::json::value geoJson = {{"type", "FeatureCollection"}, {"features", stops}};
         return serialize(geoJson);
+    });
+
+
+    get((std::regex) "/travelTime/(\\d+)", [&](auto context) {
+        context.response.set(http::field::access_control_allow_origin, "*");
+        context.response.set(http::field::content_type, "application/json");
+        std::cout << "this should not run" << std::endl;
+        auto stopId = std::stoull(context.match[1].str());
+        auto& stop = timetable.stops[stopId];
+        auto stopCoord = DMSCoord(stop.lat, stop.lon);
+
+        E2EE::Options options = {stopId, 0.6, 500, 500, 0,
+                              E2EE::COLLECT_ALL, routingOptions};
+
+        E2EE::Stats stats = endToEndEval.evaluatePerformanceAtPoint(stopCoord.toMeter(), options);
+
+        // Add the following to the response object
+        // FIXME: Distribution of travel time
+        // FIXME: Mean travel time
+
+        boost::json::value response = {
+            {"totalNrPeople", stats.personsWithinRange},
+            {"optimalNrPeople", stats.hasThisAsOptimal}>
+        };
+
+        return serialize(response);
+
     });
 
     // Generate an info report for a given stop (basically what gets shown in the sidebar).
