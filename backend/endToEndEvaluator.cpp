@@ -76,6 +76,7 @@ E2EE::Stats E2EE::evaluatePerformanceAtPoint(MeterCoord origin, E2EE::Options op
     uint64_t unreachableTargets = 0;
     int n = 0;
     int i = 0;
+    int nptg = 0;
     for (auto person : filteredPersons) {
         if (++n % 1000 == 0) std::cout << "Testing person " << n << std::endl;
 
@@ -90,7 +91,7 @@ E2EE::Stats E2EE::evaluatePerformanceAtPoint(MeterCoord origin, E2EE::Options op
         }
 
         // Keep track of the fastest path found yet
-        PersonPath fastest{0, 0, 0, 0, 60 * 60 * 24 * 5};
+        PersonPath fastest{0, 0, 0, 0, 0, 60 * 60 * 24 * 5, 0};
 
         // Loop over all possible first stops
         for (auto [firstStopId, firstStopTime] : walkableStops[person.home_coord]) {
@@ -112,15 +113,22 @@ E2EE::Stats E2EE::evaluatePerformanceAtPoint(MeterCoord origin, E2EE::Options op
                     auto firstStopTimeInt = static_cast<int32_t>(firstStopTime);
                     auto timeToGoalInt = static_cast<int32_t>(timeToGoal);
 
-                    int32_t timeAtGoal =
-                        firstStopTimeInt + timeToEndStop + timeToGoalInt + opts.routingOptions.startTime;
+                    int32_t timeAtGoal = firstStopTimeInt + timeToEndStop + timeToGoalInt;
 
                     if (timeAtGoal < fastest.timeAtGoal) {
                         fastest = {firstStopId,   firstStopTimeInt, endStopId, timeToEndStop,
-                                   timeToGoalInt, timeAtGoal,       {}};
+                                   timeToGoalInt,
+                                   timeAtGoal,
+                                   timeAtGoal + opts.routingOptions.startTime,
+                                   {}};
                     }
                 }
             }
+        }
+
+        if (fastest.firstStop == 0) {
+            //TODO: Add this as a stat
+            std::cout << "No path to goal (" << (++nptg) << ")\n";
         }
 
         if (opts.statsToCollect & COLLECT_DIST_START_STOPS) {
@@ -135,6 +143,12 @@ E2EE::Stats E2EE::evaluatePerformanceAtPoint(MeterCoord origin, E2EE::Options op
             auto search = ret.distNumberOfEndStops.find(key);
             int next = (search == ret.distNumberOfEndStops.end()) ? 1 : (search->second + 1);
             ret.distNumberOfEndStops.insert_or_assign(key, next);
+        }
+
+        if (opts.statsToCollect & COLLECT_EXTRACTED_PATHS) {
+            if (fastest.firstStop != 0 && fastest.firstStop != fastest.secondStop) { //so extract doesn't crash
+                fastest.extractedPath = extractPath(timetable, fastest.secondStop, dijkstraCache.at(fastest.firstStop));
+            }
         }
 
         if (opts.statsToCollect & COLLECT_SIMPLIFIED_PATHS) {
@@ -153,7 +167,7 @@ std::ostream& operator<<(std::ostream& os, const E2EE::PersonPath& path) {
     os << "firstStop: " << path.firstStop << " timeToFirstStop: " << path.timeToFirstStop
        << " secondStop: " << path.secondStop << " timeToSecondStop: " << path.timeToSecondStop
        << " timeToGoal: " << path.timeToGoal << " timeAtGoal: " << path.timeAtGoal
-       << " extractedPath: " /*<< path.extractedPath*/;
+       << " timestampAtGoal: " << path.timestampAtGoal << " extractedPath size: " << path.extractedPath.size();
     return os;
 }
 
@@ -164,10 +178,23 @@ std::string E2EE::PersonPath::toNiceString(const Timetable& tt) const {
     if (this->firstStop == 0) return "Invalid path, firstStop doesn't exist";
     if (this->secondStop == 0) return "Invalid path, secondStop doesn't exist";
 
-    return "Walk " + std::to_string(this->timeToFirstStop) + " s, take bus from " + tt.stops.at(this->firstStop).name +
-           " to arrive at " + tt.stops.at(this->secondStop).name + " after " +
-           prettyTravelTime(this->timeToSecondStop) + ". Walk " + prettyTravelTime(this->timeToGoal) +
-           " s, and you'll be at the goal at " + TIME(timeAtGoal);
+    std::stringstream s;
+    s << "Walk " << this->timeToFirstStop << " s and take transport from " << tt.stops.at(this->firstStop).name;
+    s << " to arrive at " << tt.stops.at(this->secondStop).name << " after ";
+    s << prettyTravelTime(this->timeToSecondStop) << ". Walk for " << this->timeToGoal << "s to arrive ";
+    s << "at the goal at " << TIME(timestampAtGoal) << ".";
+
+    if (!this->extractedPath.empty()) {
+        s << " Path taken: Home";
+        for (auto stopID : this->extractedPath) {
+            if (stopID == WALK) {
+                s << "->WALK";
+            } else {
+                s << "->" << tt.stops.at(stopID).name;
+            }
+        }
+    }
+    return s.str();
 }
 
 void E2EE::test() {
@@ -185,7 +212,8 @@ void E2EE::test() {
     auto originCoord = DMSCoord(latitude, longitude).toMeter();
 
     RoutingOptions ropts = {60 * 60 * 10, 20221118, 30 * 60, 5 * 60};
-    E2EE::Options opts = {target, 0.6, 500, 500, 0, COLLECT_ALL, ropts};
+    E2EE::Options opts = {target, 0.6, 500, 500, 0,
+                          COLLECT_ALL, ropts};
 
     E2EE obj(people, timetable);
 

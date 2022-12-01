@@ -13,7 +13,8 @@ class E2EE {
         StopId secondStop;
         int32_t timeToSecondStop; //time taken, first->second stop
         int32_t timeToGoal; //time taken, second->goal
-        int32_t timeAtGoal; //timestamp at goal
+        int32_t timeAtGoal; //total time taken, home->goal
+        int32_t timestampAtGoal; //timestamp at goal
         std::vector<StopId> extractedPath;
 
         friend std::ostream& operator<<(std::ostream& os, const PersonPath& path);
@@ -59,7 +60,7 @@ class E2EE {
     static const uint32_t COLLECT_DIST_START_STOPS = 0b1;
     static const uint32_t COLLECT_DIST_END_STOPS = 0b10;
     static const uint32_t COLLECT_SIMPLIFIED_PATHS = 0b100;
-    static const uint32_t COLLECT_EXTRACTED_PATHS = 0b1000 | COLLECT_SIMPLIFIED_PATHS;
+    static const uint32_t COLLECT_EXTRACTED_PATHS = 0b1000;
     static const uint32_t INCLUDE_TT_OPTS_POINTERS = 0b10000;
 
     static const uint32_t COLLECT_ALL =
