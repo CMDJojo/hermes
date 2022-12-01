@@ -25,6 +25,52 @@ export interface MapProps {
   onClick: (event: Stop) => void;
 }
 
+// stackoverflow.com/questions/37599561/drawing-a-circle-with-the-radius-in-miles-meters-with-mapbox-gl-js
+const createGeoJSONCircle = (
+  center: [number, number],
+  radiusInKm: number,
+  points: number
+): FeatureCollection => {
+  if (!points) points = 64;
+
+  const coords = {
+    latitude: center[1],
+    longitude: center[0],
+  };
+
+  const km = radiusInKm;
+
+  const ret = [];
+  const distanceX = km / (111.32 * Math.cos((coords.latitude * Math.PI) / 180));
+  const distanceY = km / 110.574;
+
+  let theta;
+  let x;
+  let y;
+  for (let i = 0; i < points; i++) {
+    theta = (i / points) * (2 * Math.PI);
+    x = distanceX * Math.cos(theta);
+    y = distanceY * Math.sin(theta);
+
+    ret.push([coords.longitude + x, coords.latitude + y]);
+  }
+  ret.push(ret[0]);
+
+  return {
+    type: 'FeatureCollection',
+    features: [
+      {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'Polygon',
+          coordinates: [ret],
+        },
+      },
+    ],
+  };
+};
+
 function Map({ onClick, activeStop }: MapProps) {
   const mapContainer = useRef<string | HTMLElement | null>(null);
   const api = useRef<API | null>(null);
@@ -60,7 +106,7 @@ function Map({ onClick, activeStop }: MapProps) {
             source: 'stops',
             layout: {
               'icon-image': 'custom-marker',
-              'icon-allow-overlap': true,
+              'icon-allow-overlap': false,
               'icon-size': 0.5,
               'text-field': ['get', 'name'],
               'text-font': ['Inter', 'Arial Unicode MS Bold'],
@@ -86,11 +132,12 @@ function Map({ onClick, activeStop }: MapProps) {
 
         map.current?.addLayer({
           id: 'activeCircle',
-          type: 'circle',
+          type: 'fill',
           source: 'activeCircle',
+          layout: {},
           paint: {
-            'circle-color': '#04a9eb',
-            'circle-radius': 15,
+            'fill-color': '#04aaeb',
+            'fill-opacity': 0.2,
           },
         });
 
@@ -154,19 +201,9 @@ function Map({ onClick, activeStop }: MapProps) {
     // When the user selects a stop
     map.current?.flyTo({ center: [activeStop.lon, activeStop.lat] });
 
-    (map.current?.getSource('activeCircle') as GeoJSONSource).setData({
-      type: 'FeatureCollection',
-      features: [
-        {
-          type: 'Feature',
-          properties: { name: 'Active Marker' },
-          geometry: {
-            type: 'Point',
-            coordinates: [activeStop.lon, activeStop.lat],
-          },
-        },
-      ],
-    });
+    (map.current?.getSource('activeCircle') as GeoJSONSource).setData(
+      createGeoJSONCircle([activeStop.lon, activeStop.lat], 0.5)
+    );
 
     api.current?.relativeTravelTime(activeStop.id.toString()).then(data => {
       (map.current?.getSource('relativeTravelTime') as GeoJSONSource).setData(
