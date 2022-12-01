@@ -53,7 +53,7 @@ export default function Sidebar({
             )}
             <div className="infoBoxes">
               {distanceInfo !== null && (
-                <InfoBox color="#D7EBBA" title="Medianavstånd till arbete">
+                <InfoBox color="#84ACCE" title="Medianavstånd till arbete">
                   <h1>{formatDistance(distanceInfo?.medianDistance)}</h1>
                   <ResponsiveContainer width="100%" height={150}>
                     <BarChart
@@ -64,7 +64,7 @@ export default function Sidebar({
                       <XAxis dataKey="name" />
                       <Tooltip />
                       <YAxis /* tickFormatter={tick => `${tick}%`} */ />
-                      <Bar dataKey="distance" fill="#889574" />
+                      <Bar dataKey="distance" fill="#284867" />
                     </BarChart>
                   </ResponsiveContainer>
                 </InfoBox>
@@ -72,7 +72,7 @@ export default function Sidebar({
               {timeInfo !== null && (
                 <InfoBox
                   title="Hur många har den här som bästa hållplats på väg till arbetet?"
-                  color="red"
+                  color="#8E6C88"
                 >
                   <h1>
                     {Math.round(
@@ -82,7 +82,7 @@ export default function Sidebar({
                   </h1>
                 </InfoBox>
               )}
-              <InfoBox title="Debug" color="#eee">
+              <InfoBox title="Debug" color="#eee" textColor="black">
                 Stop ID: {stop.id}
               </InfoBox>
             </div>
