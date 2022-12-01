@@ -3,7 +3,7 @@ import { useState } from 'react';
 import Map from './components/Map';
 import Sidebar from './components/Sidebar';
 import Menu from './components/Menu';
-import API, { InfoReport } from './api';
+import API, { TravelDistance } from './api';
 import Stop from './types/Stop';
 import ActiveArea from './types/ActiveArea';
 
@@ -12,7 +12,7 @@ import './styles/App.css';
 function App() {
   const [isSidebarActive, setIsSidebarActive] = useState<boolean>(false);
   const [activeStop, setActiveStop] = useState<Stop | null>(null);
-  const [info, setInfo] = useState<InfoReport | null>(null);
+  const [distanceInfo, setDistanceInfo] = useState<TravelDistance | null>(null);
   const [activeArea, setActiveArea] = useState<ActiveArea | null>(null);
 
   const api = new API();
@@ -21,9 +21,9 @@ function App() {
     setActiveStop(stop);
     setIsSidebarActive(true);
     api
-      .infoReport(stop.id.toString())
-      .then(setInfo)
-      .catch(() => setInfo(null));
+      .travelDistance(stop.id.toString())
+      .then(setDistanceInfo)
+      .catch(() => setDistanceInfo(null));
   };
 
   const closeSidebar = () => {
@@ -43,7 +43,7 @@ function App() {
         onClose={closeSidebar}
         active={isSidebarActive}
         stop={activeStop}
-        info={info}
+        info={distanceInfo}
       />
     </div>
   );

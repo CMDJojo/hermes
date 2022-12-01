@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
+import { FeatureCollection } from 'geojson';
 
 export type Feature = {
   geometry: {
@@ -12,21 +13,6 @@ export type Feature = {
 
 export type Stops = {
   features: Feature[];
-};
-
-export type FeatureWithTime = {
-  geometry: {
-    coordinates: [number, number];
-  };
-  id: number;
-  properties: {
-    name: string;
-    travelTime: string;
-  };
-};
-
-export type RelativeTravelTime = {
-  features: FeatureWithTime[];
 };
 
 export type StopID = string;
@@ -148,8 +134,8 @@ class API {
     return this.getJson<Stops>('/stops');
   }
 
-  async relativeTravelTime(stopId: StopID): Promise<RelativeTravelTime> {
-    return this.getJson<RelativeTravelTime>(`/travelTimeLayer/${stopId}`);
+  async relativeTravelTime(stopId: StopID): Promise<FeatureCollection> {
+    return this.getJson<FeatureCollection>(`/travelTimeLayer/${stopId}`);
   }
 
   async graphFrom(stopId: StopID): Promise<Graph> {

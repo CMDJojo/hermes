@@ -46,5 +46,7 @@ module.exports = {
     'max-classes-per-file': 0,
     'import/no-extraneous-dependencies': ['error', { devDependencies: true }],
     'class-methods-use-this': 0,
+    'no-param-reassign': 0,
+    'no-plusplus': 0,
   },
 };
