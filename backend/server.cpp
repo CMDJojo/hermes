@@ -124,7 +124,7 @@ int main() {
 
         boost::json::value response = {
             {"totalNrPeople", stats.personsWithinRange},
-            {"optimalNrPeople", stats.hasThisAsOptimal}>
+            {"optimalNrPeople", stats.hasThisAsOptimal}
         };
 
         return serialize(response);
