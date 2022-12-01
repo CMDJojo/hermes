@@ -58,7 +58,7 @@ export default function Sidebar({ active, stop, info, onClose }: SidebarProps) {
                         <XAxis dataKey="name" />
                         <Tooltip />
                         <YAxis /* tickFormatter={tick => `${tick}%`} */ />
-                        <Bar dataKey="distance" fill="#8884d8" />
+                        <Bar dataKey="distance" fill="#889574" />
                       </BarChart>
                     </ResponsiveContainer>
                   </InfoBox>
