@@ -29,7 +29,7 @@ export interface MapProps {
 const createGeoJSONCircle = (
   center: [number, number],
   radiusInKm: number,
-  points: number
+  points?: number
 ): FeatureCollection => {
   if (!points) points = 64;
 

@@ -12,13 +12,13 @@ import {
 import Stop from '../types/Stop';
 import '../styles/Sidebar.css';
 import InfoBox from './InfoBox';
-import { InfoReport } from '../api';
+import { TravelDistance } from '../api';
 import formatDistance from '../utils/format';
 
 interface SidebarProps {
   active: boolean;
   stop: Stop | null;
-  info: InfoReport | null;
+  info: TravelDistance | null;
   onClose: () => void;
 }
 

@@ -101,7 +101,7 @@ int main() {
     });
 
     // Generate an info report for a given stop (basically what gets shown in the sidebar).
-    get((std::regex) "/stopInfo/(\\d+)", [&timetable, &people](auto context) {
+    get((std::regex) "/travelDistance/(\\d+)", [&timetable, &people](auto context) {
         context.response.set(http::field::access_control_allow_origin, "*");
         context.response.set(http::field::content_type, "application/json");
 
