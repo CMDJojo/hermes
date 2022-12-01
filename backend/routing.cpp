@@ -166,7 +166,7 @@ Timetable::Timetable(const std::string& gtfsPath) {
 
     for (const auto& st : gtfs::StopTime::load(gtfsPath)) {
         StopId stopId = stopAreaFromStopPoint(st.stopId);
-        StopTime stopTime{st.tripId, st.arrivalTime.timestamp, st.departureTime.timestamp, stopId, st.stopSequence};
+        StopTime stopTime{st.tripId, st.arrivalTime.timestamp, st.departureTime.timestamp, stopId, st.stopSequence, st.shapeDistTravelled};
 
         stopTimes[stopId].push_back(stopTime);
         trips[st.tripId].stopTimes.push_back(stopTime);

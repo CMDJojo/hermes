@@ -7,6 +7,55 @@
 
 using namespace routing;
 
+double findShapeDistTravelled(const std::vector<StopTime>& times, TripId tripId) {
+    for (StopTime st : times) {
+        if (st.tripId == tripId) return st.shapeDistTravelled;
+    }
+    std::cerr << "[ERROR] Did not find shapeDistTravelled for tripId " << tripId << std::endl;
+    return 0;
+}
+
+std::vector<E2EE::ShapeSegment> extractShape(Timetable& tt, StopId to, std::unordered_map<StopId, StopState>& graph) {
+    StopState* current = &graph.at(to);
+    if (graph[to].incoming.empty()) return {};
+
+    TripId currentTrip = current->incoming.front().tripId;
+    StopId currentId = to;
+    std::vector<E2EE::ShapeSegment> legs;
+
+    while (!current->incoming.empty()) {
+        // we came from "from" and are going to "current"
+        IncomingTrip from = current->incoming[0];
+        for (const IncomingTrip& node : current->incoming) {
+            if (node.tripId == currentTrip && currentTrip != WALK) {
+                from = node;
+                break;
+            }
+        }
+
+        //TODO: This should be exchanged for a map from a combination of tripId, segment at start and seg at end
+        // mapping to a Segment
+        if(from.tripId != WALK) {
+            legs.emplace_back(
+                from.from->stopId,
+                currentId,
+                from.tripId,
+                findShapeDistTravelled(tt.stopTimes[currentId], from.tripId),
+                findShapeDistTravelled(tt.stopTimes[from.from->stopId], from.tripId)
+            );
+        } else {
+            legs.emplace_back(from.from->stopId,
+                              currentId,from.tripId,0,0);
+        }
+
+        currentTrip = from.tripId;
+        currentId = from.from->stopId;
+        current = &graph[currentId];
+    }
+    std::reverse(legs.begin(), legs.end());
+    return legs;
+}
+
 std::vector<StopId> extractPath(Timetable& timetable, StopId stopId, std::unordered_map<StopId, StopState>& graph) {
     StopState* current = &graph.at(stopId);
     TripId currentTrip = current->incoming.front().tripId;
@@ -151,7 +200,13 @@ E2EE::Stats E2EE::evaluatePerformanceAtPoint(MeterCoord origin, E2EE::Options op
             }
         }
 
-        if (opts.statsToCollect & COLLECT_SIMPLIFIED_PATHS) {
+        if (opts.statsToCollect & COLLECT_EXTRACTED_SHAPES) {
+            if (fastest.firstStop != 0 && fastest.firstStop != fastest.secondStop) {
+                fastest.extractedShape = extractShape(timetable, fastest.secondStop, dijkstraCache.at(fastest.firstStop));
+            }
+        }
+
+        if (opts.statsToCollect & COLLECT_SIMPLIFIED_PATHS && fastest.firstStop) {
             ret.allPaths.push_back(fastest);
         }
 
@@ -175,8 +230,12 @@ std::ostream& operator<<(std::ostream& os, const E2EE::PersonPath& path) {
     std::to_string((n) / (60 * 60)) + ":" + ((((n) / 60) % 60) < 10 ? "0" : "") + (std::to_string(((n) / 60) % 60))
 
 std::string E2EE::PersonPath::toNiceString(const Timetable& tt) const {
-    if (this->firstStop == 0) return "Invalid path, firstStop doesn't exist";
-    if (this->secondStop == 0) return "Invalid path, secondStop doesn't exist";
+    if (this->firstStop == 0) {
+        return "Invalid path, firstStop doesn't exist";
+    }
+    if (this->secondStop == 0) {
+        return "Invalid path, secondStop doesn't exist";
+    }
 
     std::stringstream s;
     s << "Walk " << this->timeToFirstStop << " s and take transport from " << tt.stops.at(this->firstStop).name;
@@ -206,14 +265,21 @@ void E2EE::test() {
     std::cout << "[TEST] E2EE..." << std::endl;
 
     // dr forselius gata
+    /*
     StopId target = 9021014002080000;
     double latitude = 57.678623;
     double longitude = 11.983399;
+     */
+
+    // mossen Mossen,57.681522,11.984383,9021014004830000
+    StopId target = 9021014004830000;
+    double latitude = 57.681522;
+    double longitude = 11.984383;
     auto originCoord = DMSCoord(latitude, longitude).toMeter();
 
     RoutingOptions ropts = {60 * 60 * 10, 20221118, 30 * 60, 5 * 60};
-    E2EE::Options opts = {target, 0.6, 500, 500, 0,
-                          COLLECT_ALL, ropts};
+    E2EE::Options opts = {target, 0.6, 600, 600, 0,
+                          COLLECT_ALL & (~COLLECT_EXTRACTED_SHAPES), ropts};
 
     E2EE obj(people, timetable);
 
@@ -259,7 +325,7 @@ std::string E2EE::Stats::prettyString() {
     std::string is;
     StopId isid = 0;
     if (opts != nullptr && (isid = opts->interestingStop) != 0) {
-        is = tt != nullptr ? (tt->stops.at(isid).name) : "[ID:" + std::to_string(isid) + "]";
+        is = tt != nullptr && tt->stops.contains(isid) ? (tt->stops.at(isid).name) : "[ID:" + std::to_string(isid) + "]";
         s << "Interesting stop: " + is + "\n";
         s << "Search range: " << opts->searchRange << "m\n";
     } else {
@@ -329,3 +395,11 @@ std::string E2EE::Stats::prettyString() {
 
     return s.str();
 }
+
+E2EE::ShapeSegment::ShapeSegment(StopId startStop, StopId endStop, TripId tripId, double startDistTravelled,
+                                 double endDistTravelled)
+    : startStop(startStop),
+      endStop(endStop),
+      tripId(tripId),
+      startDistTravelled(startDistTravelled),
+      endDistTravelled(endDistTravelled) {}

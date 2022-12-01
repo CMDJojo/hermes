@@ -39,7 +39,7 @@ std::vector<Shape> Shape::load(const std::string& gtfsPath) {
 }
 
 std::vector<StopTime> StopTime::load(const std::string& gtfsPath) {
-    return csvLoader::load<StopTime, TripId, Time, Time, StopId, int, std::string, int, int, Ignore, bool>(
+    return csvLoader::load<StopTime, TripId, Time, Time, StopId, int, std::string, int, int, double, bool>(
         gtfsPath + "/stop_times.txt");
 }
 

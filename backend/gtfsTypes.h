@@ -141,11 +141,11 @@ struct StopTime {
     std::string stopHeadsign;
     int32_t pickupType;
     int32_t dropOffType;
-    Ignore shapeDistTravelled;
+    double shapeDistTravelled;
     bool timepoint;
 
     StopTime(TripId trip_id, const Time& arrival_time, const Time& departure_time, StopId stop_id, int stop_sequence,
-             std::string stop_headsign, int pickup_type, int drop_off_type, const Ignore& shape_dist_travelled,
+             std::string stop_headsign, int pickup_type, int drop_off_type, const double shape_dist_travelled,
              bool timepoint)
         : tripId(trip_id),
           arrivalTime(arrival_time),

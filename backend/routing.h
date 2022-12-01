@@ -20,15 +20,18 @@ class StopTime {
     int32_t departureTime;
     uint64_t stopId;
     int32_t stopSequence;
+    double shapeDistTravelled;
 
     explicit StopTime(int32_t departureTime) : departureTime(departureTime) {}
 
-    StopTime(TripId tripId, int32_t arrivalTime, int32_t departureTime, uint64_t stopId, int32_t stopSequence)
+    StopTime(TripId tripId, int32_t arrivalTime, int32_t departureTime, uint64_t stopId, int32_t stopSequence,
+             double shapeDistTravelled)
         : tripId(tripId),
           arrivalTime(arrivalTime),
           departureTime(departureTime),
           stopId(stopId),
-          stopSequence(stopSequence) {}
+          stopSequence(stopSequence),
+          shapeDistTravelled(shapeDistTravelled) {}
 };
 
 class StopNode;
