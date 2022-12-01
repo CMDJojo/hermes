@@ -5,37 +5,62 @@
 
 #include "routing.h"
 
-E2EE::E2EE(const People& people, routing::Timetable timetable)
+using namespace routing;
+
+std::vector<StopId> extractPath(Timetable& timetable, StopId stopId, std::unordered_map<StopId, StopState>& graph) {
+    StopState* current = &graph.at(stopId);
+    TripId currentTrip = current->incoming.front().tripId;
+    std::vector<StopId> legs;
+    legs.push_back(stopId);
+
+    if (graph[stopId].incoming.empty()) return {};
+
+    while (!current->incoming.empty()) {
+        for (const IncomingTrip& node : current->incoming) {
+            if (node.tripId == currentTrip && currentTrip != WALK) {
+                legs.push_back(node.from->stopId);
+                break;
+            }
+        }
+        StopId fromStopId = current->incoming[0].from->stopId;
+        legs.push_back(fromStopId);
+        current = &graph[fromStopId];
+    }
+
+    std::reverse(legs.begin(), legs.end());
+    return legs;
+}
+
+E2EE::E2EE(const People& people, Timetable timetable)
     : people(people), timetable(std::move(timetable)), prox("data/raw") {}
 
 E2EE::Stats E2EE::evaluatePerformanceAtPoint(MeterCoord origin, E2EE::Options opts) {
+    // The Stats struct to return, fields will be updated throughout
     Stats ret{};
 
-    ret.opts = &opts;
-    ret.tt = &timetable;
+    // If pointers should be included in Stats, add them
+    if (opts.statsToCollect & INCLUDE_TT_OPTS_POINTERS) {
+        ret.opts = &opts;
+        ret.tt = &timetable;
+    }
 
-    // find all persons within range
+    // find all persons within the specified search range
     std::vector<Person> allPersons = people.personsInCircle(origin, opts.searchRange);
     ret.personsWithinRange = allPersons.size();
-    std::cout << ret.personsWithinRange << " persons within range" << std::endl;
 
-    // only keep persons further from a job than a certain range
+    // now we filter so we only keep persons whose work is further from home than the specified minimum range
     std::vector<Person> filteredPersons;
-    uint64_t excluded = 0;
     for (auto person : allPersons) {
-        if (!person.work_coord.distanceToLEQ(person.home_coord, opts.minimumRange)) {
-            filteredPersons.push_back(person);
-        } else {
-            excluded++;
-        }
+        if (!person.work_coord.distanceToLEQ(person.home_coord, opts.minimumRange)) filteredPersons.push_back(person);
     }
-    ret.excludedWithinMinimumRange = excluded;
+    // excluded persons = persons before filtering - persons after filtering
+    ret.excludedWithinMinimumRange = ret.personsWithinRange - filteredPersons.size();
 
-    // find all coords where ppl live within range
+    // find all coords where ppl live on within range
     std::vector<MeterCoord> populatedCoords = people.populatedCoordsInCircle(origin, opts.moveableDistance);
     ret.uniqueSpots = populatedCoords.size();
 
-    // for each coord someone lives in, calculate what stops they might go to and time taken to do so
+    // for each coord someone lives on, calculate what stops they might go to and time taken to do so
     std::unordered_map<MeterCoord, std::vector<std::pair<StopId, double>>> walkableStops;
     walkableStops.reserve(populatedCoords.size());
 
@@ -45,18 +70,19 @@ E2EE::Stats E2EE::evaluatePerformanceAtPoint(MeterCoord origin, E2EE::Options op
             prox.stopsIDAndDistanceMultipliedWithAFactorWhichInFactIsJustTheWalkSpeedWithinACertainRangeInclusiveButRounded(
                 coord, opts.moveableDistance, opts.moveSpeed));
 
+    // this struct will keep the information after exploring the first stop
+    // which is what stop that is, time taken to go there
     struct TemporaryPath {
         int32_t currentTime;
         StopId firstStop;
         int32_t timeAtFirstStop;
-        std::unordered_map<StopId, int32_t> secondTimes{};
         TemporaryPath(int32_t currentTime, StopId firstStop, int32_t timeAtFirstStop)
             : currentTime(currentTime), firstStop(firstStop), timeAtFirstStop(timeAtFirstStop) {}
     };
 
-    std::unordered_map<StopId, std::unordered_map<StopId, routing::StopState>> dijkstraCache;
+    std::unordered_map<StopId, std::unordered_map<StopId, StopState>> dijkstraCache;
 
-    routing::RoutingOptions& routingOptions = opts.routingOptions;
+    RoutingOptions& routingOptions = opts.routingOptions;
     uint64_t unreachableTargets = 0;
     int n = 0;
     int i = 0;
@@ -82,16 +108,9 @@ E2EE::Stats E2EE::evaluatePerformanceAtPoint(MeterCoord origin, E2EE::Options op
                 dijkstraCache.insert_or_assign(fscID, timetable.dijkstra(fscID, routingOptions));
             }
 
-            std::unordered_map<StopId, routing::StopState>& dijRes = dijkstraCache[fscID];
+            std::unordered_map<StopId, StopState>& dijRes = dijkstraCache[fscID];
 
             auto& elem = firstStops.emplace_back(static_cast<int32_t>(fscTime), fscID, static_cast<int32_t>(fscTime));
-            elem.secondTimes.reserve(possibleVTGoals.size());
-
-            for (auto [escID, escTime] : possibleVTGoals) {
-                if (dijRes.contains(escID)) {
-                    elem.secondTimes.emplace(escID, dijRes[escID].travelTime);
-                }
-            }
         }
 
         // fastest way to the end
@@ -99,9 +118,11 @@ E2EE::Stats E2EE::evaluatePerformanceAtPoint(MeterCoord origin, E2EE::Options op
 
         for (auto [sscID, sscTime] : possibleVTGoals) {
             for (const auto& tp : firstStops) {
+                std::unordered_map<StopId, StopState>& dijRes = dijkstraCache[tp.firstStop];
+
                 // if second is reachable from firsts
-                if (tp.secondTimes.contains(sscID)) {
-                    auto sta = tp.secondTimes.at(sscID);
+                if (dijRes.contains(sscID)) {
+                    auto sta = dijRes.at(sscID).travelTime;
                     auto timeAtEnd = tp.currentTime + sta + static_cast<int32_t>(sscTime);
 
                     if (timeAtEnd < fastest.timeAtEnd) {
@@ -111,22 +132,23 @@ E2EE::Stats E2EE::evaluatePerformanceAtPoint(MeterCoord origin, E2EE::Options op
             }
         }
 
-        // FIXME: dont ignore zeroes (skipped earlier on)
-        {
+        if (opts.statsToCollect & COLLECT_DIST_START_STOPS) {
             auto key = walkableStops[person.home_coord].size();
             auto search = ret.distNumberOfStartStops.find(key);
             int next = (search == ret.distNumberOfStartStops.end()) ? 1 : (search->second + 1);
             ret.distNumberOfStartStops.insert_or_assign(key, next);
         }
 
-        {
+        if (opts.statsToCollect & COLLECT_DIST_END_STOPS) {
             auto key = possibleVTGoals.size();
             auto search = ret.distNumberOfEndStops.find(key);
             int next = (search == ret.distNumberOfEndStops.end()) ? 1 : (search->second + 1);
             ret.distNumberOfEndStops.insert_or_assign(key, next);
         }
 
-        ret.allPaths.push_back(fastest);
+        if(opts.statsToCollect & COLLECT_SIMPLIFIED_PATHS) {
+            ret.allPaths.push_back(fastest);
+        }
 
         if (fastest.firstStop == opts.interestingStop) {
             ret.hasThisAsOptimal++;
@@ -144,20 +166,19 @@ std::ostream& operator<<(std::ostream& os, const E2EE::PersonPath& path) {
     return os;
 }
 
-std::string E2EE::PersonPath::toNiceString(const routing::Timetable& tt) const {
+std::string E2EE::PersonPath::toNiceString(const Timetable& tt) const {
     if (this->firstStop == 0) return "Invalid path, firstStop doesn't exist";
     if (this->secondStop == 0) return "Invalid path, secondStop doesn't exist";
 
     return "Walk " + std::to_string(this->timeAtFirstStop) + " s, take bus from " + tt.stops.at(this->firstStop).name +
            " to arrive at " + tt.stops.at(this->secondStop).name + " after " +
-           routing::prettyTravelTime(this->timeAtSecondStop) + ". You'll be at work after " +
-           routing::prettyTravelTime(this->timeAtEnd);
+           prettyTravelTime(this->timeAtSecondStop) + ". You'll be at work after " + prettyTravelTime(this->timeAtEnd);
 }
 
 #define TIME(n) \
     std::to_string((n) / (60 * 60)) + ":" + ((((n) / 60) % 60) < 10 ? "0" : "") + (std::to_string(((n) / 60) % 60))
 
-std::string E2EE::PersonPath::toNiceString(const routing::Timetable& tt, int32_t timeAtStart) const {
+std::string E2EE::PersonPath::toNiceString(const Timetable& tt, int32_t timeAtStart) const {
     if (this->firstStop == 0) return "Invalid path, firstStop doesn't exist";
     if (this->secondStop == 0) return "Invalid path, secondStop doesn't exist";
 
@@ -168,7 +189,7 @@ void E2EE::test() {
     std::cout << "[TEST] Testing endToEndEvaluator at a random point" << std::endl;
     std::cout << "[TEST] Loading TimeTable and People..." << std::endl;
 
-    routing::Timetable timetable("data/raw");
+    Timetable timetable("data/raw");
     People people("data/raw/Ast_bost.txt");
     std::cout << "[TEST] E2EE..." << std::endl;
 
@@ -178,8 +199,8 @@ void E2EE::test() {
     double longitude = 11.983399;
     auto originCoord = DMSCoord(latitude, longitude).toMeter();
 
-    routing::RoutingOptions ropts = {60 * 60 * 10, 20221118, 30 * 60, 5 * 60};
-    E2EE::Options opts = {target, 0.6, 500, 500, 0, ropts};
+    RoutingOptions ropts = {60 * 60 * 10, 20221118, 30 * 60, 5 * 60};
+    E2EE::Options opts = {target, 0.6, 500, 500, 0, COLLECT_ALL, ropts};
 
     E2EE obj(people, timetable);
 
