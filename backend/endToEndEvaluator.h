@@ -9,15 +9,15 @@ class E2EE {
    public:
     struct PersonPath {
         StopId firstStop;
-        int32_t timeAtFirstStop;
+        int32_t timeToFirstStop; //time taken, home->first stop
         StopId secondStop;
-        int32_t timeAtSecondStop;
-        int32_t timeAtEnd;
+        int32_t timeToSecondStop; //time taken, first->second stop
+        int32_t timeToGoal; //time taken, second->goal
+        int32_t timeAtGoal; //timestamp at goal
         std::vector<StopId> extractedPath;
 
         friend std::ostream& operator<<(std::ostream& os, const PersonPath& path);
         [[nodiscard]] std::string toNiceString(const routing::Timetable& tt) const;
-        [[nodiscard]] std::string toNiceString(const routing::Timetable& tt, int32_t timeAtStart) const;
     };
 
     struct Options;

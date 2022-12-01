@@ -70,16 +70,6 @@ E2EE::Stats E2EE::evaluatePerformanceAtPoint(MeterCoord origin, E2EE::Options op
             prox.stopsIDAndDistanceMultipliedWithAFactorWhichInFactIsJustTheWalkSpeedWithinACertainRangeInclusiveButRounded(
                 coord, opts.moveableDistance, opts.moveSpeed));
 
-    // this struct will keep the information after exploring the first stop
-    // which is what stop that is, time taken to go there
-    struct TemporaryPath {
-        int32_t currentTime;
-        StopId firstStop;
-        int32_t timeAtFirstStop;
-        TemporaryPath(int32_t currentTime, StopId firstStop, int32_t timeAtFirstStop)
-            : currentTime(currentTime), firstStop(firstStop), timeAtFirstStop(timeAtFirstStop) {}
-    };
-
     std::unordered_map<StopId, std::unordered_map<StopId, StopState>> dijkstraCache;
 
     RoutingOptions& routingOptions = opts.routingOptions;
@@ -99,34 +89,35 @@ E2EE::Stats E2EE::evaluatePerformanceAtPoint(MeterCoord origin, E2EE::Options op
             continue;
         }
 
-        std::vector<TemporaryPath> firstStops;
-
-        // first stop candidates
-        for (auto [fscID, fscTime] : walkableStops[person.home_coord]) {
-            if (!dijkstraCache.contains(fscID)) {
-                if (++i % 10 == 0) std::cout << "Dijkstra " << i << std::endl;
-                dijkstraCache.insert_or_assign(fscID, timetable.dijkstra(fscID, routingOptions));
-            }
-
-            std::unordered_map<StopId, StopState>& dijRes = dijkstraCache[fscID];
-
-            auto& elem = firstStops.emplace_back(static_cast<int32_t>(fscTime), fscID, static_cast<int32_t>(fscTime));
-        }
-
-        // fastest way to the end
+        // Keep track of the fastest path found yet
         PersonPath fastest{0, 0, 0, 0, 60 * 60 * 24 * 5};
 
-        for (auto [sscID, sscTime] : possibleVTGoals) {
-            for (const auto& tp : firstStops) {
-                std::unordered_map<StopId, StopState>& dijRes = dijkstraCache[tp.firstStop];
+        // Loop over all possible first stops
+        for (auto [firstStopId, firstStopTime] : walkableStops[person.home_coord]) {
+            // If no dijkstra exists for that stop, cache it
+            if (!dijkstraCache.contains(firstStopId)) {
+                if (++i % 10 == 0) std::cout << "Dijkstra " << i << std::endl;
+                dijkstraCache.insert_or_assign(firstStopId, timetable.dijkstra(firstStopId, routingOptions));
+            }
 
+            // Get a hold on the dijkstra result for that first stop
+            std::unordered_map<StopId, StopState>& dijRes = dijkstraCache[firstStopId];
+
+            // For each possible end stop...
+            for (auto [endStopId, timeToGoal] : possibleVTGoals) {
                 // if second is reachable from firsts
-                if (dijRes.contains(sscID)) {
-                    auto sta = dijRes.at(sscID).travelTime;
-                    auto timeAtEnd = tp.currentTime + sta + static_cast<int32_t>(sscTime);
+                if (dijRes.contains(endStopId)) {
+                    int32_t timeToEndStop = dijRes.at(endStopId).travelTime;
 
-                    if (timeAtEnd < fastest.timeAtEnd) {
-                        fastest = {tp.firstStop, tp.timeAtFirstStop, sscID, tp.currentTime + sta, timeAtEnd};
+                    auto firstStopTimeInt = static_cast<int32_t>(firstStopTime);
+                    auto timeToGoalInt = static_cast<int32_t>(timeToGoal);
+
+                    int32_t timeAtGoal =
+                        firstStopTimeInt + timeToEndStop + timeToGoalInt + opts.routingOptions.startTime;
+
+                    if (timeAtGoal < fastest.timeAtGoal) {
+                        fastest = {firstStopId,   firstStopTimeInt, endStopId, timeToEndStop,
+                                   timeToGoalInt, timeAtGoal,       {}};
                     }
                 }
             }
@@ -146,7 +137,7 @@ E2EE::Stats E2EE::evaluatePerformanceAtPoint(MeterCoord origin, E2EE::Options op
             ret.distNumberOfEndStops.insert_or_assign(key, next);
         }
 
-        if(opts.statsToCollect & COLLECT_SIMPLIFIED_PATHS) {
+        if (opts.statsToCollect & COLLECT_SIMPLIFIED_PATHS) {
             ret.allPaths.push_back(fastest);
         }
 
@@ -155,34 +146,28 @@ E2EE::Stats E2EE::evaluatePerformanceAtPoint(MeterCoord origin, E2EE::Options op
         }
         ret.personsCanGoWithBus++;
     }
-
     return ret;
 }
 
 std::ostream& operator<<(std::ostream& os, const E2EE::PersonPath& path) {
-    os << "Path {firstStop:" << path.firstStop << ",timeAtFirstStop:" << path.timeAtFirstStop
-       << ",secondStop:" << path.secondStop << ",timeAtSecondStop:" << path.timeAtSecondStop
-       << ",timeAtEnd:" << path.timeAtEnd << "}";
+    os << "firstStop: " << path.firstStop << " timeToFirstStop: " << path.timeToFirstStop
+       << " secondStop: " << path.secondStop << " timeToSecondStop: " << path.timeToSecondStop
+       << " timeToGoal: " << path.timeToGoal << " timeAtGoal: " << path.timeAtGoal
+       << " extractedPath: " /*<< path.extractedPath*/;
     return os;
-}
-
-std::string E2EE::PersonPath::toNiceString(const Timetable& tt) const {
-    if (this->firstStop == 0) return "Invalid path, firstStop doesn't exist";
-    if (this->secondStop == 0) return "Invalid path, secondStop doesn't exist";
-
-    return "Walk " + std::to_string(this->timeAtFirstStop) + " s, take bus from " + tt.stops.at(this->firstStop).name +
-           " to arrive at " + tt.stops.at(this->secondStop).name + " after " +
-           prettyTravelTime(this->timeAtSecondStop) + ". You'll be at work after " + prettyTravelTime(this->timeAtEnd);
 }
 
 #define TIME(n) \
     std::to_string((n) / (60 * 60)) + ":" + ((((n) / 60) % 60) < 10 ? "0" : "") + (std::to_string(((n) / 60) % 60))
 
-std::string E2EE::PersonPath::toNiceString(const Timetable& tt, int32_t timeAtStart) const {
+std::string E2EE::PersonPath::toNiceString(const Timetable& tt) const {
     if (this->firstStop == 0) return "Invalid path, firstStop doesn't exist";
     if (this->secondStop == 0) return "Invalid path, secondStop doesn't exist";
 
-    return "Start at " + TIME(timeAtStart) + ": " + toNiceString(tt) + ", at " + TIME(timeAtStart + timeAtEnd);
+    return "Walk " + std::to_string(this->timeToFirstStop) + " s, take bus from " + tt.stops.at(this->firstStop).name +
+           " to arrive at " + tt.stops.at(this->secondStop).name + " after " +
+           prettyTravelTime(this->timeToSecondStop) + ". Walk " + prettyTravelTime(this->timeToGoal) +
+           " s, and you'll be at the goal at " + TIME(timeAtGoal);
 }
 
 void E2EE::test() {
@@ -212,15 +197,6 @@ void E2EE::test() {
 
     auto duration = duration_cast<std::chrono::microseconds>(stop - start);
     std::cout << "[TEST] Done, took " << duration.count() << " μs" << std::endl;
-
-    std::cout << "[TEST] " << s << std::endl;
-
-    std::cout << "[TEST] Some sample paths:" << std::endl;
-    int count = 10;
-    for (auto path : s.allPaths) {
-        std::cout << path.toNiceString(timetable) << std::endl;
-        if (count-- < 0) break;
-    }
 
     std::cout << "[TEST] Testing pretty printer..." << std::endl;
     std::cout << s.prettyString() << std::endl;
@@ -283,13 +259,9 @@ std::string E2EE::Stats::prettyString() {
             for (int i = 0; i < 10 && i < allPaths.size(); i++) {
                 s << "\n" << allPaths[i];
             }
-        } else if (opts == nullptr) {
-            for (int i = 0; i < 10 && i < allPaths.size(); i++) {
-                s << "\n" << allPaths[i].toNiceString(*tt);
-            }
         } else {
             for (int i = 0; i < 10 && i < allPaths.size(); i++) {
-                s << "\n" << allPaths[i].toNiceString(*tt, opts->routingOptions.startTime);
+                s << "\n" << allPaths[i].toNiceString(*tt);
             }
         }
     }
