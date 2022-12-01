@@ -1,5 +1,6 @@
 #pragma once
 #include <ostream>
+#include <map>
 
 #include "people.h"
 #include "prox.h"
