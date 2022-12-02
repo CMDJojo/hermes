@@ -122,13 +122,63 @@ int main() {
         // FIXME: Distribution of travel time
         // FIXME: Mean travel time
 
+        std::vector<boost::json::value> segments;
+        std::transform(
+            stats.shapeSegments.begin(), stats.shapeSegments.end(), std::back_inserter(segments),
+            [&timetable](const auto& entry) {
+                const E2EE::ShapeSegment& segment = entry.second;
+
+                std::vector<boost::json::value> line;
+
+                boost::json::object properties = {
+                    {"from", segment.startStop},
+                    {"to", segment.endStop},
+                    {"passengerCount", segment.passengerCount},
+                };
+
+                if (segment.tripId == routing::WALK) {
+                    auto& start = timetable.stops[segment.startStop];
+                    auto& end = timetable.stops[segment.endStop];
+                    line = {{start.lon, start.lat}, {end.lon, end.lat}};
+                    properties["walk"] = true;
+                } else {
+                    routing::Trip& trip = timetable.trips[segment.tripId];
+                    gtfs::Route& route = timetable.routes[trip.routeId];
+
+                    properties["routeName"] = route.routeShortName;
+
+                    auto& shape = timetable.shapes[trip.shapeId];
+                    auto compare = [](std::pair<double, DMSCoord> a, std::pair<double, DMSCoord> b) {
+                        return a.first < b.first;
+                    };
+                    auto start = std::lower_bound(shape.begin(), shape.end(),
+                                                  std::make_pair(segment.startDistTravelled, DMSCoord(0, 0)), compare);
+                    auto end = std::upper_bound(shape.begin(), shape.end(),
+                                                std::make_pair(segment.endDistTravelled, DMSCoord(0, 0)), compare);
+
+                    std::transform(start, end, std::back_inserter(line), [](const std::pair<double, DMSCoord>& point) {
+                        boost::json::value coord = {point.second.longitude, point.second.latitude};
+                        return coord;
+                    });
+                }
+
+                boost::json::value feature = {
+                    {"type", "Feature"},
+                    {"properties", properties},
+                    {"geometry", {{"type", "LineString"}, {"coordinates", line}}},
+                };
+                return feature;
+            });
+
+        boost::json::value geojson = {{"type", "FeatureCollection"}, {"features", segments}};
+
         boost::json::value response = {
             {"totalNrPeople", stats.personsWithinRange},
-            {"optimalNrPeople", stats.hasThisAsOptimal}
+            {"optimalNrPeople", stats.hasThisAsOptimal},
+            {"geojson", geojson},
         };
 
         return serialize(response);
-
     });
 
     // Generate an info report for a given stop (basically what gets shown in the sidebar).

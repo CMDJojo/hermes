@@ -161,12 +161,13 @@ static bool isStopPoint(StopId stopId) { return stopId % 10000000000000 / 100000
 
 Timetable::Timetable(const std::string& gtfsPath) {
     for (const auto& t : gtfs::Trip::load(gtfsPath)) {
-        trips[t.tripId] = {t.serviceId, {}, t.directionId, t.routeId};
+        trips[t.tripId] = {t.serviceId, {}, t.directionId, t.routeId, t.shapeId};
     }
 
     for (const auto& st : gtfs::StopTime::load(gtfsPath)) {
         StopId stopId = stopAreaFromStopPoint(st.stopId);
-        StopTime stopTime{st.tripId, st.arrivalTime.timestamp, st.departureTime.timestamp, stopId, st.stopSequence, st.shapeDistTravelled};
+        StopTime stopTime{st.tripId, st.arrivalTime.timestamp, st.departureTime.timestamp,
+                          stopId,    st.stopSequence,          st.shapeDistTravelled};
 
         stopTimes[stopId].push_back(stopTime);
         trips[st.tripId].stopTimes.push_back(stopTime);
@@ -214,6 +215,10 @@ Timetable::Timetable(const std::string& gtfsPath) {
 
     for (gtfs::Route& r : gtfs::Route::load(gtfsPath)) {
         routes[r.routeId] = r;
+    }
+
+    for (gtfs::Shape& s : gtfs::Shape::load(gtfsPath)) {
+        shapes[s.shapeId].push_back(std::make_pair(s.shapeDistTravelled, DMSCoord(s.shapePtLat, s.shapePtLon)));
     }
 }
 

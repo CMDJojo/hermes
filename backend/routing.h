@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "gtfsTypes.h"
+#include "people.h"
 
 namespace routing {
 
@@ -60,6 +61,7 @@ struct Trip {
     std::vector<StopTime> stopTimes;
     int32_t directionId;
     RouteId routeId;
+    ShapeId shapeId;
 };
 
 struct RoutingOptions {
@@ -92,6 +94,7 @@ class Timetable {
     std::unordered_map<TripId, Trip> trips;
     std::unordered_map<ServiceId, std::set<int32_t>> calendarDates;
     std::unordered_map<RouteId, gtfs::Route> routes;
+    std::unordered_map<ShapeId, std::vector<std::pair<double, DMSCoord>>> shapes;
 
     explicit Timetable(const std::string& gtfsPath);
 
