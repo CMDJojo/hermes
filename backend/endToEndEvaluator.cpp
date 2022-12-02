@@ -7,21 +7,20 @@
 
 using namespace routing;
 
-double findShapeDistTravelled(const std::vector<StopTime>& times, TripId tripId) {
-    for (StopTime st : times) {
-        if (st.tripId == tripId) return st.shapeDistTravelled;
-    }
-    std::cerr << "[ERROR] Did not find shapeDistTravelled for tripId " << tripId << std::endl;
-    return 0;
+inline SegmentId createSegmentId(TripId tripId, int32_t stopSequence) {
+    return tripId ^ ((uint64_t) stopSequence << 48);
 }
 
-std::vector<E2EE::ShapeSegment> extractShape(Timetable& tt, StopId to, std::unordered_map<StopId, StopState>& graph) {
+static void extractShape(
+    Timetable& tt, StopId to, std::unordered_map<StopId, StopState>& graph,
+    std::unordered_map<SegmentId, E2EE::ShapeSegment>& segments) {
+    if (graph.find(to) == graph.end()) return;
+    
     StopState* current = &graph.at(to);
-    if (graph[to].incoming.empty()) return {};
+    if (current->incoming.empty()) return;
 
     TripId currentTrip = current->incoming.front().tripId;
     StopId currentId = to;
-    std::vector<E2EE::ShapeSegment> legs;
 
     while (!current->incoming.empty()) {
         // we came from "from" and are going to "current"
@@ -33,36 +32,37 @@ std::vector<E2EE::ShapeSegment> extractShape(Timetable& tt, StopId to, std::unor
             }
         }
 
-        //TODO: This should be exchanged for a map from a combination of tripId, segment at start and seg at end
-        // mapping to a Segment
-        if(from.tripId != WALK) {
-            legs.emplace_back(
-                from.from->stopId,
-                currentId,
-                from.tripId,
-                findShapeDistTravelled(tt.stopTimes[currentId], from.tripId),
-                findShapeDistTravelled(tt.stopTimes[from.from->stopId], from.tripId)
-            );
+        SegmentId segmentId = createSegmentId(from.tripId, from.stopSequence);
+        auto iter = segments.find(segmentId);
+        if (iter != segments.end()) {
+            iter->second.passengerCount++;
         } else {
-            legs.emplace_back(from.from->stopId,
-                              currentId,from.tripId,0,0);
+            if (from.tripId != WALK) {
+                Trip& trip = tt.trips[currentTrip];
+                segments[segmentId] = {
+                    from.from->stopId, currentId, from.tripId,
+                    trip.stopTimes[from.stopSequence - 1].shapeDistTravelled,
+                    trip.stopTimes[from.stopSequence].shapeDistTravelled};
+            } else {
+                segments[segmentId] = {from.from->stopId, currentId, WALK, 0, 0};
+            }
         }
 
         currentTrip = from.tripId;
         currentId = from.from->stopId;
         current = &graph[currentId];
     }
-    std::reverse(legs.begin(), legs.end());
-    return legs;
 }
 
 std::vector<StopId> extractPath(Timetable& timetable, StopId stopId, std::unordered_map<StopId, StopState>& graph) {
+    if (graph.find(stopId) == graph.end()) return {};
+    
     StopState* current = &graph.at(stopId);
+    if (current->incoming.empty()) return {};
+    
     TripId currentTrip = current->incoming.front().tripId;
     std::vector<StopId> legs;
     legs.push_back(stopId);
-
-    if (graph[stopId].incoming.empty()) return {};
 
     while (!current->incoming.empty()) {
         for (const IncomingTrip& node : current->incoming) {
@@ -202,7 +202,7 @@ E2EE::Stats E2EE::evaluatePerformanceAtPoint(MeterCoord origin, E2EE::Options op
 
         if (opts.statsToCollect & COLLECT_EXTRACTED_SHAPES) {
             if (fastest.firstStop != 0 && fastest.firstStop != fastest.secondStop) {
-                fastest.extractedShape = extractShape(timetable, fastest.secondStop, dijkstraCache.at(fastest.firstStop));
+                extractShape(timetable, fastest.secondStop, dijkstraCache.at(fastest.firstStop), ret.shapeSegments);
             }
         }
 
@@ -395,11 +395,3 @@ std::string E2EE::Stats::prettyString() {
 
     return s.str();
 }
-
-E2EE::ShapeSegment::ShapeSegment(StopId startStop, StopId endStop, TripId tripId, double startDistTravelled,
-                                 double endDistTravelled)
-    : startStop(startStop),
-      endStop(endStop),
-      tripId(tripId),
-      startDistTravelled(startDistTravelled),
-      endDistTravelled(endDistTravelled) {}

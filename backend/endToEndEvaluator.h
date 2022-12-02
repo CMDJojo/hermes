@@ -6,6 +6,8 @@
 #include "prox.h"
 #include "routing.h"
 
+using SegmentId = uint64_t;
+
 class E2EE {
    public:
     struct ShapeSegment;
@@ -19,20 +21,27 @@ class E2EE {
         int32_t timeAtGoal;        // total time taken, home->goal
         int32_t timestampAtGoal;   // timestamp at goal
         std::vector<StopId> extractedPath;
-        std::vector<ShapeSegment> extractedShape;
 
         friend std::ostream& operator<<(std::ostream& os, const PersonPath& path);
         [[nodiscard]] std::string toNiceString(const routing::Timetable& tt) const;
     };
 
     struct ShapeSegment {
-        StopId startStop;
-        StopId endStop;
-        TripId tripId;
-        double startDistTravelled;
-        double endDistTravelled;
-        ShapeSegment(StopId startStop, StopId endStop, TripId tripId, double startDistTravelled,
-                     double endDistTravelled);
+        StopId startStop{};
+        StopId endStop{};
+        TripId tripId{};
+        double startDistTravelled{};
+        double endDistTravelled{};
+        int32_t passengerCount = 1;
+        
+        ShapeSegment() = default;
+        ShapeSegment(StopId start_stop, StopId end_stop, TripId trip_id, double start_dist_travelled,
+                     double end_dist_travelled)
+            : startStop(start_stop),
+              endStop(end_stop),
+              tripId(trip_id),
+              startDistTravelled(start_dist_travelled),
+              endDistTravelled(end_dist_travelled) {}
     };
 
     struct Options;
@@ -51,6 +60,8 @@ class E2EE {
 
         routing::Timetable* tt = nullptr;
         E2EE::Options* opts = nullptr;
+
+        std::unordered_map<SegmentId, ShapeSegment> shapeSegments;
 
         Stats() = default;
         friend std::ostream& operator<<(std::ostream& os, const Stats& stats);
