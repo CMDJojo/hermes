@@ -5,6 +5,8 @@
 #include <unordered_map>
 #include <utility>
 
+#include "csvLoader.h"
+
 DMSCoord MeterCoord::toDMS() const {
     gausskruger::SWEREF99TM projection;
     double latitude, longitude;

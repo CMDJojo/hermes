@@ -14,7 +14,7 @@ using namespace routing;
 
 const routing::RoutingOptions routingOptions(10 * 60 * 60, 20221118, 60 * 60);
 
-std::vector<IncomingTrip> extractPath(Timetable& timetable, StopId stopId,
+static std::vector<IncomingTrip> extractPath(Timetable& timetable, StopId stopId,
                                       std::unordered_map<StopId, StopState>& graph) {
     if (graph[stopId].incoming.empty()) return {};
     StopState* current = &graph.at(stopId);
@@ -36,7 +36,7 @@ std::vector<IncomingTrip> extractPath(Timetable& timetable, StopId stopId,
     return legs;
 }
 
-void printPath(Timetable& timetable, StopId stopId, std::unordered_map<StopId, StopState>& graph) {
+static void printPath(Timetable& timetable, StopId stopId, std::unordered_map<StopId, StopState>& graph) {
     auto path = extractPath(timetable, stopId, graph);
     std::stringstream result;
 
