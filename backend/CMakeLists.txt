@@ -42,14 +42,6 @@ add_executable(test test.cpp
         endToEndEvaluator.cpp endToEndEvaluator.h
         prox.cpp prox.h)
 
-add_executable(person
-        csvLoader.h
-        gtfsTypes.h
-        people.h people.cpp
-        gauss-kruger/gausskruger.cpp gauss-kruger/gausskruger.h
-        boardingStatistics.cpp boardingStatistics.h
-        endToEndEvaluator.cpp endToEndEvaluator.h)
-
 target_link_libraries(server webServer)
 
 file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/data ${CMAKE_CURRENT_BINARY_DIR}/data SYMBOLIC)
