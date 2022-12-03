@@ -218,7 +218,7 @@ Timetable::Timetable(const std::string& gtfsPath) {
     }
 
     for (gtfs::Shape& s : gtfs::Shape::load(gtfsPath)) {
-        shapes[s.shapeId].push_back(std::make_pair(s.shapeDistTravelled, DMSCoord(s.shapePtLat, s.shapePtLon)));
+        shapes[s.shapeId].emplace_back(s.shapeDistTravelled, DMSCoord(s.shapePtLat, s.shapePtLon));
     }
 }
 

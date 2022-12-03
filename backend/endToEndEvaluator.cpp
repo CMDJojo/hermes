@@ -7,10 +7,6 @@
 
 using namespace routing;
 
-inline SegmentId createSegmentId(TripId tripId, int32_t stopSequence, StopId from, StopId to) {
-    return tripId ^ stopSequence ^ from ^ to;
-}
-
 static void extractShape(Timetable& tt, StopId to, std::unordered_map<StopId, StopState>& graph,
                          std::unordered_map<SegmentId, E2EE::ShapeSegment>& segments) {
     if (graph.find(to) == graph.end()) return;
@@ -31,16 +27,24 @@ static void extractShape(Timetable& tt, StopId to, std::unordered_map<StopId, St
             }
         }
 
-        SegmentId segmentId = createSegmentId(from.tripId, from.stopSequence, from.from->stopId, currentId);
-        auto iter = segments.find(segmentId);
-        if (iter != segments.end()) {
-            iter->second.passengerCount++;
-        } else {
-            if (from.tripId != WALK) {
-                Trip& trip = tt.trips[from.tripId];
+        if (from.tripId != WALK) {
+            Trip& trip = tt.trips[from.tripId];
+            SegmentId segmentId = trip.routeId + from.stopSequence * 10 + trip.directionId;
+
+            auto iter = segments.find(segmentId);
+            if (iter != segments.end()) {
+                iter->second.passengerCount++;
+            } else {
                 segments[segmentId] = {from.from->stopId, currentId, from.tripId,
                                        trip.stopTimes[from.stopSequence - 2].shapeDistTravelled,
                                        trip.stopTimes[from.stopSequence - 1].shapeDistTravelled};
+            }
+        } else {
+            SegmentId segmentId = from.from->stopId ^ (to << 32);
+
+            auto iter = segments.find(segmentId);
+            if (iter != segments.end()) {
+                iter->second.passengerCount++;
             } else {
                 segments[segmentId] = {from.from->stopId, currentId, WALK, 0, 0};
             }
