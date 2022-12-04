@@ -171,10 +171,15 @@ function Map({ onClick, activeStop, activeLines }: MapProps) {
             'line-cap': 'round',
           },
           paint: {
-            'line-color': '#3c80e6',
-            'line-width': 4,
+            'line-color': ['get', 'bgColor'],
+            'line-width': ['*', 3, ['ln', ['get', 'passengerCount']]],
           },
         });
+        
+        /*map.current?.on('mousemove', e => {
+          const features = map.current?.queryRenderedFeatures(e.point, {layers: ['activeLines']});
+          console.log(features?.map(f => f.properties.routeName));
+        });*/
 
         // Change the cursor to a pointer when the mouse is over the places layer.
         map.current?.on('mouseenter', 'stops', () => {

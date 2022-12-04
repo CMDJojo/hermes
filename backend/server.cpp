@@ -1,17 +1,19 @@
-#include <boost/json/src.hpp>
 #include <algorithm>
+#include <boost/json/src.hpp>
 #include <iostream>
+
+#include "binarySearch.h"
+#include "endToEndEvaluator.h"
+#include "lineRegister.h"
 #include "people.h"
 #include "routing.h"
 #include "routingCacher.h"
 #include "webServer/webServer.h"
-#include "binarySearch.h"
-#include "endToEndEvaluator.h"
 
 const auto address = net::ip::make_address("0.0.0.0");
 const auto port = static_cast<unsigned short>(8080);
 const auto doc_root = std::make_shared<std::string>(".");
-const auto threads = 1;
+const auto threads = 4;
 
 std::function<BinarySearch::ComparatorResult(const Person&)> constructClosure(float distance) {
     return [=](const Person& p) {
@@ -26,6 +28,8 @@ int main() {
     std::cout << "Loading timetable" << std::endl;
     routing::Timetable timetable("data/raw");
     const routing::RoutingOptions routingOptions(10 * 60 * 60, 20221118, 60 * 60);
+    
+    LineRegister lineRegister("data/raw/lineregister.json");
 
     std::cout << "Loading people data" << std::endl;
     People people("data/raw/Ast_bost.txt");
@@ -113,8 +117,8 @@ int main() {
         auto& stop = timetable.stops[stopId];
         auto stopCoord = DMSCoord(stop.lat, stop.lon);
 
-        E2EE::Options options = {stopId, 0.6, 500, 500, 0,
-                              E2EE::COLLECT_ALL, routingOptions};
+        E2EE::Options options = {stopId,        0.6, 500, 500, 0, E2EE::COLLECT_ALL & (~E2EE::COLLECT_EXTRACTED_PATHS),
+                                 routingOptions};
 
         E2EE::Stats stats = endToEndEval.evaluatePerformanceAtPoint(stopCoord.toMeter(), options);
 
@@ -129,52 +133,53 @@ int main() {
         // FIXME: Distribution of travel time
 
         std::vector<boost::json::value> segments;
-        std::transform(
-            stats.shapeSegments.begin(), stats.shapeSegments.end(), std::back_inserter(segments),
-            [&timetable](const auto& entry) {
-                const E2EE::ShapeSegment& segment = entry.second;
+        std::transform(stats.shapeSegments.begin(), stats.shapeSegments.end(), std::back_inserter(segments),
+                       [&timetable, &lineRegister](const auto& entry) {
+                           const E2EE::ShapeSegment& segment = entry.second;
 
-                std::vector<boost::json::value> line;
+                           std::vector<boost::json::value> lineString;
 
-                boost::json::object properties = {
-                    {"from", segment.startStop},
-                    {"to", segment.endStop},
-                    {"passengerCount", segment.passengerCount},
-                };
+                           boost::json::object properties = {
+                               {"from", segment.startStop},
+                               {"to", segment.endStop},
+                               {"passengerCount", segment.passengerCount},
+                           };
 
-                if (segment.tripId == routing::WALK) {
-                    auto& start = timetable.stops[segment.startStop];
-                    auto& end = timetable.stops[segment.endStop];
-                    line = {{start.lon, start.lat}, {end.lon, end.lat}};
-                    properties["walk"] = true;
-                } else {
-                    routing::Trip& trip = timetable.trips[segment.tripId];
-                    gtfs::Route& route = timetable.routes[trip.routeId];
+                           if (segment.tripId == routing::WALK) {
+                               auto& start = timetable.stops[segment.startStop];
+                               auto& end = timetable.stops[segment.endStop];
+                               lineString = {{start.lon, start.lat}, {end.lon, end.lat}};
+                               properties["walk"] = true;
+                           } else {
+                               routing::Trip& trip = timetable.trips[segment.tripId];
+                               gtfs::Route& route = timetable.routes[trip.routeId];
 
-                    properties["routeName"] = route.routeShortName;
+                               properties["routeName"] = route.routeShortName;
 
-                    auto& shape = timetable.shapes[trip.shapeId];
-                    auto compare = [](std::pair<double, DMSCoord> a, std::pair<double, DMSCoord> b) {
-                        return a.first < b.first;
-                    };
-                    auto start = std::lower_bound(shape.begin(), shape.end(),
-                                                  std::make_pair(segment.startDistTravelled, DMSCoord(0, 0)), compare);
-                    auto end = std::upper_bound(shape.begin(), shape.end(),
-                                                std::make_pair(segment.endDistTravelled, DMSCoord(0, 0)), compare);
+                               auto& line = lineRegister.lines[trip.routeId];
+                               properties["fgColor"] = line.fgColor;
+                               properties["bgColor"] = line.bgColor;
 
-                    std::transform(start, end, std::back_inserter(line), [](const std::pair<double, DMSCoord>& point) {
-                        boost::json::value coord = {point.second.longitude, point.second.latitude};
-                        return coord;
-                    });
-                }
+                               auto& shape = timetable.shapes[trip.shapeId];
 
-                boost::json::value feature = {
-                    {"type", "Feature"},
-                    {"properties", properties},
-                    {"geometry", {{"type", "LineString"}, {"coordinates", line}}},
-                };
-                return feature;
-            });
+                               auto start = &shape[segment.startIdx];
+                               auto end = &shape[segment.endIdx];
+
+                               std::transform(
+                                   start, end, std::back_inserter(lineString),
+                                   [](const std::pair<double, DMSCoord>& point) {
+                                       boost::json::value coord = {point.second.longitude, point.second.latitude};
+                                       return coord;
+                                   });
+                           }
+
+                           boost::json::value feature = {
+                               {"type", "Feature"},
+                               {"properties", properties},
+                               {"geometry", {{"type", "LineString"}, {"coordinates", lineString}}},
+                           };
+                           return feature;
+                       });
 
         boost::json::value geojson = {{"type", "FeatureCollection"}, {"features", segments}};
 

@@ -30,7 +30,8 @@ add_executable(server server.cpp
         boardingStatistics.cpp boardingStatistics.h
         endToEndEvaluator.cpp endToEndEvaluator.h
         binarySearch.cpp binarySearch.h
-        prox.cpp prox.h)
+        prox.cpp prox.h
+        lineRegister.cpp lineRegister.h)
 
 add_executable(test test.cpp
         csvLoader.h csvLoaderTypes.h

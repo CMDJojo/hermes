@@ -35,9 +35,48 @@ static void extractShape(Timetable& tt, StopId to, std::unordered_map<StopId, St
             if (iter != segments.end()) {
                 iter->second.passengerCount++;
             } else {
-                segments[segmentId] = {from.from->stopId, currentId, from.tripId,
-                                       trip.stopTimes[from.stopSequence - 2].shapeDistTravelled,
-                                       trip.stopTimes[from.stopSequence - 1].shapeDistTravelled};
+                int32_t startIdx, endIdx;
+
+                StopTime& start = trip.stopTimes[from.stopSequence - 2];
+                StopTime& end = trip.stopTimes[from.stopSequence - 1];
+
+                auto& shape = tt.shapes.at(trip.shapeId);
+
+                if (end.shapeDistTravelled == 0 && start.shapeDistTravelled == 0) {
+                    auto sqDist = [](DMSCoord& a, DMSCoord& b) {
+                        double deltaLat = a.latitude - b.latitude;
+                        double deltaLon = a.longitude - b.longitude;
+                        return deltaLat * deltaLat + deltaLon * deltaLon;
+                    };
+
+                    auto findClosestPoint = [&sqDist](DMSCoord& point) {
+                        return [&point, &sqDist](std::pair<double, DMSCoord> a, std::pair<double, DMSCoord> b) {
+                            return sqDist(a.second, point) < sqDist(b.second, point);
+                        };
+                    };
+
+                    auto& startCoord = tt.stopPoints.at(start.stopPoint);
+                    auto startPoint = std::min_element(shape.begin(), shape.end(), findClosestPoint(startCoord));
+                    startIdx = (int32_t)std::distance(shape.begin(), startPoint);
+
+                    auto& endCoord = tt.stopPoints.at(end.stopPoint);
+                    auto endPoint = std::min_element(shape.begin() + startIdx, shape.end(), findClosestPoint(endCoord));
+                    endIdx = (int32_t)std::distance(shape.begin(), endPoint) + 1;
+                } else {
+                    auto compare = [](std::pair<double, DMSCoord> a, std::pair<double, DMSCoord> b) {
+                        return a.first < b.first;
+                    };
+
+                    auto startBound = std::lower_bound(
+                        shape.begin(), shape.end(), std::make_pair(start.shapeDistTravelled, DMSCoord(0, 0)), compare);
+                    startIdx = (int32_t)std::distance(shape.begin(), startBound);
+
+                    auto endBound = std::upper_bound(shape.begin(), shape.end(),
+                                                     std::make_pair(end.shapeDistTravelled, DMSCoord(0, 0)), compare);
+                    endIdx = (int32_t)std::distance(shape.begin(), endBound);
+                }
+
+                segments[segmentId] = {from.from->stopId, currentId, from.tripId, startIdx, endIdx};
             }
         } else {
             SegmentId segmentId = from.from->stopId ^ (to << 32);

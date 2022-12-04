@@ -51,7 +51,7 @@ std::unordered_map<StopId, StopState> Timetable::dijkstra(StopId start, const Ro
 
                 // Do not add the same trip again when revisiting.
                 if (toState.revisit && std::any_of(toState.incoming.begin(), toState.incoming.end(),
-                                                   [&edge](IncomingTrip t) { return t.tripId == edge.tripId; }))
+                                                   [&edge](IncomingTrip& t) { return t.tripId == edge.tripId; }))
                     continue;
 
                 toState.incoming.emplace_back(node, edge.tripId, edge.stopSequence);
@@ -124,6 +124,9 @@ std::vector<Edge> StopNode::getEdges(Timetable& timetable, const RoutingOptions&
         // Skip departure if the next stop is the stop that you came from
         if (!state->incoming.empty() && next.stopId == state->incoming[0].from->stopId) continue;
 
+        // Skip departure if the next stop is another stop point at the same stop area
+        if (next.stopId == stopId) continue;
+
         outgoingEdges.emplace_back(&timetable.stops[next.stopId],
                                    next.arrivalTime - options.startTime - state->travelTime, iter->tripId,
                                    next.stopSequence);
@@ -148,6 +151,9 @@ inline void StopNode::handleTransferType1(Timetable& timetable, const RoutingOpt
 
             StopTime next = stopTimes[stopSequence];
 
+            // If there are several stop times at the same stop area in a row, use the last one.
+            while (next.stopId == stopId) next = stopTimes[++stopSequence];
+
             outgoingEdges.emplace_back(&timetable.stops[next.stopId],
                                        next.arrivalTime - options.startTime - state->travelTime, toTripId,
                                        next.stopSequence);
@@ -167,7 +173,8 @@ Timetable::Timetable(const std::string& gtfsPath) {
     for (const auto& st : gtfs::StopTime::load(gtfsPath)) {
         StopId stopId = stopAreaFromStopPoint(st.stopId);
         StopTime stopTime{st.tripId, st.arrivalTime.timestamp, st.departureTime.timestamp,
-                          stopId,    st.stopSequence,          st.shapeDistTravelled};
+                          stopId,    st.stopSequence,          st.shapeDistTravelled,
+                          st.stopId};
 
         stopTimes[stopId].push_back(stopTime);
         trips[st.tripId].stopTimes.push_back(stopTime);
@@ -183,8 +190,11 @@ Timetable::Timetable(const std::string& gtfsPath) {
     }
 
     for (auto& s : gtfs::Stop::load(gtfsPath)) {
-        if (isStopPoint(s.stopId)) continue;
-        stops[s.stopId] = StopNode(s.stopId, s.stopName, s.stopLat, s.stopLon);
+        if (isStopPoint(s.stopId)) {
+            stopPoints[s.stopId] = DMSCoord(s.stopLat, s.stopLon);
+        } else {
+            stops[s.stopId] = StopNode(s.stopId, s.stopName, s.stopLat, s.stopLon);
+        }
     }
 
     for (auto& t : gtfs::Transfer::load(gtfsPath)) {
