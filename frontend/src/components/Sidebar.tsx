@@ -70,6 +70,11 @@ export default function Sidebar({
                 </InfoBox>
               )}
               {timeInfo !== null && (
+                <InfoBox title="Medianrestid till arbetet" color="#6c8e79">
+                  <h1>{timeInfo.medianTravelTimeFormatted}</h1>
+                </InfoBox>
+              )}
+              {timeInfo !== null && (
                 <InfoBox
                   title="Hur många har den här som bästa hållplats på väg till arbetet?"
                   color="#8E6C88"

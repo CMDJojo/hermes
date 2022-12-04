@@ -108,7 +108,7 @@ int main() {
     get((std::regex) "/travelTime/(\\d+)", [&](auto context) {
         context.response.set(http::field::access_control_allow_origin, "*");
         context.response.set(http::field::content_type, "application/json");
-        std::cout << "this should not run" << std::endl;
+
         auto stopId = std::stoull(context.match[1].str());
         auto& stop = timetable.stops[stopId];
         auto stopCoord = DMSCoord(stop.lat, stop.lon);
@@ -118,9 +118,15 @@ int main() {
 
         E2EE::Stats stats = endToEndEval.evaluatePerformanceAtPoint(stopCoord.toMeter(), options);
 
-        // Add the following to the response object
+        // Find the mean travel time (I assume that it is okay to mutate the stats object?)
+        std::sort(stats.allPaths.begin(), stats.allPaths.end(), [](auto const &a, auto const &b) {
+          return a.timeAtGoal < b.timeAtGoal;
+        });
+
+        auto medianTravelTime = stats.allPaths[stats.allPaths.size() / 2].timeAtGoal;
+        auto medianTravelTimeFormatted = routing::prettyTravelTime(medianTravelTime);
+
         // FIXME: Distribution of travel time
-        // FIXME: Mean travel time
 
         std::vector<boost::json::value> segments;
         std::transform(
@@ -175,6 +181,8 @@ int main() {
         boost::json::value response = {
             {"totalNrPeople", stats.personsWithinRange},
             {"optimalNrPeople", stats.hasThisAsOptimal},
+            {"medianTravelTime", medianTravelTime},
+            {"medianTravelTimeFormatted", medianTravelTimeFormatted},
             {"geojson", geojson},
         };
 
