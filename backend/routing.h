@@ -19,20 +19,22 @@ class StopTime {
     TripId tripId;
     int32_t arrivalTime;
     int32_t departureTime;
-    uint64_t stopId;
+    StopId stopId;
     int32_t stopSequence;
     double shapeDistTravelled;
+    StopId stopPoint;
 
     explicit StopTime(int32_t departureTime) : departureTime(departureTime) {}
 
-    StopTime(TripId tripId, int32_t arrivalTime, int32_t departureTime, uint64_t stopId, int32_t stopSequence,
-             double shapeDistTravelled)
+    StopTime(TripId tripId, int32_t arrivalTime, int32_t departureTime, StopId stopId, int32_t stopSequence,
+             double shapeDistTravelled, StopId stopPoint)
         : tripId(tripId),
           arrivalTime(arrivalTime),
           departureTime(departureTime),
           stopId(stopId),
           stopSequence(stopSequence),
-          shapeDistTravelled(shapeDistTravelled) {}
+          shapeDistTravelled(shapeDistTravelled),
+          stopPoint(stopPoint) {}
 };
 
 class StopNode;
@@ -95,6 +97,7 @@ class Timetable {
     std::unordered_map<ServiceId, std::set<int32_t>> calendarDates;
     std::unordered_map<RouteId, gtfs::Route> routes;
     std::unordered_map<ShapeId, std::vector<std::pair<double, DMSCoord>>> shapes;
+    std::unordered_map<StopId, DMSCoord> stopPoints;
 
     explicit Timetable(const std::string& gtfsPath);
 

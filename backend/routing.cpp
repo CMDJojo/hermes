@@ -173,7 +173,8 @@ Timetable::Timetable(const std::string& gtfsPath) {
     for (const auto& st : gtfs::StopTime::load(gtfsPath)) {
         StopId stopId = stopAreaFromStopPoint(st.stopId);
         StopTime stopTime{st.tripId, st.arrivalTime.timestamp, st.departureTime.timestamp,
-                          stopId,    st.stopSequence,          st.shapeDistTravelled};
+                          stopId,    st.stopSequence,          st.shapeDistTravelled,
+                          st.stopId};
 
         stopTimes[stopId].push_back(stopTime);
         trips[st.tripId].stopTimes.push_back(stopTime);
@@ -189,8 +190,11 @@ Timetable::Timetable(const std::string& gtfsPath) {
     }
 
     for (auto& s : gtfs::Stop::load(gtfsPath)) {
-        if (isStopPoint(s.stopId)) continue;
-        stops[s.stopId] = StopNode(s.stopId, s.stopName, s.stopLat, s.stopLon);
+        if (isStopPoint(s.stopId)) {
+            stopPoints[s.stopId] = DMSCoord(s.stopLat, s.stopLon);
+        } else {
+            stops[s.stopId] = StopNode(s.stopId, s.stopName, s.stopLat, s.stopLon);
+        }
     }
 
     for (auto& t : gtfs::Transfer::load(gtfsPath)) {
