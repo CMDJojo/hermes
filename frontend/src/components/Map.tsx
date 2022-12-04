@@ -24,6 +24,7 @@ export interface MapProps {
   activeArea: ActiveArea | null;
   activeLines: FeatureCollection | null;
   onClick: (event: Stop) => void;
+  onInteract: () => void;
 }
 
 // stackoverflow.com/questions/37599561/drawing-a-circle-with-the-radius-in-miles-meters-with-mapbox-gl-js
@@ -72,7 +73,7 @@ const createGeoJSONCircle = (
   };
 };
 
-function Map({ onClick, activeStop, activeLines }: MapProps) {
+function Map({ onClick, activeStop, activeLines, onInteract }: MapProps) {
   const mapContainer = useRef<string | HTMLElement | null>(null);
   const api = useRef<API | null>(null);
   const map = useRef<MapLibreGL | null>(null);
@@ -175,11 +176,11 @@ function Map({ onClick, activeStop, activeLines }: MapProps) {
             'line-width': ['*', 3, ['ln', ['get', 'passengerCount']]],
           },
         });
-        
-        /*map.current?.on('mousemove', e => {
+
+        /* map.current?.on('mousemove', e => {
           const features = map.current?.queryRenderedFeatures(e.point, {layers: ['activeLines']});
           console.log(features?.map(f => f.properties.routeName));
-        });*/
+        }); */
 
         // Change the cursor to a pointer when the mouse is over the places layer.
         map.current?.on('mouseenter', 'stops', () => {
@@ -189,6 +190,9 @@ function Map({ onClick, activeStop, activeLines }: MapProps) {
         map.current?.on('mouseleave', 'stops', () => {
           map.current!.getCanvas().style.cursor = '';
         });
+
+        map.current?.on('move', onInteract);
+
         // Center the map on the coordinates of any clicked symbol from the 'symbols' layer.
         map.current?.on('click', 'stops', e => {
           const { features } = e as unknown as Stops;

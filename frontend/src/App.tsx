@@ -15,6 +15,7 @@ function App() {
   const [distanceInfo, setDistanceInfo] = useState<TravelDistance | null>(null);
   const [timeInfo, setTimeInfo] = useState<TravelTime | null>(null);
   const [activeArea, setActiveArea] = useState<ActiveArea | null>(null);
+  const [showMenu, setShowMenu] = useState<boolean>(true);
 
   const api = new API();
 
@@ -40,12 +41,13 @@ function App() {
 
   return (
     <div className="App">
-      <Menu />
+      <Menu show={showMenu} onHide={() => setShowMenu(false)} />
       <Map
         activeStop={activeStop}
         activeArea={activeArea}
         activeLines={timeInfo?.geojson ?? null}
         onClick={updateSidebar}
+        onInteract={() => setShowMenu(false)}
       />
       <Sidebar
         onClose={closeSidebar}
