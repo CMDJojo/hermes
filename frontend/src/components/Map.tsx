@@ -22,6 +22,7 @@ export type StopEvent = Feature<Geometry, GeoJsonProperties>;
 export interface MapProps {
   activeStop: Stop | null;
   activeArea: ActiveArea | null;
+  activeLines: FeatureCollection | null;
   onClick: (event: Stop) => void;
 }
 
@@ -71,7 +72,7 @@ const createGeoJSONCircle = (
   };
 };
 
-function Map({ onClick, activeStop }: MapProps) {
+function Map({ onClick, activeStop, activeLines }: MapProps) {
   const mapContainer = useRef<string | HTMLElement | null>(null);
   const api = useRef<API | null>(null);
   const map = useRef<MapLibreGL | null>(null);
@@ -130,6 +131,11 @@ function Map({ onClick, activeStop }: MapProps) {
           data: EMPTY_GEOJSON_DATA,
         });
 
+        map.current?.addSource('activeLines', {
+          type: 'geojson',
+          data: EMPTY_GEOJSON_DATA,
+        });
+
         map.current?.addLayer({
           id: 'activeCircle',
           type: 'fill',
@@ -153,6 +159,20 @@ function Map({ onClick, activeStop }: MapProps) {
             'icon-allow-overlap': true,
             'text-anchor': 'top',
             'text-size': 10,
+          },
+        });
+
+        map.current?.addLayer({
+          id: 'activeLines',
+          type: 'line',
+          source: 'activeLines',
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round',
+          },
+          paint: {
+            'line-color': '#3c80e6',
+            'line-width': 4,
           },
         });
 
@@ -195,6 +215,10 @@ function Map({ onClick, activeStop }: MapProps) {
       (map.current?.getSource('activeCircle') as GeoJSONSource).setData(
         EMPTY_GEOJSON_DATA
       );
+
+      (map.current?.getSource('activeLines') as GeoJSONSource).setData(
+        EMPTY_GEOJSON_DATA
+      );
       return;
     }
 
@@ -205,12 +229,18 @@ function Map({ onClick, activeStop }: MapProps) {
       createGeoJSONCircle([activeStop.lon, activeStop.lat], 0.5)
     );
 
+    if (activeLines !== null) {
+      (map.current?.getSource('activeLines') as GeoJSONSource).setData(
+        activeLines
+      );
+    }
+
     api.current?.relativeTravelTime(activeStop.id.toString()).then(data => {
       (map.current?.getSource('relativeTravelTime') as GeoJSONSource).setData(
         data as FeatureCollection
       );
     });
-  }, [activeStop, api, map, mapLoaded]);
+  }, [activeStop, activeLines, api, map, mapLoaded]);
 
   return (
     <div className="Map">
