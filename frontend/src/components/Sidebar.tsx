@@ -44,13 +44,14 @@ export default function Sidebar({
           </button>
           <div className="content">
             <h1 className="heading">{stop.name}</h1>
-            <span className="" />
+
             {distanceInfo !== null && (
-              <strong>
-                Boende inom {formatDistance(distanceInfo?.peopleRange)}:
-                {distanceInfo?.nrPeople}
-              </strong>
+              <span className="nrPeople">
+                Här bor {distanceInfo?.nrPeople} personer inom en{' '}
+                {formatDistance(distanceInfo?.peopleRange)} radie.
+              </span>
             )}
+
             <div className="infoBoxes">
               {distanceInfo !== null && (
                 <InfoBox color="#84ACCE" title="Medianavstånd till arbete">
