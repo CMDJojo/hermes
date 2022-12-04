@@ -44,7 +44,7 @@ function App() {
       <Map
         activeStop={activeStop}
         activeArea={activeArea}
-        activeLines={timeInfo?.geojson}
+        activeLines={timeInfo?.geojson ?? null}
         onClick={updateSidebar}
       />
       <Sidebar
