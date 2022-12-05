@@ -127,8 +127,13 @@ int main() {
           return a.timeAtGoal < b.timeAtGoal;
         });
 
-        auto medianTravelTime = stats.allPaths[stats.allPaths.size() / 2].timeAtGoal;
-        auto medianTravelTimeFormatted = routing::prettyTravelTime(medianTravelTime);
+        uint32_t medianTravelTime = 0;
+        std::string medianTravelTimeFormatted = {};
+        if (stats.allPaths.size() != 0) {
+            medianTravelTime = stats.allPaths[stats.allPaths.size() / 2].timeAtGoal;
+            medianTravelTimeFormatted = routing::prettyTravelTime(medianTravelTime);
+        }
+
 
         // FIXME: Distribution of travel time
 
