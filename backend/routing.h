@@ -14,6 +14,11 @@ namespace routing {
 
 const TripId WALK = 0;
 
+struct DestinationEdge {
+    uint64_t destinationId;
+    int32_t cost;
+};
+
 class StopTime {
    public:
     TripId tripId;
@@ -104,6 +109,9 @@ class Timetable {
     explicit Timetable(const std::string& gtfsPath);
 
     std::unordered_map<StopId, StopState> dijkstra(StopId start, const RoutingOptions& options);
+    std::unordered_map<StopId, StopState> dijkstra(
+        StopId start, const RoutingOptions& options,
+        std::unordered_map<StopId, std::vector<DestinationEdge>>& destinationEdges);
 };
 
 class StopNode {
