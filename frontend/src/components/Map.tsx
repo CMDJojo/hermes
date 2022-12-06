@@ -24,6 +24,7 @@ export type DetailInfoData = {
   passengerCount: number;
   bgColor: string;
   fgColor: string;
+  headsign: string;
 }[];
 
 export interface MapProps {
@@ -203,6 +204,7 @@ function Map({
               passengerCount: f.properties.passengerCount as number,
               bgColor: f.properties.bgColor as string,
               fgColor: f.properties.fgColor as string,
+              headsign: f.properties.headsign as string,
             })) ?? [];
 
           if (info.length < 1) {
