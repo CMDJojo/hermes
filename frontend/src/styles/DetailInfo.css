@@ -28,4 +28,9 @@
     display: flex;
     gap: 0.5rem;
     align-items: center;
+    justify-content: space-between;
+}
+
+.DetailInfo .Route .headsign {
+    flex-grow: 1;
 }

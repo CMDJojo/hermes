@@ -29,7 +29,8 @@ function Route({
       >
         {routeName}
       </div>
-      {headsign} &mdash; {passengerCount} personer
+      <div className="headsign">{headsign}</div>
+      <div>{passengerCount} personer</div>
     </div>
   );
 }
