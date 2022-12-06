@@ -30,6 +30,16 @@ export default function Sidebar({
   timeInfo,
   onClose,
 }: SidebarProps) {
+  const optimalDiv =
+    timeInfo !== null
+      ? timeInfo.optimalNrPeople / timeInfo.totalNrPeople
+      : null;
+  const optimalPercent =
+    timeInfo !== null &&
+    !Number.isNaN(optimalDiv) &&
+    Number.isFinite(optimalDiv)
+      ? Math.round(optimalDiv! * 100)
+      : null;
   return (
     <AnimatePresence>
       {active && stop !== null && (
@@ -73,21 +83,25 @@ export default function Sidebar({
                 </InfoBox>
               )}
               {timeInfo !== null && (
-                <InfoBox title="Medianrestid till arbetet" color="#6c8e79">
-                  <h1>{timeInfo.medianTravelTimeFormatted}</h1>
+                <InfoBox
+                  title={
+                    timeInfo.medianTravelTime !== 0
+                      ? 'Medianrestid till arbetet'
+                      : 'Medianrestid till arbetet kunde inte visas för den här hållplatsen.'
+                  }
+                  color="#6c8e79"
+                >
+                  {timeInfo.medianTravelTime !== 0 && (
+                    <h1>{timeInfo.medianTravelTimeFormatted}</h1>
+                  )}
                 </InfoBox>
               )}
-              {timeInfo !== null && (
+              {timeInfo !== null && optimalPercent !== null && (
                 <InfoBox
                   title="Hur många har den här som bästa hållplats på väg till arbetet?"
                   color="#8E6C88"
                 >
-                  <h1>
-                    {Math.round(
-                      (timeInfo.optimalNrPeople / timeInfo.totalNrPeople) * 100
-                    )}
-                    %
-                  </h1>
+                  <h1>{optimalPercent}%</h1>
                 </InfoBox>
               )}
               <InfoBox title="Debug" color="#eee" textColor="black">
