@@ -207,10 +207,8 @@ function Map({
 
           if (info.length < 1) {
             onHideDetailInfo();
-            map.current!.getCanvas().style.cursor = '';
           } else {
             onShowDetailInfo(info);
-            map.current!.getCanvas().style.cursor = 'help';
           }
         });
 
