@@ -30,15 +30,20 @@ class E2EE {
         StopId startStop{};
         StopId endStop{};
         TripId tripId{};
-        //double startDistTravelled{};
-        //double endDistTravelled{};
         int32_t startIdx{};
         int32_t endIdx{};
+        int32_t stopSequence{};
         int32_t passengerCount = 1;
-        
+
         ShapeSegment() = default;
-        ShapeSegment(StopId start_stop, StopId end_stop, TripId trip_id, int32_t start_idx, int32_t end_idx)
-            : startStop(start_stop), endStop(end_stop), tripId(trip_id), startIdx(start_idx), endIdx(end_idx) {}
+        ShapeSegment(StopId start_stop, StopId end_stop, TripId trip_id, int32_t start_idx, int32_t end_idx,
+                     int32_t stop_sequence)
+            : startStop(start_stop),
+              endStop(end_stop),
+              tripId(trip_id),
+              startIdx(start_idx),
+              stopSequence(stop_sequence),
+              endIdx(end_idx) {}
     };
 
     struct Options;

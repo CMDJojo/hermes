@@ -91,7 +91,7 @@ std::vector<Edge> StopNode::getEdges(Timetable& timetable, const RoutingOptions&
         if (trip.stopSequence >= stopTimes.size()) continue;
 
         // Get next stop
-        StopTime next = stopTimes[trip.stopSequence];
+        StopTime& next = stopTimes[trip.stopSequence];
 
         outgoingEdges.emplace_back(&timetable.stops[next.stopId],
                                    next.arrivalTime - options.startTime - state->travelTime, trip.tripId,
@@ -100,7 +100,7 @@ std::vector<Edge> StopNode::getEdges(Timetable& timetable, const RoutingOptions&
 
     int32_t timeAtStop = options.startTime + state->travelTime + getMinTransferTime(options, this);
 
-    auto compare = [](StopTime a, StopTime b) { return a.departureTime < b.departureTime; };
+    auto compare = [](const StopTime& a, const StopTime& b) { return a.departureTime < b.departureTime; };
     auto iter = std::lower_bound(stop->begin(), stop->end(), StopTime(timeAtStop), compare);
 
     for (; iter < stop->end() && iter->departureTime < timeAtStop + options.searchTime; iter++) {
@@ -119,7 +119,7 @@ std::vector<Edge> StopNode::getEdges(Timetable& timetable, const RoutingOptions&
         if (iter->stopSequence >= trip->stopTimes.size()) continue;
 
         // Get next stop
-        StopTime next = trip->stopTimes[iter->stopSequence];
+        StopTime& next = trip->stopTimes[iter->stopSequence];
 
         // Skip departure if the next stop is the stop that you came from
         if (!state->incoming.empty() && next.stopId == state->incoming[0].from->stopId) continue;
@@ -174,14 +174,14 @@ Timetable::Timetable(const std::string& gtfsPath) {
         StopId stopId = stopAreaFromStopPoint(st.stopId);
         StopTime stopTime{st.tripId, st.arrivalTime.timestamp, st.departureTime.timestamp,
                           stopId,    st.stopSequence,          st.shapeDistTravelled,
-                          st.stopId};
+                          st.stopId, st.stopHeadsign};
 
         stopTimes[stopId].push_back(stopTime);
         trips[st.tripId].stopTimes.push_back(stopTime);
     }
 
     for (auto& [stopId, st] : stopTimes) {
-        auto compare = [](StopTime a, StopTime b) { return a.departureTime < b.departureTime; };
+        auto compare = [](const StopTime& a, const StopTime& b) { return a.departureTime < b.departureTime; };
         std::sort(st.begin(), st.end(), compare);
     }
 

@@ -127,9 +127,9 @@ int main() {
           return a.timeAtGoal < b.timeAtGoal;
         });
 
-        uint32_t medianTravelTime = 0;
+        int32_t medianTravelTime = 0;
         std::string medianTravelTimeFormatted = {};
-        if (stats.allPaths.size() != 0) {
+        if (!stats.allPaths.empty()) {
             medianTravelTime = stats.allPaths[stats.allPaths.size() / 2].timeAtGoal;
             medianTravelTimeFormatted = routing::prettyTravelTime(medianTravelTime);
         }
@@ -160,6 +160,7 @@ int main() {
                                gtfs::Route& route = timetable.routes[trip.routeId];
 
                                properties["routeName"] = route.routeShortName;
+                               properties["headsign"] = trip.stopTimes.at(segment.stopSequence - 1).stopHeadsign;
 
                                auto& line = lineRegister.lines[trip.routeId];
                                properties["fgColor"] = line.fgColor;
