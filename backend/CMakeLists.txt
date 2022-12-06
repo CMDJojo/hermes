@@ -8,6 +8,8 @@ add_subdirectory(webServer)
 find_package(Boost REQUIRED COMPONENTS filesystem coroutine json)
 include_directories(${Boost_INCLUDE_DIR})
 
+include_directories(include)
+
 add_executable(backend main.cpp
         csvLoader.h csvLoaderTypes.h
         gtfsTypes.h gtfsTypes.cpp
