@@ -1,11 +1,11 @@
 import { useState } from 'react';
 
-import Map from './components/Map';
+import Map, { DetailInfoData } from './components/Map';
 import Sidebar from './components/Sidebar';
 import Menu from './components/Menu';
+import DetailInfo from './components/DetailInfo';
 import API, { TravelDistance, TravelTime } from './api';
 import Stop from './types/Stop';
-import ActiveArea from './types/ActiveArea';
 
 import './styles/App.css';
 
@@ -14,7 +14,10 @@ function App() {
   const [activeStop, setActiveStop] = useState<Stop | null>(null);
   const [distanceInfo, setDistanceInfo] = useState<TravelDistance | null>(null);
   const [timeInfo, setTimeInfo] = useState<TravelTime | null>(null);
-  const [activeArea, setActiveArea] = useState<ActiveArea | null>(null);
+  const [detailInfoData, setDetailedInfo] = useState<DetailInfoData | null>(
+    null
+  );
+
   const [showMenu, setShowMenu] = useState<boolean>(true);
 
   const api = new API();
@@ -42,12 +45,14 @@ function App() {
   return (
     <div className="App">
       <Menu show={showMenu} onHide={() => setShowMenu(false)} />
+      <DetailInfo info={detailInfoData} />
       <Map
         activeStop={activeStop}
-        activeArea={activeArea}
         activeLines={timeInfo?.geojson ?? null}
         onClick={updateSidebar}
         onInteract={() => setShowMenu(false)}
+        onShowDetailInfo={setDetailedInfo}
+        onHideDetailInfo={() => setDetailedInfo(null)}
       />
       <Sidebar
         onClose={closeSidebar}
