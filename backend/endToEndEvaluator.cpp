@@ -76,7 +76,7 @@ static void extractShape(Timetable& tt, StopId to, std::unordered_map<StopId, St
                     endIdx = (int32_t)std::distance(shape.begin(), endBound);
                 }
 
-                segments[segmentId] = {from.from->stopId, currentId, from.tripId, startIdx, endIdx};
+                segments[segmentId] = {from.from->stopId, currentId, from.tripId, startIdx, endIdx, from.stopSequence};
             }
         } else {
             SegmentId segmentId = from.from->stopId ^ (to << 32);
@@ -85,7 +85,7 @@ static void extractShape(Timetable& tt, StopId to, std::unordered_map<StopId, St
             if (iter != segments.end()) {
                 iter->second.passengerCount++;
             } else {
-                segments[segmentId] = {from.from->stopId, currentId, WALK, 0, 0};
+                segments[segmentId] = {from.from->stopId, currentId, WALK, 0, 0, 0};
             }
         }
 

@@ -23,18 +23,20 @@ class StopTime {
     int32_t stopSequence;
     double shapeDistTravelled;
     StopId stopPoint;
+    std::string stopHeadsign;
 
     explicit StopTime(int32_t departureTime) : departureTime(departureTime) {}
 
     StopTime(TripId tripId, int32_t arrivalTime, int32_t departureTime, StopId stopId, int32_t stopSequence,
-             double shapeDistTravelled, StopId stopPoint)
+             double shapeDistTravelled, StopId stopPoint, std::string stopHeadsign)
         : tripId(tripId),
           arrivalTime(arrivalTime),
           departureTime(departureTime),
           stopId(stopId),
           stopSequence(stopSequence),
           shapeDistTravelled(shapeDistTravelled),
-          stopPoint(stopPoint) {}
+          stopPoint(stopPoint),
+          stopHeadsign(std::move(stopHeadsign)) {}
 };
 
 class StopNode;
