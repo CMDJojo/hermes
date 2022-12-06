@@ -265,12 +265,12 @@ int main() {
             {"medianTravelTime", medianTravelTime},
             {"medianTravelTimeFormatted", medianTravelTimeFormatted},
             {"travelTimeStats", {
-                    {{"name", "< 15 min"}, {"people", time15min}},
-                    {{"name", "15-30 min"}, {"people", time30min - time15min}},
-                    {{"name", "30-60 min"}, {"people", time60min - time30min}},
-                    {{"name", "60-90 min"}, {"people", time90min - time60min}},
-                    {{"name", "90-180 min"}, {"people", time180min - time90min}},
-                    {{"name", "> 180 min"}, {"people", timeMore}}
+                    {{"name", "< 15 min"}, {"data", time15min}},
+                    {{"name", "15-30 min"}, {"data", time30min - time15min}},
+                    {{"name", "30-60 min"}, {"data", time60min - time30min}},
+                    {{"name", "60-90 min"}, {"data", time90min - time60min}},
+                    {{"name", "90-180 min"}, {"data", time180min - time90min}},
+                    {{"name", "> 180 min"}, {"data", timeMore}}
                 }
             },
             {"geojson", geojson},
@@ -301,10 +301,10 @@ int main() {
                                        {"medianDistance", 0},
                                        {"distanceStats",
                                                {{{"name", "< 1 km"}, {"distance", 0}},
-                                                            {{"name", "1-5 km"}, {"distance", 0}},
-                                                            {{"name", "5-10 km"}, {"distance", 0}},
-                                                            {{"name", "10-50 km"}, {"distance", 0}},
-                                                            {{"name", "> 50 km"}, {"distance", 0}}}}};
+                                                            {{"name", "1-5 km"}, {"data", 0}},
+                                                            {{"name", "5-10 km"}, {"data", 0}},
+                                                            {{"name", "10-50 km"}, {"data", 0}},
+                                                            {{"name", "> 50 km"}, {"data", 0}}}}};
 
             return serialize(info);
         }
@@ -325,11 +325,11 @@ int main() {
                                    {"peopleRange", nearbyPeopleRangeMeter},
                                    {"medianDistance", pseudoMedian},
                                    {"distanceStats",
-                                    {{{"name", "< 1 km"}, {"distance", distance1km}},
-                                     {{"name", "1-5 km"}, {"distance", distance5km - distance1km}},
-                                     {{"name", "5-10 km"}, {"distance", distance10km - distance5km}},
-                                     {{"name", "10-50 km"}, {"distance", distance50km - distance10km}},
-                                     {{"name", "> 50 km"}, {"distance", distanceMore}}}}};
+                                    {{{"name", "< 1 km"}, {"data", distance1km}},
+                                     {{"name", "1-5 km"}, {"data", distance5km - distance1km}},
+                                     {{"name", "5-10 km"}, {"data", distance10km - distance5km}},
+                                     {{"name", "10-50 km"}, {"data", distance50km - distance10km}},
+                                     {{"name", "> 50 km"}, {"data", distanceMore}}}}};
 
         return serialize(info);
     });

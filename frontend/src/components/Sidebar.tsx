@@ -8,12 +8,35 @@ import {
   Tooltip,
   XAxis,
   YAxis,
+  TooltipProps,
 } from 'recharts';
+import {
+  ValueType,
+  NameType,
+} from 'recharts/src/component/DefaultTooltipContent';
 import Stop from '../types/Stop';
 import '../styles/Sidebar.css';
 import InfoBox from './InfoBox';
 import { TravelDistance, TravelTime } from '../api';
 import formatDistance from '../utils/format';
+
+function TooltipContent({
+  active,
+  payload,
+  label,
+}: TooltipProps<ValueType, NameType>) {
+  const { data } = payload?.[0]?.payload || { data: null };
+  return (
+    <div className="TooltipContent">
+      {active && payload!.length > 0 && (
+        <>
+          <p className="label">{label}</p>
+          <p className="data">Personer: {data}</p>
+        </>
+      )}
+    </div>
+  );
+}
 
 interface SidebarProps {
   active: boolean;
@@ -74,11 +97,14 @@ export default function Sidebar({
                       data={distanceInfo?.distanceStats}
                     >
                       <XAxis dataKey="name" />
-                      <Tooltip formatter={value => [value, 'personer']} />
+                      <Tooltip
+                        cursor={{ fill: 'rgba(0,0,0,0.15)' }}
+                        content={<TooltipContent />}
+                      />
                       <YAxis
                         width={40} /* tickFormatter={tick => `${tick}%`} */
                       />
-                      <Bar dataKey="distance" fill="#284867" />
+                      <Bar dataKey="data" fill="#284867" />
                     </BarChart>
                   </ResponsiveContainer>
                 </InfoBox>
@@ -93,9 +119,12 @@ export default function Sidebar({
                       data={timeInfo?.travelTimeStats}
                     >
                       <XAxis dataKey="name" />
-                      <Tooltip formatter={value => [value, 'personer']} />
+                      <Tooltip
+                        cursor={{ fill: 'rgba(0,0,0,0.15)' }}
+                        content={<TooltipContent />}
+                      />
                       <YAxis width={40} />
-                      <Bar dataKey="people" fill="#314137" />
+                      <Bar dataKey="data" fill="#314137" />
                     </BarChart>
                   </ResponsiveContainer>
                 </InfoBox>

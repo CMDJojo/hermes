@@ -69,3 +69,29 @@
     padding: 1rem;
     flex-direction: column;
 }
+
+.Sidebar .TooltipContent {
+    background: #FFFFFF;
+    border-radius: 0.5rem;
+    color:#15141A;
+    margin: 0;
+    padding: 0.5rem 0.75rem 0.5rem 0.75rem;
+    height: 4.75rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+}
+
+.Sidebar .TooltipContent p {
+    margin: 0;
+    padding: 0;
+}
+
+.Sidebar .TooltipContent p.label {
+    font-size: 1.2rem;
+    font-weight: 500;
+}
+
+.Sidebar .TooltipContent p.data {
+    font-size: 1rem;
+}
