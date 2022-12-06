@@ -9,7 +9,6 @@ import {
 
 import API, { Stops } from '../api';
 import Stop from '../types/Stop';
-import ActiveArea from '../types/ActiveArea';
 
 import '../styles/Map.css';
 
@@ -19,12 +18,21 @@ const EMPTY_GEOJSON_DATA: FeatureCollection = {
 };
 
 export type StopEvent = Feature<Geometry, GeoJsonProperties>;
+
+export type DetailInfoData = {
+  routeName: string;
+  passengerCount: number;
+  bgColor: string;
+  fgColor: string;
+}[];
+
 export interface MapProps {
   activeStop: Stop | null;
-  activeArea: ActiveArea | null;
   activeLines: FeatureCollection | null;
   onClick: (event: Stop) => void;
   onInteract: () => void;
+  onShowDetailInfo: (info: DetailInfoData) => void;
+  onHideDetailInfo: () => void;
 }
 
 // stackoverflow.com/questions/37599561/drawing-a-circle-with-the-radius-in-miles-meters-with-mapbox-gl-js
@@ -73,7 +81,14 @@ const createGeoJSONCircle = (
   };
 };
 
-function Map({ onClick, activeStop, activeLines, onInteract }: MapProps) {
+function Map({
+  onClick,
+  activeStop,
+  activeLines,
+  onInteract,
+  onShowDetailInfo,
+  onHideDetailInfo,
+}: MapProps) {
   const mapContainer = useRef<string | HTMLElement | null>(null);
   const api = useRef<API | null>(null);
   const map = useRef<MapLibreGL | null>(null);
@@ -177,10 +192,25 @@ function Map({ onClick, activeStop, activeLines, onInteract }: MapProps) {
           },
         });
 
-        /* map.current?.on('mousemove', e => {
-          const features = map.current?.queryRenderedFeatures(e.point, {layers: ['activeLines']});
-          console.log(features?.map(f => f.properties.routeName));
-        }); */
+        map.current?.on('mousemove', e => {
+          const features = map.current?.queryRenderedFeatures(e.point, {
+            layers: ['activeLines'],
+          });
+
+          const info =
+            features?.map(f => ({
+              routeName: f.properties.routeName as string,
+              passengerCount: f.properties.passengerCount as number,
+              bgColor: f.properties.bgColor as string,
+              fgColor: f.properties.fgColor as string,
+            })) ?? [];
+
+          if (info.length < 1) {
+            onHideDetailInfo();
+          } else {
+            onShowDetailInfo(info);
+          }
+        });
 
         // Change the cursor to a pointer when the mouse is over the places layer.
         map.current?.on('mouseenter', 'stops', () => {

@@ -1,0 +1,31 @@
+.DetailInfo {
+    display: flex;
+    flex-direction: column;
+    top: 1.2rem;
+    left: 1.2rem;
+    gap: 0.5rem;
+    position: absolute;
+    z-index: 1000;
+    box-sizing: border-box;
+    padding: 0.5rem;
+    background:#fefefe;
+    box-shadow: 0 3px 3px rgba(0, 0, 0, 0.351);
+    box-sizing: border-box;
+    border-radius: 0.5rem;
+}
+
+
+.DetailInfo .Route .icon {
+    height: 2.5rem;
+    width: 2.5rem;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.DetailInfo .Route {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
