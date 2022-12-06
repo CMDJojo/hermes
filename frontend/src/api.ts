@@ -26,6 +26,7 @@ export type GraphIncomingEntry = {
 export type TravelTime = {
   totalNrPeople: number;
   optimalNrPeople: number;
+  travelTimeStats: { name: string; people: number }[];
   medianTravelTime: number;
   medianTravelTimeFormatted: string;
   geojson: FeatureCollection;
