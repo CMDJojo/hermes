@@ -18,7 +18,7 @@ add_executable(backend main.cpp
         boardingStatistics.cpp boardingStatistics.h
         endToEndEvaluator.cpp endToEndEvaluator.h
         binarySearch.cpp binarySearch.h
-        prox.cpp prox.h)
+        prox.cpp prox.h supermarket.h supermarket.cpp)
 
 add_executable(server server.cpp
         csvLoader.h csvLoaderTypes.h

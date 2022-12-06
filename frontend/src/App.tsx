@@ -6,6 +6,7 @@ import Menu from './components/Menu';
 import DetailInfo from './components/DetailInfo';
 import API, { TravelDistance, TravelTime } from './api';
 import Stop from './types/Stop';
+import Controls from './components/Controls';
 
 import './styles/App.css';
 
@@ -46,6 +47,7 @@ function App() {
     <div className="App">
       <Menu show={showMenu} onHide={() => setShowMenu(false)} />
       <DetailInfo info={detailInfoData} />
+      <Controls show={!showMenu} />
       <Map
         activeStop={activeStop}
         activeLines={timeInfo?.geojson ?? null}

@@ -16,6 +16,14 @@ inline int32_t getMinTransferTime(const RoutingOptions& options, StopNode* stop)
 }
 
 std::unordered_map<StopId, StopState> Timetable::dijkstra(StopId start, const RoutingOptions& options) {
+    std::unordered_map<StopId, std::vector<DestinationEdge>> destinationEdges;
+    return dijkstra(start, options, destinationEdges);
+}
+
+std::unordered_map<StopId, StopState> Timetable::dijkstra(
+    StopId start, const RoutingOptions& options,
+    std::unordered_map<StopId, std::vector<DestinationEdge>>& destinationEdges) {
+    
     std::unordered_map<StopId, StopState> state;
 
     auto compare = [](std::pair<StopNode*, StopState*> a, std::pair<StopNode*, StopState*> b) {
@@ -36,6 +44,15 @@ std::unordered_map<StopId, StopState> Timetable::dijkstra(StopId start, const Ro
         // Ignore duplicates
         if (nodeState->visited && !nodeState->revisit) continue;
         nodeState->visited = true;
+        
+        for (DestinationEdge& edge : destinationEdges[node->stopId]) {
+            int32_t newTravelTime = nodeState->travelTime + edge.cost;
+            StopState& toState = state[edge.destinationId];
+            if (newTravelTime < toState.travelTime) {
+                toState.travelTime = newTravelTime;
+                toState.incoming = {IncomingTrip(node, WALK, 0)};
+            }
+        }
 
         for (Edge& edge : node->getEdges(*this, options, nodeState)) {
             int32_t newTravelTime = nodeState->travelTime + edge.cost;
