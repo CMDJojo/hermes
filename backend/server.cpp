@@ -36,7 +36,7 @@ std::function<BinarySearch::ComparatorResult(const E2EE::PersonPath&)> construct
 int main() {
     std::cout << "Loading timetable" << std::endl;
     routing::Timetable timetable("data/raw");
-    const routing::RoutingOptions routingOptions(10 * 60 * 60, 20221118, 60 * 60);
+    const routing::RoutingOptions routingOptions(10 * 60 * 60, 20221206, 60 * 60);
     
     LineRegister lineRegister("data/raw/lineregister.json");
 
@@ -131,27 +131,36 @@ int main() {
 
         E2EE::Stats stats = endToEndEval.evaluatePerformanceAtPoint(stopCoord.toMeter(), options);
 
-        // Find the mean travel time (I assume that it is okay to mutate the stats object?)
-        std::sort(stats.allPaths.begin(), stats.allPaths.end(), [](auto const &a, auto const &b) {
-          return a.timeAtGoal < b.timeAtGoal;
-        });
-
-        size_t time15min = BinarySearch::binarySearch<E2EE::PersonPath>(stats.allPaths, constructClosurePersonPath(60 * 15)).index;
-        size_t time30min = BinarySearch::binarySearch<E2EE::PersonPath>(stats.allPaths, constructClosurePersonPath(60 * 30), time15min, stats.allPaths.size()).index;
-        size_t time60min = BinarySearch::binarySearch<E2EE::PersonPath>(stats.allPaths, constructClosurePersonPath(60 * 60), time30min, stats.allPaths.size()).index;
-        size_t time90min = BinarySearch::binarySearch<E2EE::PersonPath>(stats.allPaths, constructClosurePersonPath(60 * 90), time60min, stats.allPaths.size()).index;
-        size_t time180min = BinarySearch::binarySearch<E2EE::PersonPath>(stats.allPaths, constructClosurePersonPath(180 * 90), time90min, stats.allPaths.size()).index;
-        size_t timeMore = stats.allPaths.size() - time180min;
-
         uint32_t medianTravelTime = 0;
         std::string medianTravelTimeFormatted = {};
+        size_t time15min = 0;
+        size_t time30min = 0;
+        size_t time60min = 0;
+        size_t time90min = 0;
+        size_t time180min = 0;
+        size_t timeMore = 0;
+
         if (stats.allPaths.size() != 0) {
+            // Find the mean travel time (I assume that it is okay to mutate the stats object?)
+            std::sort(stats.allPaths.begin(), stats.allPaths.end(), [](auto const &a, auto const &b) {
+                return a.timeAtGoal < b.timeAtGoal;
+            });
+
+            time15min = BinarySearch::binarySearch<E2EE::PersonPath>(stats.allPaths, constructClosurePersonPath(60 * 15)).index;
+            time30min = BinarySearch::binarySearch<E2EE::PersonPath>(stats.allPaths, constructClosurePersonPath(60 * 30), time15min, stats.allPaths.size()).index;
+            time60min = BinarySearch::binarySearch<E2EE::PersonPath>(stats.allPaths, constructClosurePersonPath(60 * 60), time30min, stats.allPaths.size()).index;
+            time90min = BinarySearch::binarySearch<E2EE::PersonPath>(stats.allPaths, constructClosurePersonPath(60 * 90), time60min, stats.allPaths.size()).index;
+            time180min = BinarySearch::binarySearch<E2EE::PersonPath>(stats.allPaths, constructClosurePersonPath(180 * 90), time90min, stats.allPaths.size()).index;
+            timeMore = stats.allPaths.size() - time180min;
+
             medianTravelTime = stats.allPaths[stats.allPaths.size() / 2].timeAtGoal;
             medianTravelTimeFormatted = routing::prettyTravelTime(medianTravelTime);
         }
 
-
-        // FIXME: Distribution of travel time
+//        if (stats.allPaths.size() != 0) {
+//            medianTravelTime = stats.allPaths[stats.allPaths.size() / 2].timeAtGoal;
+//            medianTravelTimeFormatted = routing::prettyTravelTime(medianTravelTime);
+//        }
 
         std::vector<boost::json::value> segments;
         std::transform(stats.shapeSegments.begin(), stats.shapeSegments.end(), std::back_inserter(segments),
