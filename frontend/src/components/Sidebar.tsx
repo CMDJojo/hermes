@@ -49,12 +49,13 @@ export default function Sidebar({
           exit={{ translateX: '120%', translateY: 50 }}
           className="Sidebar"
         >
-          <button onClick={onClose} type="button" className="closeButton">
-            <MdClose className="closeIcon" size="1.5rem" />
-          </button>
-          <div className="content">
+          <div className="header">
             <h1 className="heading">{stop.name}</h1>
-
+            <button onClick={onClose} type="button" className="closeButton">
+              <MdClose className="closeIcon" size="1.5rem" />
+            </button>
+          </div>
+          <div className="content">
             {distanceInfo !== null && (
               <span className="nrPeople">
                 Här finns data för {distanceInfo?.nrPeople} personer inom en{' '}

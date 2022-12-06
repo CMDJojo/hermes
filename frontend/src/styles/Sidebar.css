@@ -7,29 +7,39 @@
     box-sizing: border-box;
     width: 28rem;
     background:#fefefe;
-    box-shadow: 0 3px 3px rgba(0, 0, 0, 0.351);
+    box-shadow: 0 3px 3px rgba(0, 0, 0, 0.350);
     box-sizing: border-box;
     border-radius: 1.2rem;
     overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    justify-self: flex-start;
 }
 
-.Sidebar h1 {
+.Sidebar .header {
+    position: sticky;
+    top: 0;
+    left: 0;
+    /* margin: 0.5rem; */
+    z-index: 100;
+    background: inherit;
+}
+
+.Sidebar h1.heading {
+    /* margin-top: 0.5rem;
+    margin-bottom: 0rem; */
     line-height: normal;
+    max-width: calc(100% - 4rem);
+    margin-left: 1rem;
+    box-sizing: border-box;
 }
 
-.Sidebar .heading {
-    margin-top: 0.5rem;
-    margin-bottom: 0rem;
-    line-height: normal;
-}
-
-.Sidebar .closeButton {
+.Sidebar button.closeButton {
     position: absolute;
     top: 1rem;
     right: 1rem;
     padding:0.5rem;
-    border: none;
-    background: transparent;
+    background: inherit;
     cursor: pointer;
     width: 2rem;
     height: 2rem;
@@ -40,6 +50,7 @@
     box-sizing: border-box;
     transition: all 0.2s;
     border: solid 1px transparent;
+    z-index: 100;
 }
 
 .Sidebar .closeButton:hover {
