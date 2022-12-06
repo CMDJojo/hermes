@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <boost/json/src.hpp>
+#include <boost/url/src.hpp>
 #include <iostream>
 
 #include "binarySearch.h"
@@ -14,6 +15,8 @@ const auto address = net::ip::make_address("0.0.0.0");
 const auto port = static_cast<unsigned short>(8080);
 const auto doc_root = std::make_shared<std::string>(".");
 const auto threads = 4;
+
+using namespace boost::urls;
 
 std::function<BinarySearch::ComparatorResult(const Person&)> constructClosurePerson(float distance) {
     return [=](const Person& p) {
@@ -33,10 +36,42 @@ std::function<BinarySearch::ComparatorResult(const E2EE::PersonPath&)> construct
     };
 }
 
+template <class Body>
+params_view getParams(const http::request<Body>& request) {
+    result<url_view> u = boost::urls::parse_origin_form(request.target());
+    if (u.has_error()) return {};
+    return u->params();
+}
+
+routing::RoutingOptions routingOptionsFromParams(const params_view& params) {
+    routing::RoutingOptions options{8 * 60 * 60, 20221216, 60 * 60};
+
+    if (params.contains("date")) {
+        options.date = std::stoi((*params.find("date")).value);
+    }
+
+    if (params.contains("time")) {
+        options.startTime = std::stoi((*params.find("time")).value);
+    }
+
+    if (params.contains("searchTime")) {
+        options.searchTime = std::stoi((*params.find("searchTime")).value);
+    }
+
+    if (params.contains("minTransferTime")) {
+        int32_t minTransferTime = std::stoi((*params.find("minTransferTime")).value);
+        if (minTransferTime >= 0) {
+            options.overrideMinTransferTime = true;
+            options.minTransferTime = minTransferTime;
+        }
+    }
+
+    return options;
+}
+
 int main() {
     std::cout << "Loading timetable" << std::endl;
     routing::Timetable timetable("data/raw");
-    const routing::RoutingOptions routingOptions(10 * 60 * 60, 20221206, 60 * 60);
     
     LineRegister lineRegister("data/raw/lineregister.json");
 
@@ -48,18 +83,25 @@ int main() {
 
     get("/", [](auto context) { return "Hello World!"; });
 
-    get((std::regex) "/graphFrom/(\\d+)", [&timetable, &routingOptions](auto context) {
+    get((std::regex) "/graphFrom/(\\d+).*", [&timetable](auto context) {
         context.response.set(http::field::content_type, "application/json");
         context.response.set(http::field::access_control_allow_origin, "*");
+        
+        auto params = getParams(context.request);
+        auto routingOptions = routingOptionsFromParams(params);
+        
         auto match = std::stoull(context.match[1].str());
         auto result = timetable.dijkstra(match, routingOptions);
         return routingCacher::toJson(result);
     });
 
-    get((std::regex) "/travelTimeLayer/(\\d+)", [&timetable, &routingOptions](auto context) {
+    get((std::regex) "/travelTimeLayer/(\\d+).*", [&timetable](auto context) {
         context.response.set(http::field::content_type, "application/geo+json");
         context.response.set(http::field::access_control_allow_origin, "*");
 
+        auto params = getParams(context.request);
+        auto routingOptions = routingOptionsFromParams(params);
+        
         auto match = std::stoull(context.match[1].str());
         auto graph = timetable.dijkstra(match, routingOptions);
 
@@ -118,13 +160,16 @@ int main() {
     });
 
 
-    get((std::regex) "/travelTime/(\\d+)", [&](auto context) {
+    get((std::regex) "/travelTime/(\\d+).*", [&](auto context) {
         context.response.set(http::field::access_control_allow_origin, "*");
         context.response.set(http::field::content_type, "application/json");
 
         auto stopId = std::stoull(context.match[1].str());
         auto& stop = timetable.stops[stopId];
         auto stopCoord = DMSCoord(stop.lat, stop.lon);
+        
+        auto params = getParams(context.request);
+        auto routingOptions = routingOptionsFromParams(params);
 
         E2EE::Options options = {stopId,        0.6, 500, 500, 0, E2EE::COLLECT_ALL & (~E2EE::COLLECT_EXTRACTED_PATHS),
                                  routingOptions};
@@ -289,14 +334,12 @@ int main() {
         return serialize(info);
     });
 
-    get((std::regex) ".*", [](auto context) { return "Not found"; });
+    get((std::regex) ".*", [](auto context) {
+        context.response.result(http::status::not_found);
+        return "Not found";
+    });
 
     std::cout << "Starting server at " << address << ":" << port << std::endl;
 
     startServer(address, port, doc_root, threads);
 }
-
-
-
-
-
