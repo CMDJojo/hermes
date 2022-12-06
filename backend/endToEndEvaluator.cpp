@@ -79,7 +79,7 @@ static void extractShape(Timetable& tt, StopId to, std::unordered_map<StopId, St
                 segments[segmentId] = {from.from->stopId, currentId, from.tripId, startIdx, endIdx, from.stopSequence};
             }
         } else {
-            SegmentId segmentId = from.from->stopId ^ (to << 32);
+            SegmentId segmentId = from.from->stopId ^ (currentId << 32);
 
             auto iter = segments.find(segmentId);
             if (iter != segments.end()) {
