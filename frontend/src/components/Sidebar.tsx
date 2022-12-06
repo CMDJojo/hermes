@@ -47,7 +47,7 @@ export default function Sidebar({
 
             {distanceInfo !== null && (
               <span className="nrPeople">
-                Här bor {distanceInfo?.nrPeople} personer inom en{' '}
+                Här finns data för {distanceInfo?.nrPeople} personer inom en{' '}
                 {formatDistance(distanceInfo?.peopleRange)} radie.
               </span>
             )}
@@ -63,8 +63,10 @@ export default function Sidebar({
                       data={distanceInfo?.distanceStats}
                     >
                       <XAxis dataKey="name" />
-                      <Tooltip />
-                      <YAxis /* tickFormatter={tick => `${tick}%`} */ />
+                      <Tooltip formatter={value => [value, 'personer']} />
+                      <YAxis
+                        width={40} /* tickFormatter={tick => `${tick}%`} */
+                      />
                       <Bar dataKey="distance" fill="#284867" />
                     </BarChart>
                   </ResponsiveContainer>
