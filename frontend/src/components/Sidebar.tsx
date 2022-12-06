@@ -83,17 +83,20 @@ export default function Sidebar({
                 </InfoBox>
               )}
               {timeInfo !== null && (
-                <InfoBox
-                  title={
-                    timeInfo.medianTravelTime !== 0
-                      ? 'Medianrestid till arbetet'
-                      : 'Medianrestid till arbetet kunde inte visas för den här hållplatsen.'
-                  }
-                  color="#6c8e79"
-                >
-                  {timeInfo.medianTravelTime !== 0 && (
-                    <h1>{timeInfo.medianTravelTimeFormatted}</h1>
-                  )}
+                <InfoBox color="#6c8e79" title="Medianrestid till arbete">
+                  <h1>{timeInfo?.medianTravelTimeFormatted}</h1>
+                  <ResponsiveContainer width="100%" height={150}>
+                    <BarChart
+                      width={800}
+                      height={300}
+                      data={timeInfo?.travelTimeStats}
+                    >
+                      <XAxis dataKey="name" />
+                      <Tooltip formatter={value => [value, 'personer']} />
+                      <YAxis width={40} />
+                      <Bar dataKey="people" fill="#314137" />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </InfoBox>
               )}
               {timeInfo !== null && optimalPercent !== null && (

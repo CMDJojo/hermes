@@ -15,11 +15,20 @@ const auto port = static_cast<unsigned short>(8080);
 const auto doc_root = std::make_shared<std::string>(".");
 const auto threads = 4;
 
-std::function<BinarySearch::ComparatorResult(const Person&)> constructClosure(float distance) {
+std::function<BinarySearch::ComparatorResult(const Person&)> constructClosurePerson(float distance) {
     return [=](const Person& p) {
         auto d = p.distanceToWork();
         if (d > distance) return BinarySearch::ComparatorResult::LT;
         if (d < distance) return BinarySearch::ComparatorResult::GT;
+        return BinarySearch::ComparatorResult::EQ;
+    };
+}
+
+std::function<BinarySearch::ComparatorResult(const E2EE::PersonPath&)> constructClosurePersonPath(float time) {
+    return [=](const E2EE::PersonPath& p) {
+        auto t = p.timeAtGoal;
+        if (t > time) return BinarySearch::ComparatorResult::LT;
+        if (t < time) return BinarySearch::ComparatorResult::GT;
         return BinarySearch::ComparatorResult::EQ;
     };
 }
@@ -127,9 +136,16 @@ int main() {
           return a.timeAtGoal < b.timeAtGoal;
         });
 
-        int32_t medianTravelTime = 0;
+        size_t time15min = BinarySearch::binarySearch<E2EE::PersonPath>(stats.allPaths, constructClosurePersonPath(60 * 15)).index;
+        size_t time30min = BinarySearch::binarySearch<E2EE::PersonPath>(stats.allPaths, constructClosurePersonPath(60 * 30), time15min, stats.allPaths.size()).index;
+        size_t time60min = BinarySearch::binarySearch<E2EE::PersonPath>(stats.allPaths, constructClosurePersonPath(60 * 60), time30min, stats.allPaths.size()).index;
+        size_t time90min = BinarySearch::binarySearch<E2EE::PersonPath>(stats.allPaths, constructClosurePersonPath(60 * 90), time60min, stats.allPaths.size()).index;
+        size_t time180min = BinarySearch::binarySearch<E2EE::PersonPath>(stats.allPaths, constructClosurePersonPath(180 * 90), time90min, stats.allPaths.size()).index;
+        size_t timeMore = stats.allPaths.size() - time180min;
+
+        uint32_t medianTravelTime = 0;
         std::string medianTravelTimeFormatted = {};
-        if (!stats.allPaths.empty()) {
+        if (stats.allPaths.size() != 0) {
             medianTravelTime = stats.allPaths[stats.allPaths.size() / 2].timeAtGoal;
             medianTravelTimeFormatted = routing::prettyTravelTime(medianTravelTime);
         }
@@ -194,6 +210,15 @@ int main() {
             {"optimalNrPeople", stats.hasThisAsOptimal},
             {"medianTravelTime", medianTravelTime},
             {"medianTravelTimeFormatted", medianTravelTimeFormatted},
+            {"travelTimeStats", {
+                    {{"name", "< 15 min"}, {"people", time15min}},
+                    {{"name", "15-30 min"}, {"people", time30min - time15min}},
+                    {{"name", "30-60 min"}, {"people", time60min - time30min}},
+                    {{"name", "60-90 min"}, {"people", time90min - time60min}},
+                    {{"name", "90-180 min"}, {"people", time180min - time90min}},
+                    {{"name", "> 180 min"}, {"people", timeMore}}
+                }
+            },
             {"geojson", geojson},
         };
 
@@ -236,10 +261,10 @@ int main() {
 
         uint32_t pseudoMedian =  static_cast<uint32_t>(peopleNearby.at(peopleNearby.size() / 2).distanceToWork());
 
-        size_t distance1km = BinarySearch::binarySearch<Person>(peopleNearby, constructClosure(1000)).index;
-        size_t distance5km = BinarySearch::binarySearch<Person>(peopleNearby, constructClosure(5000), distance1km, peopleNearby.size()).index;
-        size_t distance10km = BinarySearch::binarySearch<Person>(peopleNearby, constructClosure(10000), distance5km, peopleNearby.size()).index;
-        size_t distance50km = BinarySearch::binarySearch<Person>(peopleNearby, constructClosure(50000), distance10km, peopleNearby.size()).index;
+        size_t distance1km = BinarySearch::binarySearch<Person>(peopleNearby, constructClosurePerson(1000)).index;
+        size_t distance5km = BinarySearch::binarySearch<Person>(peopleNearby, constructClosurePerson(5000), distance1km, peopleNearby.size()).index;
+        size_t distance10km = BinarySearch::binarySearch<Person>(peopleNearby, constructClosurePerson(10000), distance5km, peopleNearby.size()).index;
+        size_t distance50km = BinarySearch::binarySearch<Person>(peopleNearby, constructClosurePerson(50000), distance10km, peopleNearby.size()).index;
         size_t distanceMore = peopleNearby.size() - distance50km;
 
         boost::json::value info = {{"nrPeople", peopleNearby.size()},

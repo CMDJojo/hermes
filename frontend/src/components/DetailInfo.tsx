@@ -11,9 +11,16 @@ interface RouteProps {
   routeName: string;
   bgColor: string;
   fgColor: string;
+  headsign: string;
 }
 
-function Route({ passengerCount, routeName, bgColor, fgColor }: RouteProps) {
+function Route({
+  passengerCount,
+  routeName,
+  bgColor,
+  fgColor,
+  headsign,
+}: RouteProps) {
   return (
     <div className="Route">
       <div
@@ -22,7 +29,8 @@ function Route({ passengerCount, routeName, bgColor, fgColor }: RouteProps) {
       >
         {routeName}
       </div>
-      {passengerCount} personer
+      <div className="headsign">{headsign}</div>
+      <div>{passengerCount} personer</div>
     </div>
   );
 }
@@ -39,6 +47,7 @@ export default function DetailInfo({ info }: DetailInfoProps) {
       routeName={r.routeName}
       bgColor={r.bgColor}
       fgColor={r.fgColor}
+      headsign={r.headsign}
     />
   ));
 
