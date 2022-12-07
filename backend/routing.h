@@ -92,6 +92,7 @@ struct RoutingOptions {
 
 struct StopState {
     int32_t travelTime = std::numeric_limits<int32_t>::max();
+    int32_t initialWaitTime = 0;
     std::vector<IncomingTrip> incoming;
     bool visited = false;
     bool revisit = false;
@@ -129,7 +130,7 @@ class StopNode {
     StopNode(StopId stop_id, std::string name, float lat, float lon)
         : stopId(stop_id), name(std::move(name)), lat(lat), lon(lon) {}
 
-    std::vector<Edge> getEdges(Timetable& timetable, const RoutingOptions& options, StopState* state);
+    std::vector<Edge> getEdges(Timetable& timetable, const RoutingOptions& options, StopState* state, bool startNode);
 
    private:
     void handleTransferType1(Timetable& timetable, const RoutingOptions& options, const StopState* state,
