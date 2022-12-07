@@ -9,6 +9,7 @@
 
 #include "gtfsTypes.h"
 #include "people.h"
+#undef max
 
 namespace routing {
 
