@@ -107,7 +107,7 @@ function Map({
 
     map.current = new MapLibreGL({
       container: mapContainer.current as string | HTMLElement,
-      style: `https://api.maptiler.com/maps/96d26bc0-1881-4822-a296-78dd505fb161/style.json?key=${
+      style: `https://api.maptiler.com/maps/54858462-e4f8-4c80-897c-8723e988f391/style.json?key=${
         import.meta.env.VITE_MAPTILER_API_KEY
       }`,
       center: [view.lon, view.lat],
@@ -127,6 +127,7 @@ function Map({
             layout: {
               'icon-image': 'custom-marker',
               'icon-allow-overlap': false,
+              'icon-anchor': 'bottom',
               'icon-size': 0.5,
               'text-field': ['get', 'name'],
               'text-font': ['Inter', 'Arial Unicode MS Bold'],
