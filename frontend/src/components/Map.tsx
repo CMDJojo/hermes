@@ -212,7 +212,11 @@ function Map({
         });
 
         map.current?.on('mousemove', e => {
-          const features = map.current?.queryRenderedFeatures(e.point, {
+          const bbox = [
+            [e.point.x - 16, e.point.y - 16],
+            [e.point.x + 16, e.point.y + 16],
+          ] as [[number, number], [number, number]];
+          const features = map.current?.queryRenderedFeatures(bbox, {
             layers: ['activeLines', 'activeWalks'],
           });
 
