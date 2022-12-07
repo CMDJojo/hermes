@@ -172,21 +172,6 @@ function Map({
         });
 
         map.current?.addLayer({
-          id: 'relativeTravelTime',
-          type: 'symbol',
-          minzoom: 12,
-          source: 'relativeTravelTime',
-          layout: {
-            'text-field': ['get', 'travelTime'],
-            'text-font': ['Inter', 'Arial Unicode MS Bold'],
-            'text-offset': [0, 2.8],
-            'icon-allow-overlap': true,
-            'text-anchor': 'top',
-            'text-size': 10,
-          },
-        });
-
-        map.current?.addLayer({
           id: 'activeWalks',
           type: 'line',
           source: 'activeWalks',
@@ -209,6 +194,21 @@ function Map({
           paint: {
             'line-color': ['get', 'bgColor'],
             'line-width': ['*', 3, ['ln', ['get', 'passengerCount']]],
+          },
+        });
+
+        map.current?.addLayer({
+          id: 'relativeTravelTime',
+          type: 'symbol',
+          minzoom: 12,
+          source: 'relativeTravelTime',
+          layout: {
+            'text-field': ['get', 'travelTime'],
+            'text-font': ['Inter', 'Arial Unicode MS Bold'],
+            'text-offset': [0, 2.8],
+            'icon-allow-overlap': true,
+            'text-anchor': 'top',
+            'text-size': 10,
           },
         });
 

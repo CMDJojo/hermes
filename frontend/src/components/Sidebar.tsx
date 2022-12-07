@@ -133,7 +133,7 @@ export default function Sidebar({
                   <h1>{optimalPercent}</h1>
                   Andra personer åker från...
                   {timeInfo.peopleTravelFrom
-                    .filter(stat => stat.stopID != stop.id)
+                    .filter(stat => stat.stopID != stop.id.toString())
                     .map(stat => (
                       <div key={stat.stopID}>
                         <strong>{stat.stopName}</strong>
