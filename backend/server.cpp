@@ -272,9 +272,13 @@ int main() {
         boost::json::value linesGeoJson = {{"type", "FeatureCollection"}, {"features", segments}};
         boost::json::value walksGeoJson = {{"type", "FeatureCollection"}, {"features", walks}};
 
+        std::vector<std::pair<StopId, int>> sortedPpl;
+        for (auto& a : stats.optimalFirstStop) sortedPpl.emplace_back(a);
+        std::sort(sortedPpl.begin(), sortedPpl.end(), [](auto a, auto b) {return a.second > b.second;});
+
         std::vector<boost::json::value> pplTravelFrom;
 
-        std::transform(stats.optimalFirstStop.begin(), stats.optimalFirstStop.end(), std::back_inserter(pplTravelFrom),
+        std::transform(sortedPpl.begin(), sortedPpl.end(), std::back_inserter(pplTravelFrom),
                        [&timetable](auto pair) {
                            auto [stopID, numberOfPeople] = pair;
                            auto name = timetable.stops.contains(stopID) ? (timetable.stops.at(stopID).name)
@@ -284,6 +288,7 @@ int main() {
                                                      {"stopName", stopID == routing::WALK ? "Walk" : name},
                                                      {"numberOfPersons", numberOfPeople}};
                        });
+
 
         boost::json::value response = {
             {"totalNrPeople", stats.personsWithinRange},
