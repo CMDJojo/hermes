@@ -225,10 +225,12 @@ function Map({
               headsign: f.properties.headsign as string,
             })) ?? [];
 
+          const infoUnique = [...new Set(info)];
+
           if (info.length < 1) {
             onHideDetailInfo();
           } else {
-            onShowDetailInfo(info);
+            onShowDetailInfo(infoUnique);
           }
         });
 
