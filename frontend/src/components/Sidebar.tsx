@@ -111,7 +111,10 @@ export default function Sidebar({
                 </InfoBox>
               )}
               {timeInfo !== null && (
-                <InfoBox color="#6c8e79" title="Medianrestid till arbete">
+                <InfoBox
+                  color="#6c8e79"
+                  title="Medianrestid till arbete via kollektivtrafik"
+                >
                   <h1>{timeInfo?.medianTravelTimeFormatted}</h1>
                   <ResponsiveContainer width="100%" height={150}>
                     <BarChart
@@ -130,6 +133,20 @@ export default function Sidebar({
                   </ResponsiveContainer>
                 </InfoBox>
               )}
+              {timeInfo !== null && (
+                <InfoBox
+                  title="Hur många kan åka kollektivt till sin arbetsplats?"
+                  color="#28536B"
+                >
+                  <h1 style={{ display: 'inline' }}>
+                    {formatPercent(
+                      timeInfo.peopleCanGoByBus,
+                      timeInfo.totalNrPeople
+                    )}
+                  </h1>
+                </InfoBox>
+              )}
+
               {timeInfo !== null && optimalPercent !== null && (
                 <InfoBox
                   title="Hur många har den här som bästa hållplats på väg till arbetet?"
