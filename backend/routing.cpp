@@ -23,7 +23,6 @@ std::unordered_map<StopId, StopState> Timetable::dijkstra(StopId start, const Ro
 std::unordered_map<StopId, StopState> Timetable::dijkstra(
     StopId start, const RoutingOptions& options,
     std::unordered_map<StopId, std::vector<DestinationEdge>>& destinationEdges) {
-    
     std::unordered_map<StopId, StopState> state;
 
     auto compare = [](std::pair<StopNode*, StopState*> a, std::pair<StopNode*, StopState*> b) {
@@ -54,7 +53,7 @@ std::unordered_map<StopId, StopState> Timetable::dijkstra(
             }
         }
 
-        for (Edge& edge : node->getEdges(*this, options, nodeState)) {
+        for (Edge& edge : node->getEdges(*this, options, nodeState, start == node->stopId)) {
             int32_t newTravelTime = nodeState->travelTime + edge.cost;
             StopState& toState = state[edge.to->stopId];
 
@@ -62,6 +61,13 @@ std::unordered_map<StopId, StopState> Timetable::dijkstra(
                 toState.travelTime = newTravelTime;
                 toState.incoming.insert(toState.incoming.begin(), IncomingTrip(node, edge.tripId, edge.stopSequence));
                 queue.emplace(edge.to, &toState);
+
+                if (start == node->stopId && edge.tripId != WALK) {
+                    toState.initialWaitTime =
+                        trips[edge.tripId].stopTimes[edge.stopSequence - 2].departureTime - options.startTime;
+                } else {
+                    toState.initialWaitTime = nodeState->initialWaitTime;
+                }
 
             } else if (newTravelTime <= toState.travelTime + getMinTransferTime(options, edge.to)) {
                 // Alternative trips that may result in fewer transfers and therefore faster travel time.
@@ -86,7 +92,8 @@ std::unordered_map<StopId, StopState> Timetable::dijkstra(
     return state;
 }
 
-std::vector<Edge> StopNode::getEdges(Timetable& timetable, const RoutingOptions& options, StopState* state) {
+std::vector<Edge> StopNode::getEdges(Timetable& timetable, const RoutingOptions& options, StopState* state,
+                                     bool startNode) {
     auto stop = &timetable.stopTimes[stopId];
 
     std::vector<Edge> outgoingEdges;
@@ -115,7 +122,8 @@ std::vector<Edge> StopNode::getEdges(Timetable& timetable, const RoutingOptions&
                                    next.stopSequence);
     }
 
-    int32_t timeAtStop = options.startTime + state->travelTime + getMinTransferTime(options, this);
+    int32_t timeAtStop =
+        startNode ? options.startTime : options.startTime + state->travelTime + getMinTransferTime(options, this);
 
     auto compare = [](const StopTime& a, const StopTime& b) { return a.departureTime < b.departureTime; };
     auto iter = std::lower_bound(stop->begin(), stop->end(), StopTime(timeAtStop), compare);

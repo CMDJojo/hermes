@@ -117,7 +117,7 @@ int main() {
                                {"properties",
                                 {
                                     {"name", stop.name},
-                                    {"travelTime", routing::prettyTravelTime(state.travelTime)},
+                                    {"travelTime", routing::prettyTravelTime(state.travelTime - state.initialWaitTime)},
                                 }},
                                {"geometry",
                                 {
