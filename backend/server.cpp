@@ -294,6 +294,7 @@ int main() {
             {"totalNrPeople", stats.personsWithinRange},
             {"peopleCanGoByBus", stats.personsCanGoWithBus},
             {"optimalNrPeople", stats.hasThisAsOptimal},
+            {"interestingStopID", std::to_string(stats.interestingStop)},
             {"medianTravelTime", medianTravelTime},
             {"medianTravelTimeFormatted", medianTravelTimeFormatted},
             {"peopleTravelFrom", pplTravelFrom},

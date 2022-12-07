@@ -134,6 +134,8 @@ E2EE::Stats E2EE::evaluatePerformanceAtPoint(MeterCoord origin, E2EE::Options op
         ret.tt = &timetable;
     }
 
+    ret.interestingStop = opts.interestingStop;
+
     // find all persons within the specified search range
     std::vector<Person> allPersons = people.personsInCircle(origin, opts.searchRange);
     ret.personsWithinRange = allPersons.size();

@@ -57,6 +57,7 @@ class E2EE {
         std::map<uint64_t, int, std::less<>> distNumberOfStartStops;
         std::map<uint64_t, int, std::less<>> distNumberOfEndStops;
         uint64_t hasThisAsOptimal = 0;
+        uint64_t interestingStop = 0;
         std::unordered_map<StopId, int> optimalFirstStop;
 
         std::vector<PersonPath> allPaths;

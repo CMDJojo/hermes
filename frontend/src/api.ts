@@ -27,8 +27,13 @@ export type TravelTime = {
   totalNrPeople: number;
   peopleCanGoByBus: number;
   optimalNrPeople: number;
+  interestingStopID: string;
   travelTimeStats: { name: string; people: number }[];
-  peopleTravelFrom: { stopID: StopID; stopName: string; numberOfPersons: number }[];
+  peopleTravelFrom: {
+    stopID: StopID;
+    stopName: string;
+    numberOfPersons: number;
+  }[];
   medianTravelTime: number;
   medianTravelTimeFormatted: string;
   lines: FeatureCollection;

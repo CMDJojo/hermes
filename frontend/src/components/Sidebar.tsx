@@ -57,8 +57,13 @@ export default function Sidebar({
       ? null
       : formatPercent(timeInfo.optimalNrPeople, timeInfo.peopleCanGoByBus);
 
-  // @ts-ignore
-  // @ts-ignore
+  const filteredPeopleFrom =
+    timeInfo != null
+      ? timeInfo.peopleTravelFrom.filter(
+          stat => stat.stopID != timeInfo.interestingStopID
+        )
+      : null;
+
   return (
     <AnimatePresence>
       {active && stop !== null && (
@@ -131,19 +136,22 @@ export default function Sidebar({
                   color="#8E6C88"
                 >
                   <h1>{optimalPercent}</h1>
-                  Andra personer åker från...
-                  {timeInfo.peopleTravelFrom
-                    .filter(stat => stat.stopID != stop.id)
-                    .map(stat => (
-                      <div key={stat.stopID}>
-                        <strong>{stat.stopName}</strong>
-                        {': '}
-                        {formatPercent(
-                          stat.numberOfPersons,
-                          timeInfo.peopleCanGoByBus
-                        )}
+                  {filteredPeopleFrom !== null &&
+                    filteredPeopleFrom.length > 0 && (
+                      <div>
+                        Andra personer åker från...
+                        {filteredPeopleFrom.map(stat => (
+                          <div key={stat.stopID}>
+                            <strong>{stat.stopName}</strong>
+                            {': '}
+                            {formatPercent(
+                              stat.numberOfPersons,
+                              timeInfo.peopleCanGoByBus
+                            )}
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
                 </InfoBox>
               )}
               <InfoBox title="Debug" color="#eee" textColor="black">
