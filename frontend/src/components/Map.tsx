@@ -258,7 +258,7 @@ function Map({
     });
   });
 
-  // Update the map when when a stop is selected or deselected
+  // Update the map when a stop is selected or deselected
   useEffect(() => {
     if (map.current === null) return;
     if (!mapLoaded) return;
@@ -293,17 +293,13 @@ function Map({
       createGeoJSONCircle([activeStop.lon, activeStop.lat], 0.5)
     );
 
-    if (activeLines !== null) {
-      (map.current?.getSource('activeLines') as GeoJSONSource).setData(
-        activeLines
-      );
-    }
-    console.log(activeWalks);
-    if (activeWalks !== null) {
-      (map.current?.getSource('activeWalks') as GeoJSONSource).setData(
-        activeWalks
-      );
-    }
+    (map.current?.getSource('activeLines') as GeoJSONSource).setData(
+      activeLines ?? EMPTY_GEOJSON_DATA
+    );
+
+    (map.current?.getSource('activeWalks') as GeoJSONSource).setData(
+      activeWalks ?? EMPTY_GEOJSON_DATA
+    );
 
     api.current?.relativeTravelTime(activeStop.id.toString()).then(data => {
       (map.current?.getSource('relativeTravelTime') as GeoJSONSource).setData(
