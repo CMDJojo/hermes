@@ -132,7 +132,7 @@ std::vector<Edge> StopNode::getEdges(Timetable& timetable, const RoutingOptions&
         Trip* trip = &timetable.trips[iter->tripId];
 
         // Max one departure per line and direction
-        uint64_t direction = trip->routeId + trip->directionId;
+        uint64_t direction = trip->shapeId;
         if (outgoingDirections.contains(direction)) continue;
 
         // Check date for departure
