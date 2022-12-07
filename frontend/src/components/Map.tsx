@@ -30,6 +30,7 @@ export type DetailInfoData = {
 export interface MapProps {
   activeStop: Stop | null;
   activeLines: FeatureCollection | null;
+  activeWalks: FeatureCollection | null;
   onClick: (event: Stop) => void;
   onInteract: () => void;
   onShowDetailInfo: (info: DetailInfoData) => void;
@@ -86,6 +87,7 @@ function Map({
   onClick,
   activeStop,
   activeLines,
+  activeWalks,
   onInteract,
   onShowDetailInfo,
   onHideDetailInfo,
@@ -153,6 +155,11 @@ function Map({
           data: EMPTY_GEOJSON_DATA,
         });
 
+        map.current?.addSource('activeWalks', {
+          type: 'geojson',
+          data: EMPTY_GEOJSON_DATA,
+        });
+
         map.current?.addLayer({
           id: 'activeCircle',
           type: 'fill',
@@ -180,6 +187,18 @@ function Map({
         });
 
         map.current?.addLayer({
+          id: 'activeWalks',
+          type: 'line',
+          source: 'activeWalks',
+          paint: {
+            'line-color': '#000000',
+            'line-opacity': 0.5,
+            'line-width': ['*', 3, ['ln', ['get', 'passengerCount']]],
+            'line-dasharray': [1, 1 / 2],
+          },
+        });
+
+        map.current?.addLayer({
           id: 'activeLines',
           type: 'line',
           source: 'activeLines',
@@ -195,7 +214,7 @@ function Map({
 
         map.current?.on('mousemove', e => {
           const features = map.current?.queryRenderedFeatures(e.point, {
-            layers: ['activeLines'],
+            layers: ['activeLines', 'activeWalks'],
           });
 
           const info =
@@ -260,6 +279,10 @@ function Map({
       (map.current?.getSource('activeLines') as GeoJSONSource).setData(
         EMPTY_GEOJSON_DATA
       );
+
+      (map.current?.getSource('activeWalks') as GeoJSONSource).setData(
+          EMPTY_GEOJSON_DATA
+      );
       return;
     }
 
@@ -275,13 +298,19 @@ function Map({
         activeLines
       );
     }
+    console.log(activeWalks);
+    if (activeWalks !== null) {
+      (map.current?.getSource('activeWalks') as GeoJSONSource).setData(
+        activeWalks
+      );
+    }
 
     api.current?.relativeTravelTime(activeStop.id.toString()).then(data => {
       (map.current?.getSource('relativeTravelTime') as GeoJSONSource).setData(
         data as FeatureCollection
       );
     });
-  }, [activeStop, activeLines, api, map, mapLoaded]);
+  }, [activeStop, activeLines, activeWalks, api, map, mapLoaded]);
 
   return (
     <div className="Map">

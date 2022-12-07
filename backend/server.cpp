@@ -214,56 +214,63 @@ int main() {
         //        }
 
         std::vector<boost::json::value> segments;
-        std::transform(stats.shapeSegments.begin(), stats.shapeSegments.end(), std::back_inserter(segments),
-                       [&timetable, &lineRegister](const auto& entry) {
-                           const E2EE::ShapeSegment& segment = entry.second;
+        std::vector<boost::json::value> walks;
 
-                           std::vector<boost::json::value> lineString;
+        for (const auto& [segmentId, segment] : stats.shapeSegments) {
+            std::vector<boost::json::value> lineString;
 
-                           boost::json::object properties = {
-                               {"from", segment.startStop},
-                               {"to", segment.endStop},
-                               {"passengerCount", segment.passengerCount},
-                           };
+            boost::json::object properties = {
+                {"from", segment.startStop},
+                {"to", segment.endStop},
+                {"passengerCount", segment.passengerCount},
+            };
 
-                           if (segment.tripId == routing::WALK) {
-                               auto& start = timetable.stops[segment.startStop];
-                               auto& end = timetable.stops[segment.endStop];
-                               lineString = {{start.lon, start.lat}, {end.lon, end.lat}};
-                               properties["walk"] = true;
-                           } else {
-                               routing::Trip& trip = timetable.trips[segment.tripId];
-                               gtfs::Route& route = timetable.routes[trip.routeId];
+            if (segment.tripId == routing::WALK) {
+                auto& start = timetable.stops[segment.startStop];
+                auto& end = timetable.stops[segment.endStop];
+                lineString = {{start.lon, start.lat}, {end.lon, end.lat}};
 
-                               properties["routeName"] = route.routeShortName;
-                               properties["headsign"] = trip.stopTimes.at(segment.stopSequence - 1).stopHeadsign;
+                boost::json::value feature = {
+                    {"type", "Feature"},
+                    {"properties", properties},
+                    {"geometry", {{"type", "LineString"}, {"coordinates", lineString}}},
+                };
 
-                               auto& line = lineRegister.lines[trip.routeId];
-                               properties["fgColor"] = line.fgColor;
-                               properties["bgColor"] = line.bgColor;
+                walks.push_back(feature);
+            } else {
+                routing::Trip& trip = timetable.trips[segment.tripId];
+                gtfs::Route& route = timetable.routes[trip.routeId];
 
-                               auto& shape = timetable.shapes[trip.shapeId];
+                properties["routeName"] = route.routeShortName;
+                properties["headsign"] = trip.stopTimes.at(segment.stopSequence - 1).stopHeadsign;
 
-                               auto start = &shape[segment.startIdx];
-                               auto end = &shape[segment.endIdx];
+                auto& line = lineRegister.lines[trip.routeId];
+                properties["fgColor"] = line.fgColor;
+                properties["bgColor"] = line.bgColor;
 
-                               std::transform(
-                                   start, end, std::back_inserter(lineString),
-                                   [](const std::pair<double, DMSCoord>& point) {
-                                       boost::json::value coord = {point.second.longitude, point.second.latitude};
-                                       return coord;
-                                   });
-                           }
+                auto& shape = timetable.shapes[trip.shapeId];
 
-                           boost::json::value feature = {
-                               {"type", "Feature"},
-                               {"properties", properties},
-                               {"geometry", {{"type", "LineString"}, {"coordinates", lineString}}},
-                           };
-                           return feature;
-                       });
+                auto start = &shape[segment.startIdx];
+                auto end = &shape[segment.endIdx];
 
-        boost::json::value geojson = {{"type", "FeatureCollection"}, {"features", segments}};
+                std::transform(start, end, std::back_inserter(lineString),
+                               [](const std::pair<double, DMSCoord>& point) {
+                                   boost::json::value coord = {point.second.longitude, point.second.latitude};
+                                   return coord;
+                               });
+
+                boost::json::value feature = {
+                    {"type", "Feature"},
+                    {"properties", properties},
+                    {"geometry", {{"type", "LineString"}, {"coordinates", lineString}}},
+                };
+
+                segments.push_back(feature);
+            }
+        }
+
+        boost::json::value linesGeoJson = {{"type", "FeatureCollection"}, {"features", segments}};
+        boost::json::value walksGeoJson = {{"type", "FeatureCollection"}, {"features", walks}};
 
         std::vector<boost::json::value> pplTravelFrom;
 
@@ -292,7 +299,8 @@ int main() {
               {{"name", "60-90 min"}, {"data", time90min - time60min}},
               {{"name", "90-180 min"}, {"data", time180min - time90min}},
               {{"name", "> 180 min"}, {"data", timeMore}}}},
-            {"geojson", geojson},
+            {"lines", linesGeoJson},
+            {"walks", walksGeoJson},
         };
 
         return serialize(response);

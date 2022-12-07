@@ -50,7 +50,8 @@ function App() {
       <Controls show={!showMenu} />
       <Map
         activeStop={activeStop}
-        activeLines={timeInfo?.geojson ?? null}
+        activeLines={timeInfo?.lines ?? null}
+        activeWalks={timeInfo?.walks ?? null}
         onClick={updateSidebar}
         onInteract={() => setShowMenu(false)}
         onShowDetailInfo={setDetailedInfo}

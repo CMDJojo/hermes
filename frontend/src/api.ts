@@ -31,7 +31,8 @@ export type TravelTime = {
   peopleTravelFrom: { stopID: StopID; stopName: string; numberOfPersons: number }[];
   medianTravelTime: number;
   medianTravelTimeFormatted: string;
-  geojson: FeatureCollection;
+  lines: FeatureCollection;
+  walks: FeatureCollection;
 };
 
 export type GraphEntry = {
