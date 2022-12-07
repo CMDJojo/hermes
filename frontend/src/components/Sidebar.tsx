@@ -1,5 +1,6 @@
-import { MdClose } from 'react-icons/md';
+import { MdClose, MdExpandMore } from 'react-icons/md';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useState } from 'react';
 import {
   Bar,
   BarChart,
@@ -60,9 +61,11 @@ export default function Sidebar({
   const filteredPeopleFrom =
     timeInfo != null
       ? timeInfo.peopleTravelFrom.filter(
-          stat => stat.stopID != timeInfo.interestingStopID
+          stat => stat.stopID !== timeInfo.interestingStopID
         )
       : null;
+
+  const [displayAllStops, setDisplayAllStops] = useState(false);
 
   return (
     <AnimatePresence>
@@ -169,18 +172,36 @@ export default function Sidebar({
                   <h1>{optimalPercent}</h1>
                   {filteredPeopleFrom !== null &&
                     filteredPeopleFrom.length > 0 && (
-                      <div>
-                        Andra personer åker från...
-                        {filteredPeopleFrom.map(stat => (
-                          <div key={stat.stopID}>
-                            <strong>{stat.stopName}</strong>
-                            {': '}
-                            {formatPercent(
-                              stat.numberOfPersons,
-                              timeInfo.peopleCanGoByBus
-                            )}
-                          </div>
-                        ))}
+                      <div className="optimalStopListContainer">
+                        Andra personer åker från
+                        {filteredPeopleFrom
+                          .map(stat => (
+                            <div
+                              key={stat.stopID}
+                              className="optimalStopList"
+                              style={{ opacity: displayAllStops ? 1 : 0.6 }}
+                            >
+                              <div>
+                                <strong>{stat.stopName}</strong>
+                              </div>
+                              <div>
+                                {formatPercent(
+                                  stat.numberOfPersons,
+                                  timeInfo.peopleCanGoByBus
+                                )}
+                              </div>
+                            </div>
+                          ))
+                          .slice(0, displayAllStops ? 100 : 3)}
+                        {!displayAllStops && filteredPeopleFrom.length > 3 && (
+                          <button
+                            type="button"
+                            onClick={() => setDisplayAllStops(true)}
+                          >
+                            Visa resterande
+                            <MdExpandMore size={20} />
+                          </button>
+                        )}
                       </div>
                     )}
                 </InfoBox>

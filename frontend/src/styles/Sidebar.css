@@ -95,3 +95,29 @@
 .Sidebar .TooltipContent p.data {
     font-size: 1rem;
 }
+
+
+.Sidebar .optimalStopList {
+    display: flex;
+    justify-content: space-between;
+    transition: opacity 0.2s;
+}
+
+
+.Sidebar .optimalStopListContainer button {
+    margin-top: 0.5rem;
+    background: none;
+    box-shadow: none;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding:0;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+
+.Sidebar .optimalStopListContainer button:hover {
+    opacity: 1;
+}
