@@ -97,12 +97,20 @@ export default function Sidebar({
                       height={300}
                       data={distanceInfo?.distanceStats}
                     >
-                      <XAxis dataKey="name" />
+                      <XAxis
+                        dataKey="name"
+                        stroke="#284867"
+                        axisLine={{ stroke: '#284867' }}
+                      />
                       <Tooltip
                         cursor={{ fill: 'rgba(0,0,0,0.15)' }}
                         content={<TooltipContent />}
                       />
-                      <YAxis width={40} />
+                      <YAxis
+                        width={40}
+                        stroke="#284867"
+                        axisLine={{ stroke: '#284867' }}
+                      />
                       <Bar dataKey="data" fill="#284867" />
                     </BarChart>
                   </ResponsiveContainer>
@@ -120,12 +128,20 @@ export default function Sidebar({
                       height={300}
                       data={timeInfo?.travelTimeStats}
                     >
-                      <XAxis dataKey="name" />
+                      <XAxis
+                        dataKey="name"
+                        stroke="#314137"
+                        axisLine={{ stroke: '#314137' }}
+                      />
                       <Tooltip
                         cursor={{ fill: 'rgba(0,0,0,0.15)' }}
                         content={<TooltipContent />}
                       />
-                      <YAxis width={40} />
+                      <YAxis
+                        width={40}
+                        stroke="#314137"
+                        axisLine={{ stroke: '#314137' }}
+                      />
                       <Bar dataKey="data" fill="#314137" />
                     </BarChart>
                   </ResponsiveContainer>

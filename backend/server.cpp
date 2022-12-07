@@ -169,8 +169,8 @@ int main() {
         auto params = getParams(context.request);
         auto routingOptions = routingOptionsFromParams(params);
 
-        E2EE::Options options = {stopId,        0.6, 500, 500, 0, E2EE::COLLECT_ALL & (~E2EE::COLLECT_EXTRACTED_PATHS),
-                                 routingOptions};
+        E2EE::Options options = {
+            stopId, 0.6, 500, 500, 500, E2EE::COLLECT_ALL & (~E2EE::COLLECT_EXTRACTED_PATHS), routingOptions};
 
         E2EE::Stats stats = endToEndEval.evaluatePerformanceAtPoint(stopCoord.toMeter(), options);
 
@@ -274,21 +274,19 @@ int main() {
 
         std::vector<std::pair<StopId, int>> sortedPpl;
         for (auto& a : stats.optimalFirstStop) sortedPpl.emplace_back(a);
-        std::sort(sortedPpl.begin(), sortedPpl.end(), [](auto a, auto b) {return a.second > b.second;});
+        std::sort(sortedPpl.begin(), sortedPpl.end(), [](auto a, auto b) { return a.second > b.second; });
 
         std::vector<boost::json::value> pplTravelFrom;
 
-        std::transform(sortedPpl.begin(), sortedPpl.end(), std::back_inserter(pplTravelFrom),
-                       [&timetable](auto pair) {
-                           auto [stopID, numberOfPeople] = pair;
-                           auto name = timetable.stops.contains(stopID) ? (timetable.stops.at(stopID).name)
-                                                                        : "[ID:" + std::to_string(stopID) + "]";
+        std::transform(sortedPpl.begin(), sortedPpl.end(), std::back_inserter(pplTravelFrom), [&timetable](auto pair) {
+            auto [stopID, numberOfPeople] = pair;
+            auto name = timetable.stops.contains(stopID) ? (timetable.stops.at(stopID).name)
+                                                         : "[ID:" + std::to_string(stopID) + "]";
 
-                           return boost::json::value{{"stopID", std::to_string(stopID)},
-                                                     {"stopName", stopID == routing::WALK ? "Walk" : name},
-                                                     {"numberOfPersons", numberOfPeople}};
-                       });
-
+            return boost::json::value{{"stopID", std::to_string(stopID)},
+                                      {"stopName", stopID == routing::WALK ? "Walk" : name},
+                                      {"numberOfPersons", numberOfPeople}};
+        });
 
         boost::json::value response = {
             {"totalNrPeople", stats.personsWithinRange},

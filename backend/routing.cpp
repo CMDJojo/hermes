@@ -43,7 +43,7 @@ std::unordered_map<StopId, StopState> Timetable::dijkstra(
         // Ignore duplicates
         if (nodeState->visited && !nodeState->revisit) continue;
         nodeState->visited = true;
-        
+
         for (DestinationEdge& edge : destinationEdges[node->stopId]) {
             int32_t newTravelTime = nodeState->travelTime + edge.cost;
             StopState& toState = state[edge.destinationId];
@@ -132,7 +132,7 @@ std::vector<Edge> StopNode::getEdges(Timetable& timetable, const RoutingOptions&
         Trip* trip = &timetable.trips[iter->tripId];
 
         // Max one departure per line and direction
-        uint64_t direction = trip->routeId + trip->directionId;
+        uint64_t direction = trip->shapeId;
         if (outgoingDirections.contains(direction)) continue;
 
         // Check date for departure
@@ -258,6 +258,9 @@ Timetable::Timetable(const std::string& gtfsPath) {
 }
 
 std::string routing::prettyTravelTime(int32_t time) {
+    if (time == 0) {
+        return "";
+    }
     if (time < 60) {
         return "< 1 min";
     }
