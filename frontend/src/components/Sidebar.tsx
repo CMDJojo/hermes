@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { MdClose } from 'react-icons/md';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -6,19 +5,19 @@ import {
   BarChart,
   ResponsiveContainer,
   Tooltip,
+  TooltipProps,
   XAxis,
   YAxis,
-  TooltipProps,
 } from 'recharts';
 import {
-  ValueType,
   NameType,
+  ValueType,
 } from 'recharts/src/component/DefaultTooltipContent';
 import Stop from '../types/Stop';
 import '../styles/Sidebar.css';
 import InfoBox from './InfoBox';
 import { TravelDistance, TravelTime } from '../api';
-import formatDistance from '../utils/format';
+import { formatDistance, formatPercent } from '../utils/format';
 
 function TooltipContent({
   active,
@@ -53,16 +52,13 @@ export default function Sidebar({
   timeInfo,
   onClose,
 }: SidebarProps) {
-  const optimalDiv =
-    timeInfo !== null
-      ? timeInfo.optimalNrPeople / timeInfo.totalNrPeople
-      : null;
   const optimalPercent =
-    timeInfo !== null &&
-    !Number.isNaN(optimalDiv) &&
-    Number.isFinite(optimalDiv)
-      ? Math.round(optimalDiv! * 100)
-      : null;
+    timeInfo === null
+      ? null
+      : formatPercent(timeInfo.optimalNrPeople, timeInfo.peopleCanGoByBus);
+
+  // @ts-ignore
+  // @ts-ignore
   return (
     <AnimatePresence>
       {active && stop !== null && (
@@ -134,7 +130,20 @@ export default function Sidebar({
                   title="Hur många har den här som bästa hållplats på väg till arbetet?"
                   color="#8E6C88"
                 >
-                  <h1>{optimalPercent}%</h1>
+                  <h1>{optimalPercent}</h1>
+                  Andra personer åker från...
+                  {timeInfo.peopleTravelFrom
+                    .filter(stat => stat.stopID != stop.id)
+                    .map(stat => (
+                      <div key={stat.stopID}>
+                        <strong>{stat.stopName}</strong>
+                        {': '}
+                        {formatPercent(
+                          stat.numberOfPersons,
+                          timeInfo.peopleCanGoByBus
+                        )}
+                      </div>
+                    ))}
                 </InfoBox>
               )}
               <InfoBox title="Debug" color="#eee" textColor="black">

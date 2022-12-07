@@ -72,12 +72,11 @@ routing::RoutingOptions routingOptionsFromParams(const params_view& params) {
 int main() {
     std::cout << "Loading timetable" << std::endl;
     routing::Timetable timetable("data/raw");
-    
+
     LineRegister lineRegister("data/raw/lineregister.json");
 
     std::cout << "Loading people data" << std::endl;
     People people("data/raw/Ast_bost.txt");
-
 
     E2EE endToEndEval(people, timetable);
 
@@ -86,10 +85,10 @@ int main() {
     get((std::regex) "/graphFrom/(\\d+).*", [&timetable](auto context) {
         context.response.set(http::field::content_type, "application/json");
         context.response.set(http::field::access_control_allow_origin, "*");
-        
+
         auto params = getParams(context.request);
         auto routingOptions = routingOptionsFromParams(params);
-        
+
         auto match = std::stoull(context.match[1].str());
         auto result = timetable.dijkstra(match, routingOptions);
         return routingCacher::toJson(result);
@@ -101,7 +100,7 @@ int main() {
 
         auto params = getParams(context.request);
         auto routingOptions = routingOptionsFromParams(params);
-        
+
         auto match = std::stoull(context.match[1].str());
         auto graph = timetable.dijkstra(match, routingOptions);
 
@@ -159,7 +158,6 @@ int main() {
         return serialize(geoJson);
     });
 
-
     get((std::regex) "/travelTime/(\\d+).*", [&](auto context) {
         context.response.set(http::field::access_control_allow_origin, "*");
         context.response.set(http::field::content_type, "application/json");
@@ -167,7 +165,7 @@ int main() {
         auto stopId = std::stoull(context.match[1].str());
         auto& stop = timetable.stops[stopId];
         auto stopCoord = DMSCoord(stop.lat, stop.lon);
-        
+
         auto params = getParams(context.request);
         auto routingOptions = routingOptionsFromParams(params);
 
@@ -187,25 +185,33 @@ int main() {
 
         if (stats.allPaths.size() != 0) {
             // Find the mean travel time (I assume that it is okay to mutate the stats object?)
-            std::sort(stats.allPaths.begin(), stats.allPaths.end(), [](auto const &a, auto const &b) {
-                return a.timeAtGoal < b.timeAtGoal;
-            });
+            std::sort(stats.allPaths.begin(), stats.allPaths.end(),
+                      [](auto const& a, auto const& b) { return a.timeAtGoal < b.timeAtGoal; });
 
-            time15min = BinarySearch::binarySearch<E2EE::PersonPath>(stats.allPaths, constructClosurePersonPath(60 * 15)).index;
-            time30min = BinarySearch::binarySearch<E2EE::PersonPath>(stats.allPaths, constructClosurePersonPath(60 * 30), time15min, stats.allPaths.size()).index;
-            time60min = BinarySearch::binarySearch<E2EE::PersonPath>(stats.allPaths, constructClosurePersonPath(60 * 60), time30min, stats.allPaths.size()).index;
-            time90min = BinarySearch::binarySearch<E2EE::PersonPath>(stats.allPaths, constructClosurePersonPath(60 * 90), time60min, stats.allPaths.size()).index;
-            time180min = BinarySearch::binarySearch<E2EE::PersonPath>(stats.allPaths, constructClosurePersonPath(180 * 90), time90min, stats.allPaths.size()).index;
+            time15min =
+                BinarySearch::binarySearch<E2EE::PersonPath>(stats.allPaths, constructClosurePersonPath(60 * 15)).index;
+            time30min = BinarySearch::binarySearch<E2EE::PersonPath>(
+                            stats.allPaths, constructClosurePersonPath(60 * 30), time15min, stats.allPaths.size())
+                            .index;
+            time60min = BinarySearch::binarySearch<E2EE::PersonPath>(
+                            stats.allPaths, constructClosurePersonPath(60 * 60), time30min, stats.allPaths.size())
+                            .index;
+            time90min = BinarySearch::binarySearch<E2EE::PersonPath>(
+                            stats.allPaths, constructClosurePersonPath(60 * 90), time60min, stats.allPaths.size())
+                            .index;
+            time180min = BinarySearch::binarySearch<E2EE::PersonPath>(
+                             stats.allPaths, constructClosurePersonPath(180 * 90), time90min, stats.allPaths.size())
+                             .index;
             timeMore = stats.allPaths.size() - time180min;
 
             medianTravelTime = stats.allPaths[stats.allPaths.size() / 2].timeAtGoal;
             medianTravelTimeFormatted = routing::prettyTravelTime(medianTravelTime);
         }
 
-//        if (stats.allPaths.size() != 0) {
-//            medianTravelTime = stats.allPaths[stats.allPaths.size() / 2].timeAtGoal;
-//            medianTravelTimeFormatted = routing::prettyTravelTime(medianTravelTime);
-//        }
+        //        if (stats.allPaths.size() != 0) {
+        //            medianTravelTime = stats.allPaths[stats.allPaths.size() / 2].timeAtGoal;
+        //            medianTravelTimeFormatted = routing::prettyTravelTime(medianTravelTime);
+        //        }
 
         std::vector<boost::json::value> segments;
         std::transform(stats.shapeSegments.begin(), stats.shapeSegments.end(), std::back_inserter(segments),
@@ -259,20 +265,33 @@ int main() {
 
         boost::json::value geojson = {{"type", "FeatureCollection"}, {"features", segments}};
 
+        std::vector<boost::json::value> pplTravelFrom;
+
+        std::transform(stats.optimalFirstStop.begin(), stats.optimalFirstStop.end(), std::back_inserter(pplTravelFrom),
+                       [&timetable](auto pair) {
+                           auto [stopID, numberOfPeople] = pair;
+                           auto name = timetable.stops.contains(stopID) ? (timetable.stops.at(stopID).name)
+                                                                        : "[ID:" + std::to_string(stopID) + "]";
+
+                           return boost::json::value{{"stopID", std::to_string(stopID)},
+                                                     {"stopName", stopID == routing::WALK ? "Walk" : name},
+                                                     {"numberOfPersons", numberOfPeople}};
+                       });
+
         boost::json::value response = {
             {"totalNrPeople", stats.personsWithinRange},
+            {"peopleCanGoByBus", stats.personsCanGoWithBus},
             {"optimalNrPeople", stats.hasThisAsOptimal},
             {"medianTravelTime", medianTravelTime},
             {"medianTravelTimeFormatted", medianTravelTimeFormatted},
-            {"travelTimeStats", {
-                    {{"name", "< 15 min"}, {"data", time15min}},
-                    {{"name", "15-30 min"}, {"data", time30min - time15min}},
-                    {{"name", "30-60 min"}, {"data", time60min - time30min}},
-                    {{"name", "60-90 min"}, {"data", time90min - time60min}},
-                    {{"name", "90-180 min"}, {"data", time180min - time90min}},
-                    {{"name", "> 180 min"}, {"data", timeMore}}
-                }
-            },
+            {"peopleTravelFrom", pplTravelFrom},
+            {"travelTimeStats",
+             {{{"name", "< 15 min"}, {"data", time15min}},
+              {{"name", "15-30 min"}, {"data", time30min - time15min}},
+              {{"name", "30-60 min"}, {"data", time60min - time30min}},
+              {{"name", "60-90 min"}, {"data", time90min - time60min}},
+              {{"name", "90-180 min"}, {"data", time180min - time90min}},
+              {{"name", "> 180 min"}, {"data", timeMore}}}},
             {"geojson", geojson},
         };
 
@@ -300,25 +319,30 @@ int main() {
                                        {"peopleRange", nearbyPeopleRangeMeter},
                                        {"medianDistance", 0},
                                        {"distanceStats",
-                                               {{{"name", "< 1 km"}, {"distance", 0}},
-                                                            {{"name", "1-5 km"}, {"data", 0}},
-                                                            {{"name", "5-10 km"}, {"data", 0}},
-                                                            {{"name", "10-50 km"}, {"data", 0}},
-                                                            {{"name", "> 50 km"}, {"data", 0}}}}};
+                                        {{{"name", "< 1 km"}, {"distance", 0}},
+                                         {{"name", "1-5 km"}, {"data", 0}},
+                                         {{"name", "5-10 km"}, {"data", 0}},
+                                         {{"name", "10-50 km"}, {"data", 0}},
+                                         {{"name", "> 50 km"}, {"data", 0}}}}};
 
             return serialize(info);
         }
 
-        std::sort(peopleNearby.begin(), peopleNearby.end(), [](const Person& p1, const Person& p2) {
-           return p1.distanceToWork() < p2.distanceToWork();
-        });
+        std::sort(peopleNearby.begin(), peopleNearby.end(),
+                  [](const Person& p1, const Person& p2) { return p1.distanceToWork() < p2.distanceToWork(); });
 
-        uint32_t pseudoMedian =  static_cast<uint32_t>(peopleNearby.at(peopleNearby.size() / 2).distanceToWork());
+        uint32_t pseudoMedian = static_cast<uint32_t>(peopleNearby.at(peopleNearby.size() / 2).distanceToWork());
 
         size_t distance1km = BinarySearch::binarySearch<Person>(peopleNearby, constructClosurePerson(1000)).index;
-        size_t distance5km = BinarySearch::binarySearch<Person>(peopleNearby, constructClosurePerson(5000), distance1km, peopleNearby.size()).index;
-        size_t distance10km = BinarySearch::binarySearch<Person>(peopleNearby, constructClosurePerson(10000), distance5km, peopleNearby.size()).index;
-        size_t distance50km = BinarySearch::binarySearch<Person>(peopleNearby, constructClosurePerson(50000), distance10km, peopleNearby.size()).index;
+        size_t distance5km = BinarySearch::binarySearch<Person>(peopleNearby, constructClosurePerson(5000), distance1km,
+                                                                peopleNearby.size())
+                                 .index;
+        size_t distance10km = BinarySearch::binarySearch<Person>(peopleNearby, constructClosurePerson(10000),
+                                                                 distance5km, peopleNearby.size())
+                                  .index;
+        size_t distance50km = BinarySearch::binarySearch<Person>(peopleNearby, constructClosurePerson(50000),
+                                                                 distance10km, peopleNearby.size())
+                                  .index;
         size_t distanceMore = peopleNearby.size() - distance50km;
 
         boost::json::value info = {{"nrPeople", peopleNearby.size()},
