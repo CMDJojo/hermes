@@ -5,8 +5,27 @@
     padding: 0.5rem;
     border-radius: 0.5rem;
     box-shadow: 0 2px 2px rgba(0, 0, 0, 0.092);
+    transition: all 1s;
 }
 
+.InfoBox::before {
+    content:"";
+    position: absolute;
+    top:0;
+    bottom:0;
+    left:0;
+    right:0;
+    z-index: 10;
+    background: linear-gradient(to bottom, rgb(0 0 0/5%), rgb(0 0 0/20%));
+    border-radius: 0.5rem;
+    pointer-events: none;
+    opacity: 1;
+    transition: opacity 0.5s ease-in-out;
+}
+
+.InfoBox:hover::before {
+    opacity: 0;
+}
 
 .InfoBox h2 {
     margin-top: 0;
