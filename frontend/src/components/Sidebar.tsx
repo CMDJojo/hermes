@@ -169,7 +169,7 @@ export default function Sidebar({
                     )}
                 </InfoBox>
               )}
-              <InfoBox title="Debug" color="#eee" textColor="black">
+              <InfoBox title="Debug" color="#FA6607" textColor="black">
                 Stop ID: {stop.id}
               </InfoBox>
             </div>
