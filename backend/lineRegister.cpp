@@ -3,6 +3,7 @@
 #include <boost/json.hpp>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 
 using namespace lineRegister;
 
@@ -17,7 +18,7 @@ LineRegister::LineRegister(const std::string& lineRegisterPath) {
     std::stringstream buffer;
     buffer << file.rdbuf();
     
-    boost::json::object root = boost::json::parse(buffer.view()).as_object();
+    boost::json::object root = boost::json::parse(buffer.str()).as_object();
 
     auto line = root.at("lines").at("line").as_array();
     
