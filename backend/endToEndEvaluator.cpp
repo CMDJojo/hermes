@@ -97,10 +97,10 @@ static void extractShape(Timetable& tt, StopId to, std::unordered_map<StopId, St
 
 std::vector<StopId> extractPath(Timetable& timetable, StopId stopId, std::unordered_map<StopId, StopState>& graph) {
     if (graph.find(stopId) == graph.end()) return {};
-    
+
     StopState* current = &graph.at(stopId);
     if (current->incoming.empty()) return {};
-    
+
     TripId currentTrip = current->incoming.front().tripId;
     std::vector<StopId> legs;
     legs.push_back(stopId);
@@ -163,20 +163,13 @@ E2EE::Stats E2EE::evaluatePerformanceAtPoint(MeterCoord origin, E2EE::Options op
     std::unordered_map<StopId, std::unordered_map<StopId, StopState>> dijkstraCache;
 
     RoutingOptions& routingOptions = opts.routingOptions;
-    uint64_t unreachableTargets = 0;
-    int n = 0;
-    int i = 0;
-    int nptg = 0;
     for (auto person : filteredPersons) {
-        if (++n % 1000 == 0) std::cout << "Testing person " << n << std::endl;
-
         // all possible targets
         std::vector<std::pair<StopId, double>> possibleVTGoals =
             prox.stopsIDAndDistanceMultipliedWithAFactorWhichInFactIsJustTheWalkSpeedWithinACertainRangeInclusiveButRounded(
                 person.work_coord, opts.moveableDistance, opts.moveSpeed);
 
         if (possibleVTGoals.empty()) {
-            unreachableTargets++;
             continue;
         }
 
@@ -187,7 +180,6 @@ E2EE::Stats E2EE::evaluatePerformanceAtPoint(MeterCoord origin, E2EE::Options op
         for (auto [firstStopId, firstStopTime] : walkableStops[person.home_coord]) {
             // If no dijkstra exists for that stop, cache it
             if (!dijkstraCache.contains(firstStopId)) {
-                if (++i % 10 == 0) std::cout << "Dijkstra " << i << std::endl;
                 dijkstraCache.insert_or_assign(firstStopId, timetable.dijkstra(firstStopId, routingOptions));
             }
 
@@ -206,7 +198,10 @@ E2EE::Stats E2EE::evaluatePerformanceAtPoint(MeterCoord origin, E2EE::Options op
                     int32_t timeAtGoal = firstStopTimeInt + timeToEndStop + timeToGoalInt;
 
                     if (timeAtGoal < fastest.timeAtGoal) {
-                        fastest = {firstStopId,   firstStopTimeInt, endStopId, timeToEndStop,
+                        fastest = {firstStopId,
+                                   firstStopTimeInt,
+                                   endStopId,
+                                   timeToEndStop,
                                    timeToGoalInt,
                                    timeAtGoal,
                                    timeAtGoal + opts.routingOptions.startTime,
@@ -216,9 +211,8 @@ E2EE::Stats E2EE::evaluatePerformanceAtPoint(MeterCoord origin, E2EE::Options op
             }
         }
 
-        if (fastest.firstStop == 0) {
-            //TODO: Add this as a stat
-            std::cout << "No path to goal (" << (++nptg) << ")\n";
+        if (fastest.timeAtGoal == 60 * 60 * 24 * 5) {
+            continue;
         }
 
         if (opts.statsToCollect & COLLECT_DIST_START_STOPS) {
@@ -236,24 +230,29 @@ E2EE::Stats E2EE::evaluatePerformanceAtPoint(MeterCoord origin, E2EE::Options op
         }
 
         if (opts.statsToCollect & COLLECT_EXTRACTED_PATHS) {
-            if (fastest.firstStop != 0 && fastest.firstStop != fastest.secondStop) { //so extract doesn't crash
+            if (fastest.firstStop != 0 && fastest.firstStop != fastest.secondStop) {  // so extract doesn't crash
                 fastest.extractedPath = extractPath(timetable, fastest.secondStop, dijkstraCache.at(fastest.firstStop));
             }
         }
 
-        if (opts.statsToCollect & COLLECT_EXTRACTED_SHAPES) {
+        if (opts.statsToCollect & COLLECT_AGGREGATED_SHAPES) {
             if (fastest.firstStop != 0 && fastest.firstStop != fastest.secondStop) {
                 extractShape(timetable, fastest.secondStop, dijkstraCache.at(fastest.firstStop), ret.shapeSegments);
             }
         }
 
-        if (opts.statsToCollect & COLLECT_SIMPLIFIED_PATHS && fastest.firstStop) {
+        if (opts.statsToCollect & COLLECT_SIMPLIFIED_PATHS) {
             ret.allPaths.push_back(fastest);
+        }
+
+        if (opts.statsToCollect & COLLECT_ALL_OPTIMAL_FIRST_STOPS) {
+            ret.optimalFirstStop.emplace(fastest.firstStop, 0).first->second++;
         }
 
         if (fastest.firstStop == opts.interestingStop) {
             ret.hasThisAsOptimal++;
         }
+
         ret.personsCanGoWithBus++;
     }
     return ret;
@@ -319,8 +318,7 @@ void E2EE::test() {
     auto originCoord = DMSCoord(latitude, longitude).toMeter();
 
     RoutingOptions ropts = {60 * 60 * 10, 20221118, 30 * 60, 5 * 60};
-    E2EE::Options opts = {target, 0.6, 600, 600, 0,
-                          COLLECT_ALL & (~COLLECT_EXTRACTED_SHAPES), ropts};
+    E2EE::Options opts = {target, 0.6, 600, 600, 0, COLLECT_ALL & (~COLLECT_AGGREGATED_SHAPES), ropts};
 
     E2EE obj(people, timetable);
 
@@ -366,7 +364,8 @@ std::string E2EE::Stats::prettyString() {
     std::string is;
     StopId isid = 0;
     if (opts != nullptr && (isid = opts->interestingStop) != 0) {
-        is = tt != nullptr && tt->stops.contains(isid) ? (tt->stops.at(isid).name) : "[ID:" + std::to_string(isid) + "]";
+        is =
+            tt != nullptr && tt->stops.contains(isid) ? (tt->stops.at(isid).name) : "[ID:" + std::to_string(isid) + "]";
         s << "Interesting stop: " + is + "\n";
         s << "Search range: " << opts->searchRange << "m\n";
     } else {
@@ -432,6 +431,20 @@ std::string E2EE::Stats::prettyString() {
         for (int x = nPreSpace; x; x--) preSpace << " ";
 
         s << nStops << postSpace << ": " << preSpace.str() << nPpl << "\n";
+    }
+
+    if (!optimalFirstStop.empty()) {
+        s << "\nOut of the persons living in the range, this is the stops they walk to:" << std::endl;
+        for (auto [stopid, noppl] : optimalFirstStop) {
+            auto name = tt != nullptr && tt->stops.contains(stopid) ? (tt->stops.at(stopid).name)
+                                                                    : "[ID:" + std::to_string(stopid) + "]";
+            if (stopid == routing::WALK) {
+                s << "WALK: ";
+            } else {
+                s << name << ": ";
+            }
+            s << PWF(noppl, personsCanGoWithBus) << std::endl;
+        }
     }
 
     return s.str();

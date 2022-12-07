@@ -1,6 +1,6 @@
 #pragma once
-#include <ostream>
 #include <map>
+#include <ostream>
 
 #include "people.h"
 #include "prox.h"
@@ -57,6 +57,7 @@ class E2EE {
         std::map<uint64_t, int, std::less<>> distNumberOfStartStops;
         std::map<uint64_t, int, std::less<>> distNumberOfEndStops;
         uint64_t hasThisAsOptimal = 0;
+        std::unordered_map<StopId, int> optimalFirstStop;
 
         std::vector<PersonPath> allPaths;
 
@@ -87,12 +88,14 @@ class E2EE {
     static const uint32_t COLLECT_DIST_START_STOPS = 0b1;
     static const uint32_t COLLECT_DIST_END_STOPS = 0b10;
     static const uint32_t COLLECT_SIMPLIFIED_PATHS = 0b100;
-    static const uint32_t COLLECT_EXTRACTED_PATHS = 0b1000;
-    static const uint32_t COLLECT_EXTRACTED_SHAPES = 0b10000;
-    static const uint32_t INCLUDE_TT_OPTS_POINTERS = 0b100000;
+    static const uint32_t COLLECT_EXTRACTED_PATHS = 0b1'000;
+    static const uint32_t COLLECT_AGGREGATED_SHAPES = 0b10'000;
+    static const uint32_t COLLECT_ALL_OPTIMAL_FIRST_STOPS = 0b100'000;
+    static const uint32_t INCLUDE_TT_OPTS_POINTERS = 0b1'000'000;
 
     static const uint32_t COLLECT_ALL = COLLECT_DIST_START_STOPS | COLLECT_DIST_END_STOPS | COLLECT_SIMPLIFIED_PATHS |
-                                        COLLECT_EXTRACTED_PATHS | COLLECT_EXTRACTED_SHAPES | INCLUDE_TT_OPTS_POINTERS;
+                                        COLLECT_EXTRACTED_PATHS | COLLECT_AGGREGATED_SHAPES |
+                                        COLLECT_ALL_OPTIMAL_FIRST_STOPS | INCLUDE_TT_OPTS_POINTERS;
 
     const People& people;
     const Prox prox;
