@@ -216,7 +216,7 @@ function Map({
             layers: ['activeLines', 'activeWalks'],
           });
 
-          const info =
+          let info =
             features?.map(f => ({
               routeName: f.properties.routeName as string,
               passengerCount: f.properties.passengerCount as number,
@@ -225,12 +225,21 @@ function Map({
               headsign: f.properties.headsign as string,
             })) ?? [];
 
-          const infoUnique = [...new Set(info)];
+          info = info.filter(
+            (value, index, self) =>
+              index ===
+              self.findIndex(
+                t =>
+                  t.routeName === value.routeName &&
+                  t.passengerCount === value.passengerCount &&
+                  t.headsign === value.headsign
+              )
+          );
 
           if (info.length < 1) {
             onHideDetailInfo();
           } else {
-            onShowDetailInfo(infoUnique);
+            onShowDetailInfo(info);
           }
         });
 
