@@ -9,8 +9,8 @@
 namespace lineRegister {
 
 struct Line {
-    std::string fgColor = "#006C93";
-    std::string bgColor = "#FFFFFF";
+    std::string fgColor = "#FFFFFF";
+    std::string bgColor = "#006C93";
 
     Line() = default;
     Line(std::string fg_color, std::string bg_color) : fgColor(std::move(fg_color)), bgColor(std::move(bg_color)) {}
