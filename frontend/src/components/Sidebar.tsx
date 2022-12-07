@@ -102,9 +102,7 @@ export default function Sidebar({
                         cursor={{ fill: 'rgba(0,0,0,0.15)' }}
                         content={<TooltipContent />}
                       />
-                      <YAxis
-                        width={40} /* tickFormatter={tick => `${tick}%`} */
-                      />
+                      <YAxis width={40} />
                       <Bar dataKey="data" fill="#284867" />
                     </BarChart>
                   </ResponsiveContainer>

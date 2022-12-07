@@ -8,8 +8,6 @@ interface MenuProps {
 }
 
 export default function Menu({ show, onHide }: MenuProps) {
-  ('');
-
   return (
     <AnimatePresence>
       {show && (
@@ -28,11 +26,6 @@ export default function Menu({ show, onHide }: MenuProps) {
             Tryck på en hållplats för att få upp mer information om pendelvanor
             och kollektivtrafik-möjligheterna för personer som bor i närheten av
             hållplatsen.
-          </div>
-          <div className="buttons">
-            <button type="button" onClick={onHide}>
-              Dölj info
-            </button>
           </div>
         </motion.div>
       )}

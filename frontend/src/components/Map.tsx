@@ -32,7 +32,6 @@ export interface MapProps {
   activeLines: FeatureCollection | null;
   activeWalks: FeatureCollection | null;
   onClick: (event: Stop) => void;
-  onInteract: () => void;
   onShowDetailInfo: (info: DetailInfoData) => void;
   onHideDetailInfo: () => void;
 }
@@ -88,7 +87,6 @@ function Map({
   activeStop,
   activeLines,
   activeWalks,
-  onInteract,
   onShowDetailInfo,
   onHideDetailInfo,
 }: MapProps) {
@@ -243,8 +241,6 @@ function Map({
           map.current!.getCanvas().style.cursor = '';
         });
 
-        map.current?.on('move', onInteract);
-
         // Center the map on the coordinates of any clicked symbol from the 'symbols' layer.
         map.current?.on('click', 'stops', e => {
           const { features } = e as unknown as Stops;
@@ -282,13 +278,16 @@ function Map({
       );
 
       (map.current?.getSource('activeWalks') as GeoJSONSource).setData(
-          EMPTY_GEOJSON_DATA
+        EMPTY_GEOJSON_DATA
       );
       return;
     }
 
     // When the user selects a stop
-    map.current?.flyTo({ center: [activeStop.lon, activeStop.lat] });
+    map.current?.flyTo({
+      center: [activeStop.lon, activeStop.lat],
+      padding: { right: 300 },
+    });
 
     (map.current?.getSource('activeCircle') as GeoJSONSource).setData(
       createGeoJSONCircle([activeStop.lon, activeStop.lat], 0.5)

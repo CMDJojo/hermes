@@ -52,8 +52,10 @@ function App() {
         activeStop={activeStop}
         activeLines={timeInfo?.lines ?? null}
         activeWalks={timeInfo?.walks ?? null}
-        onClick={updateSidebar}
-        onInteract={() => setShowMenu(false)}
+        onClick={stop => {
+          updateSidebar(stop);
+          setShowMenu(false);
+        }}
         onShowDetailInfo={setDetailedInfo}
         onHideDetailInfo={() => setDetailedInfo(null)}
       />
