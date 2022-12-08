@@ -177,7 +177,7 @@ function Map({
           paint: {
             'line-color': '#000000',
             'line-opacity': 0.5,
-            'line-width': ['*', 3, ['ln', ['get', 'passengerCount']]],
+            'line-width': ['*', 3, ['ln', ['+', 1, ['get', 'passengerCount']]]],
             'line-dasharray': [1, 1 / 2],
           },
         });
@@ -192,7 +192,7 @@ function Map({
           },
           paint: {
             'line-color': ['get', 'bgColor'],
-            'line-width': ['*', 3, ['ln', ['get', 'passengerCount']]],
+            'line-width': ['*', 3, ['ln', ['+', 1, ['get', 'passengerCount']]]],
           },
         });
 
