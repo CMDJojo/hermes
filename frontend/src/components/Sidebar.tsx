@@ -169,6 +169,7 @@ export default function Sidebar({
                   </ResponsiveContainer>
                 </InfoBox>
               )}
+
               {timeInfo !== null && (
                 <InfoBox
                   title="Hur många kan åka kollektivt till sin arbetsplats?"
@@ -229,8 +230,14 @@ export default function Sidebar({
                     )}
                 </InfoBox>
               )}
+
               <InfoBox title="Debug" color="#FA6607" textColor="black">
                 Stop ID: {stop.id}
+                <br />
+                Time info: {timeInfo === null ? 'null' : 'non-null'}
+                <br />
+                Distance info null:{' '}
+                {distanceInfo === null ? 'null' : 'non-null'}
               </InfoBox>
             </div>
           </div>
