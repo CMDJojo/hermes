@@ -70,16 +70,20 @@ routing::RoutingOptions routingOptionsFromParams(const params_view& params) {
 }
 
 int main() {
-    std::cout << "Loading timetable" << std::endl;
+    std::cout << "Starting server..." << std::endl;
+    std::cout << "Loading timetable (1/6)" << std::endl;
     routing::Timetable timetable("data/raw");
 
+    std::cout << "Loading lineregister (2/6)" << std::endl;
     LineRegister lineRegister("data/raw/lineregister.json");
 
-    std::cout << "Loading people data" << std::endl;
+    std::cout << "Loading people data (3/6)" << std::endl;
     People people("data/raw/Ast_bost.txt");
 
+    std::cout << "Loading end to end evaulator (4/6)" << std::endl;
     E2EE endToEndEval(people, timetable);
 
+    std::cout << "Configuring routes (5/6)" << std::endl;
     get("/", [](auto context) { return "Hello World!"; });
 
     get((std::regex) "/graphFrom/(\\d+).*", [&timetable](auto context) {
@@ -375,7 +379,6 @@ int main() {
         return "Not found";
     });
 
-    std::cout << "Starting server at " << address << ":" << port << std::endl;
-
+    std::cout << "Starting server at " << address << ":" << port << " (6/6)" << std::endl;
     startServer(address, port, doc_root, threads);
 }
