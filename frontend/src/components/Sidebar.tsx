@@ -234,10 +234,9 @@ export default function Sidebar({
               <InfoBox title="Debug" color="#FA6607" textColor="black">
                 Stop ID: {stop.id}
                 <br />
-                Time info: {timeInfo === null ? 'null' : 'non-null'}
+                Time info: {timeInfo === null ? 'null' : 'not null'}
                 <br />
-                Distance info null:{' '}
-                {distanceInfo === null ? 'null' : 'non-null'}
+                Distance info: {distanceInfo === null ? 'null' : 'not null'}
               </InfoBox>
             </div>
           </div>
