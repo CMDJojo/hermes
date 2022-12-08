@@ -1,4 +1,4 @@
-import { MdClose, MdExpandMore } from 'react-icons/md';
+import { MdClose, MdExpandLess, MdExpandMore } from 'react-icons/md';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
 import {
@@ -66,6 +66,25 @@ export default function Sidebar({
       : null;
 
   const [displayAllStops, setDisplayAllStops] = useState(false);
+
+  const defaultStopsToShow = 3;
+
+  const toNumberLiteral = (num: number) => {
+    if (num > 10 || num < 1) return num.toString();
+    const arr = 'en,två,tre,fyra,fem,sex,sju,åtta,nio,tio'.split(',');
+    return arr[num - 1];
+  };
+
+  const expansionText: () => string = () => {
+    if (displayAllStops)
+      return `Visa endast ${toNumberLiteral(defaultStopsToShow)}`;
+
+    const overflow =
+      (filteredPeopleFrom?.length ?? defaultStopsToShow) - defaultStopsToShow;
+    return overflow > 1
+      ? `Visa ytterligare ${toNumberLiteral(overflow)} alternativa hållplatser`
+      : `Visa ytterligare en alternativ hållplats`;
+  };
 
   return (
     <AnimatePresence>
@@ -193,13 +212,17 @@ export default function Sidebar({
                             </div>
                           ))
                           .slice(0, displayAllStops ? 100 : 3)}
-                        {!displayAllStops && filteredPeopleFrom.length > 3 && (
+                        {filteredPeopleFrom.length > defaultStopsToShow && (
                           <button
                             type="button"
-                            onClick={() => setDisplayAllStops(true)}
+                            onClick={() => setDisplayAllStops(!displayAllStops)}
                           >
-                            Visa resterande
-                            <MdExpandMore size={20} />
+                            {expansionText()}{' '}
+                            {displayAllStops ? (
+                              <MdExpandLess size={20} />
+                            ) : (
+                              <MdExpandMore size={20} />
+                            )}
                           </button>
                         )}
                       </div>
