@@ -1,6 +1,6 @@
 import { MdClose, MdExpandLess, MdExpandMore } from 'react-icons/md';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Bar,
   BarChart,
@@ -69,9 +69,11 @@ export default function Sidebar({
 
   const defaultStopsToShow = 3;
 
+  useEffect(() => setDisplayAllStops(false), [timeInfo]);
+
   const toNumberLiteral = (num: number) => {
-    if (num > 10 || num < 1) return num.toString();
-    const arr = 'en,två,tre,fyra,fem,sex,sju,åtta,nio,tio'.split(',');
+    const arr = 'en,två,tre,fyra,fem,sex,sju,åtta,nio,tio,elva,tolv'.split(',');
+    if (num > arr.length || num < 1) return num.toString();
     return arr[num - 1];
   };
 
