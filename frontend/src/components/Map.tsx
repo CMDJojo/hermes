@@ -114,24 +114,26 @@ function Map({
     // Add the stops
     api.current.stops().then(stops => {
       map.current?.on('load', () => {
-        map.current?.loadImage('./pin.png', (error, image) => {
+        map.current?.loadImage('./bus.png', (error, image) => {
           if (error) throw error;
-          map.current?.addImage('custom-marker', image!);
+          map.current?.addImage('custom-marker', image!, { sdf: true });
           map.current?.addSource('stops', { type: 'geojson', data: stops });
           map.current?.addLayer({
             id: 'stops',
             type: 'symbol',
             source: 'stops',
+            paint: {
+              'icon-color': '#1565C0',
+            },
             layout: {
               'icon-image': 'custom-marker',
               'icon-allow-overlap': false,
               'icon-anchor': 'bottom',
-              'icon-size': 0.5,
+              'icon-size': 0.2,
               'text-field': ['get', 'name'],
               'text-font': ['Inter', 'Arial Unicode MS Bold'],
-              'text-offset': [0, 1],
               'text-anchor': 'top',
-              'text-size': 10,
+              'text-size': 11,
             },
           });
         });
