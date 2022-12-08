@@ -1,10 +1,10 @@
-import { useRef, useState, useEffect, LegacyRef } from 'react';
-import { Map as MapLibreGL, GeoJSONSource } from 'maplibre-gl';
+import { LegacyRef, useEffect, useRef, useState } from 'react';
+import { GeoJSONSource, Map as MapLibreGL } from 'maplibre-gl';
 import {
   Feature,
-  Geometry,
-  GeoJsonProperties,
   FeatureCollection,
+  GeoJsonProperties,
+  Geometry,
 } from 'geojson';
 
 import API, { Stops } from '../api';
@@ -229,16 +229,18 @@ function Map({
               headsign: f.properties.headsign as string,
             })) ?? [];
 
-          info = info.filter(
-            (value, index, self) =>
-              index ===
-              self.findIndex(
-                t =>
-                  t.routeName === value.routeName &&
-                  t.passengerCount === value.passengerCount &&
-                  t.headsign === value.headsign
-              )
-          );
+          info.sort(({ passengerCount: p1 }, { passengerCount: p2 }) => {
+            return p2 - p1;
+          });
+
+          const set: Set<string> = new Set();
+
+          info = info.filter(val => {
+            const elem = val.routeName + val.headsign;
+            if (set.has(elem)) return false;
+            set.add(elem);
+            return true;
+          });
 
           if (info.length < 1) {
             onHideDetailInfo();

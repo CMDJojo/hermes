@@ -36,13 +36,11 @@ function Route({
 }
 
 export default function DetailInfo({ info }: DetailInfoProps) {
-  info?.sort((a, b) => b.passengerCount - a.passengerCount);
-
   const total = info?.map(r => r.passengerCount).reduce((acc, a) => acc + a, 0);
 
   const routes = info?.map(r => (
     <Route
-      key={r.routeName + r.passengerCount + r.bgColor}
+      key={r.routeName + r.headsign}
       passengerCount={r.passengerCount}
       routeName={r.routeName}
       bgColor={r.bgColor}
