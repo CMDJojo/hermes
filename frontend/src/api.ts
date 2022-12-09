@@ -23,6 +23,13 @@ export type GraphIncomingEntry = {
   tripStr: TripID;
 };
 
+export type Timetable = {
+  name: string;
+  id: number;
+  startDate: { year: number; month: number; day: number };
+  endDate: { year: number; month: number; day: number };
+};
+
 export type TravelTime = {
   totalNrPeople: number;
   peopleCanGoByBus: number;
@@ -130,7 +137,7 @@ class API {
     return null;
   }
 
-  private async getJson<T>(url: string): Promise<T> {
+  private async getJson<T>(url: string, parse?: (value: any) => T): Promise<T> {
     return new Promise((resolve, reject) => {
       this.client({ url })
         .then(response => {
@@ -139,7 +146,11 @@ class API {
           if (error !== null) {
             reject(error);
           }
-          resolve(response.data);
+          if (parse !== undefined) {
+            resolve(parse(response.data));
+          } else {
+            resolve(response.data);
+          }
         })
         .catch(error => {
           reject(error);
@@ -165,6 +176,27 @@ class API {
 
   async travelTime(stopId: StopID): Promise<TravelTime> {
     return this.getJson<TravelTime>(`/travelTime/${stopId}`);
+  }
+
+  async timetables(): Promise<Timetable[]> {
+    return this.getJson<Timetable[]>('/timetables', data => {
+      return data.timetables.map((timetable: any) => ({
+        name: timetable.name,
+        id: timetable.id,
+        // startDate stored in a number on the form of YYYYMMDD
+        startDate: {
+          year: parseInt(timetable.startDate.toString().slice(0, 4), 10),
+          month: parseInt(timetable.startDate.toString().slice(4, 6), 10),
+          day: parseInt(timetable.startDate.toString().slice(6, 8), 10),
+        },
+        // endDate stored in a number on the form of YYYYMMDD
+        endDate: {
+          year: parseInt(timetable.endDate.toString().slice(0, 4), 10),
+          month: parseInt(timetable.endDate.toString().slice(4, 6), 10),
+          day: parseInt(timetable.endDate.toString().slice(6, 8), 10),
+        },
+      }));
+    });
   }
 }
 

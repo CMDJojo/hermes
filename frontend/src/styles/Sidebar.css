@@ -120,3 +120,21 @@
 .Sidebar .optimalStopListContainer button:hover {
     opacity: 1;
 }
+
+
+
+.Sidebar button {
+    padding: 0.5rem;
+    font-size: 1.1rem;
+    background: #eaeaea;
+    border: none;
+    border-radius: 0.2rem;
+    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.24);
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+  
+  
+.Sidebar button:hover {
+    background: #d3d3d3;
+}
