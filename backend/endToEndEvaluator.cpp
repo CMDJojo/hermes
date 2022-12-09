@@ -321,7 +321,7 @@ void E2EE::test() {
     RoutingOptions ropts = {60 * 60 * 10, 20221118, 30 * 60, 5 * 60};
     E2EE::Options opts = {target, 0.6, 600, 600, 0, COLLECT_ALL & (~COLLECT_AGGREGATED_SHAPES), ropts};
 
-    Prox prox("data/raw");
+    Prox prox(timetable);
     E2EE obj(people, timetable, prox);
 
     std::cout << "[TEST] Calculating..." << std::endl;

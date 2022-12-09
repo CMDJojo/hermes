@@ -18,6 +18,7 @@ const auto doc_root = std::make_shared<std::string>(".");
 const auto threads = 4;
 
 std::vector<std::shared_ptr<routing::Timetable>> timetables;
+std::vector<std::shared_ptr<Prox>> proxes;
 
 using namespace boost::urls;
 
@@ -72,12 +73,16 @@ routing::RoutingOptions routingOptionsFromParams(const params_view& params) {
     return options;
 }
 
-routing::Timetable& timetableFromParams(const params_view& params) {
+int32_t timetableIdFromParams(const params_view& params) {
     if (params.contains("timetable")) {
         int32_t id = std::stoi((*params.find("timetable")).value);
-        return *timetables.at(id);
+        if (id >= 0 && id < timetables.size()) return id;
     }
-    return *timetables.front();
+    return 0;
+}
+
+routing::Timetable& timetableFromParams(const params_view& params) {
+    return *timetables.at(timetableIdFromParams(params));
 }
 
 int main() {
@@ -108,7 +113,7 @@ int main() {
     People people("data/raw/Ast_bost.txt");
 
     std::cout << "Loading prox (4/6)" << std::endl;
-    Prox prox("data/raw");
+    for (const auto& timetable : timetables) proxes.emplace_back(new Prox(*timetable));
 
     std::cout << "Configuring routes (5/6)" << std::endl;
     get("/", [](auto context) { return "Hello World!"; });
@@ -220,7 +225,9 @@ int main() {
 
         auto params = getParams(context.request);
         auto routingOptions = routingOptionsFromParams(params);
-        auto& timetable = timetableFromParams(params);
+
+        int32_t timetableId = timetableIdFromParams(params);
+        auto& timetable = *timetables.at(timetableId);
 
         auto stopId = std::stoull(context.match[1].str());
         auto& stop = timetable.stops[stopId];
@@ -229,7 +236,7 @@ int main() {
         E2EE::Options options = {
             stopId, 0.6, 500, 500, 500, E2EE::COLLECT_ALL & (~E2EE::COLLECT_EXTRACTED_PATHS), routingOptions};
 
-        E2EE endToEndEval(people, timetable, prox);
+        E2EE endToEndEval(people, timetable, *proxes.at(timetableId));
         E2EE::Stats stats = endToEndEval.evaluatePerformanceAtPoint(stopCoord.toMeter(), options);
 
         uint32_t medianTravelTime = 0;

@@ -10,9 +10,11 @@
 #include "people.h"
 #include "routing.h"
 
+using StopCoord = std::pair<DMSCoord, StopId>;
+
 class Prox {
    public:
-    Prox(const std::string& stopsPath);
+    Prox(const routing::Timetable& timetable);
 
     std::vector<std::pair<StopId, double>>
     stopsIDAndDistanceMultipliedWithAFactorWhichInFactIsJustTheWalkSpeedWithinACertainRangeInclusiveButRounded(
@@ -22,14 +24,11 @@ class Prox {
     stopsIDAndDistanceMultipliedWithAFactorWhichInFactIsJustTheWalkSpeedWithinACertainRangeInclusiveButRounded(
         const DMSCoord& coord, uint32_t range, double mysticFactor) const;
 
-    std::vector<std::pair<gtfs::Stop, double>> stopsAroundDMSCoord(const DMSCoord& coord, double range) const;
+    std::vector<std::pair<StopId, double>> stopsAroundDMSCoord(const DMSCoord& coord, double range) const;
 
-    std::vector<std::pair<gtfs::Stop, double>> stopsAroundMeterCoord(const MeterCoord mCoord, double range) const;
+    std::vector<std::pair<StopId, double>> stopsAroundMeterCoord(const MeterCoord mCoord, double range) const;
 
-    std::vector<gtfs::Stop> naiveStopsAroundDMSCoord(const DMSCoord coord, double range);
-
-    std::vector<gtfs::Stop> stops;
-    std::vector<gtfs::Stop> filteredStops;
+    std::vector<StopCoord> stops;
 
    private:
     const double earthRadius = 6'371'009;
@@ -44,7 +43,5 @@ class Prox {
 
     static double meterToDegreeLon(double meters, double lat);
 
-    static bool isStopPoint(StopId stopId);
-
-    static bool stopComparator(const gtfs::Stop& lhs, const gtfs::Stop& rhs);
+    static bool stopComparator(const StopCoord& lhs, const StopCoord& rhs);
 };

@@ -8,33 +8,33 @@
 
 using namespace gtfs;
 
-Prox::Prox(const std::string& stopsPath) {
-    stops = Stop::load(stopsPath);
-    std::sort(stops.begin(), stops.end(), [](const Stop& lhs, const Stop& rhs) { return stopComparator(lhs, rhs); });
-    std::copy_if(stops.begin(), stops.end(), std::back_inserter(filteredStops),
-                 [](Stop stop) { return !isStopPoint(stop.stopId); });
+Prox::Prox(const routing::Timetable& timetable) {
+    for (auto& [stopId, stopNode] : timetable.stops) {
+        stops.emplace_back(DMSCoord(stopNode.lat, stopNode.lon), stopId);
+    }
+    std::sort(stops.begin(), stops.end(), [](const auto& a, const auto& b) { return stopComparator(a, b); });
 }
 
-std::vector<std::pair<Stop, double>> Prox::stopsAroundDMSCoord(const DMSCoord& coord, double range) const {
-    std::vector<std::pair<Stop, double>> found;
+std::vector<std::pair<StopId, double>> Prox::stopsAroundDMSCoord(const DMSCoord& coord, double range) const {
+    std::vector<std::pair<StopId, double>> found;
 
     DMSCoord lowerCoord = {coord.latitude - meterToDegreeLat(range),
                            coord.longitude - meterToDegreeLon(range, coord.latitude)};
     DMSCoord upperCoord = {coord.latitude + meterToDegreeLat(range),
                            coord.longitude + meterToDegreeLon(range, coord.latitude)};
 
-    Stop lower(0, "", lowerCoord.latitude, lowerCoord.longitude, 0, Ignore(), Ignore());
-    Stop upper(0, "", upperCoord.latitude, upperCoord.longitude, 0, Ignore(), Ignore());
+    const StopCoord lower(lowerCoord, 0);
+    const StopCoord upper(upperCoord, 0);
 
-    auto start = std::lower_bound(filteredStops.begin(), filteredStops.end(), lower, stopComparator);
-    auto end = std::next(std::lower_bound(start, filteredStops.end(), upper, stopComparator));
+    auto start = std::lower_bound(stops.begin(), stops.end(), lower, stopComparator);
+    auto end = std::next(std::lower_bound(start, stops.end(), upper, stopComparator));
 
     // const double distanceToCompare = pow(range / earthRadius, 2);
 
     while (start != end) {
-        double dist = distance(coord.latitude, start->stopLat, coord.longitude, start->stopLon);
+        double dist = distance(coord.latitude, start->first.latitude, coord.longitude, start->first.longitude);
         if (dist < range) {
-            found.emplace_back(*start, dist);
+            found.emplace_back(start->second, dist);
         }
 
         start++;
@@ -73,28 +73,14 @@ double Prox::meterToDegreeLat(double meters) { return meters / 111'320; }
 
 double Prox::meterToDegreeLon(double meters, double lat) { return meters / (111'320 * cos(toRadian(lat))); }
 
-bool Prox::isStopPoint(StopId stopId) { return stopId % 10000000000000 / 1000000000000 == 2; }
-
-bool Prox::stopComparator(const gtfs::Stop& lhs, const gtfs::Stop& rhs) {
-    if (lhs.stopLat < rhs.stopLat) return true;
-    if (rhs.stopLat < lhs.stopLat) return false;
-    return lhs.stopLon < rhs.stopLon;
+bool Prox::stopComparator(const StopCoord& lhs, const StopCoord& rhs) {
+    if (lhs.first.latitude < rhs.first.latitude) return true;
+    if (rhs.first.latitude < lhs.first.latitude) return false;
+    return lhs.first.longitude < rhs.first.longitude;
 }
 
-std::vector<std::pair<Stop, double>> Prox::stopsAroundMeterCoord(const MeterCoord mCoord, double range) const {
+std::vector<std::pair<StopId, double>> Prox::stopsAroundMeterCoord(const MeterCoord mCoord, double range) const {
     return stopsAroundDMSCoord(mCoord.toDMS(), range);
-}
-
-std::vector<Stop> Prox::naiveStopsAroundDMSCoord(const DMSCoord coord, double range) {
-    std::vector<Stop> found;
-    const double distanceToCompare = pow(range / earthRadius, 2);
-    for (auto stop : filteredStops) {
-        if (distance2(coord.latitude, stop.stopLat, coord.longitude, stop.stopLon) < distanceToCompare) {
-            found.push_back(stop);
-        }
-    }
-
-    return found;
 }
 
 std::vector<std::pair<StopId, double>>
@@ -107,18 +93,18 @@ Prox::stopsIDAndDistanceMultipliedWithAFactorWhichInFactIsJustTheWalkSpeedWithin
     DMSCoord upperCoord = {coord.latitude + meterToDegreeLat(range),
                            coord.longitude + meterToDegreeLon(range, coord.latitude)};
 
-    Stop lower(0, "", lowerCoord.latitude, lowerCoord.longitude, 0, Ignore(), Ignore());
-    Stop upper(0, "", upperCoord.latitude, upperCoord.longitude, 0, Ignore(), Ignore());
+    const StopCoord lower(lowerCoord, 0);
+    const StopCoord upper(upperCoord, 0);
 
-    auto start = std::lower_bound(filteredStops.begin(), filteredStops.end(), lower, stopComparator);
-    auto end = std::next(std::lower_bound(start, filteredStops.end(), upper, stopComparator));
+    auto start = std::lower_bound(stops.begin(), stops.end(), lower, stopComparator);
+    auto end = std::next(std::lower_bound(start, stops.end(), upper, stopComparator));
 
     // const double distanceToCompare = pow(range / earthRadius, 2);
 
     while (start != end) {
-        double dist = distance(coord.latitude, start->stopLat, coord.longitude, start->stopLon);
+        double dist = distance(coord.latitude, start->first.latitude, coord.longitude, start->first.longitude);
         if (dist < range) {
-            found.emplace_back(start->stopId, dist * mysticFactor);
+            found.emplace_back(start->second, dist * mysticFactor);
         }
 
         start++;
