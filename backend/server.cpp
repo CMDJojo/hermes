@@ -88,7 +88,7 @@ int main() {
         if (!gtfsEntry.is_directory()) continue;
 
         std::cout << "Loading timetable from " << gtfsEntry.path() << "..." << std::endl;
-        timetables.emplace_back(new routing::Timetable(gtfsEntry.path()));
+        timetables.emplace_back(new routing::Timetable(gtfsEntry.path().string()));
         std::cout << timetables.back()->name << " is loaded" << std::endl;
     }
 
@@ -142,8 +142,8 @@ int main() {
             };
             tables.push_back(table);
         }
-
-        return serialize((boost::json::value){{"timetables", tables}});
+        boost::json::value jsonResponse = {{"timetables", tables}};
+        return serialize(jsonResponse);
     });
 
     get((std::regex) "/travelTimeLayer/(\\d+).*", [](auto context) {
