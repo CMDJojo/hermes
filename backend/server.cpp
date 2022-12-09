@@ -136,7 +136,7 @@ int main() {
         context.response.set(http::field::access_control_allow_origin, "*");
 
         std::vector<boost::json::value> tables;
-        
+
         for (size_t i = 0; i < timetables.size(); i++) {
             auto& timetable = timetables[i];
             boost::json::value table = {
@@ -191,7 +191,7 @@ int main() {
     get("/stops", [](auto context) {
         context.response.set(http::field::content_type, "application/geo+json");
         context.response.set(http::field::access_control_allow_origin, "*");
-        
+
         auto params = getParams(context.request);
         auto& timetable = timetableFromParams(params);
 
@@ -391,45 +391,32 @@ int main() {
         auto nearbyPeopleRangeMeter = 500;
         auto peopleNearby = people.personsInCircle(stopCoord, nearbyPeopleRangeMeter);
 
-        // FIXME: replace the avg distance with travel time when there is a dijkstra function
-        //  that takes arbitrary coordinates and not just stops.
-
-        if (peopleNearby.empty()) {
-            boost::json::value info = {{"nrPeople", 0},
-                                       {"peopleRange", nearbyPeopleRangeMeter},
-                                       {"medianDistance", 0},
-                                       {"distanceStats",
-                                        {{{"name", "< 1 km"}, {"distance", 0}},
-                                         {{"name", "1-5 km"}, {"data", 0}},
-                                         {{"name", "5-10 km"}, {"data", 0}},
-                                         {{"name", "10-50 km"}, {"data", 0}},
-                                         {{"name", "> 50 km"}, {"data", 0}}}}};
-
-            return serialize(info);
-        }
-
         int32_t nrPeople = peopleNearby.size();
 
         peopleNearby.erase(std::remove_if(peopleNearby.begin(), peopleNearby.end(),
                                           [](const Person& p) { return p.work_coord == MeterCoord(0, 0); }),
                            peopleNearby.end());
 
-        std::sort(peopleNearby.begin(), peopleNearby.end(),
-                  [](const Person& p1, const Person& p2) { return p1.distanceToWork() < p2.distanceToWork(); });
+        size_t pseudoMedian{}, distance1km{}, distance5km{}, distance10km{}, distance50km{}, distanceMore{};
 
-        uint32_t pseudoMedian = static_cast<uint32_t>(peopleNearby.at(peopleNearby.size() / 2).distanceToWork());
+        if (!peopleNearby.empty()) {
+            std::sort(peopleNearby.begin(), peopleNearby.end(),
+                      [](const Person& p1, const Person& p2) { return p1.distanceToWork() < p2.distanceToWork(); });
 
-        size_t distance1km = BinarySearch::binarySearch<Person>(peopleNearby, constructClosurePerson(1000)).index;
-        size_t distance5km = BinarySearch::binarySearch<Person>(peopleNearby, constructClosurePerson(5000), distance1km,
-                                                                peopleNearby.size())
-                                 .index;
-        size_t distance10km = BinarySearch::binarySearch<Person>(peopleNearby, constructClosurePerson(10000),
-                                                                 distance5km, peopleNearby.size())
-                                  .index;
-        size_t distance50km = BinarySearch::binarySearch<Person>(peopleNearby, constructClosurePerson(50000),
-                                                                 distance10km, peopleNearby.size())
-                                  .index;
-        size_t distanceMore = peopleNearby.size() - distance50km;
+            pseudoMedian = peopleNearby.at(peopleNearby.size() / 2).distanceToWork();
+
+            distance1km = BinarySearch::binarySearch<Person>(peopleNearby, constructClosurePerson(1000)).index;
+            distance5km = BinarySearch::binarySearch<Person>(peopleNearby, constructClosurePerson(5000), distance1km,
+                                                             peopleNearby.size())
+                              .index;
+            distance10km = BinarySearch::binarySearch<Person>(peopleNearby, constructClosurePerson(10000), distance5km,
+                                                              peopleNearby.size())
+                               .index;
+            distance50km = BinarySearch::binarySearch<Person>(peopleNearby, constructClosurePerson(50000), distance10km,
+                                                              peopleNearby.size())
+                               .index;
+            distanceMore = peopleNearby.size() - distance50km;
+        }
 
         boost::json::value info = {{"nrPeople", nrPeople},
                                    {"peopleRange", nearbyPeopleRangeMeter},
