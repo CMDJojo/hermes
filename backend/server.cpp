@@ -401,6 +401,11 @@ int main() {
             return serialize(info);
         }
 
+        int32_t nrPeople = peopleNearby.size();
+
+        peopleNearby.erase(std::remove_if(peopleNearby.begin(), peopleNearby.end(),
+                                          [](const Person& p) { return p.work_coord == MeterCoord(0, 0); }));
+
         std::sort(peopleNearby.begin(), peopleNearby.end(),
                   [](const Person& p1, const Person& p2) { return p1.distanceToWork() < p2.distanceToWork(); });
 
@@ -418,7 +423,7 @@ int main() {
                                   .index;
         size_t distanceMore = peopleNearby.size() - distance50km;
 
-        boost::json::value info = {{"nrPeople", peopleNearby.size()},
+        boost::json::value info = {{"nrPeople", nrPeople},
                                    {"peopleRange", nearbyPeopleRangeMeter},
                                    {"medianDistance", pseudoMedian},
                                    {"distanceStats",
