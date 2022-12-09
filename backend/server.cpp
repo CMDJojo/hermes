@@ -411,7 +411,8 @@ int main() {
         int32_t nrPeople = peopleNearby.size();
 
         peopleNearby.erase(std::remove_if(peopleNearby.begin(), peopleNearby.end(),
-                                          [](const Person& p) { return p.work_coord == MeterCoord(0, 0); }));
+                                          [](const Person& p) { return p.work_coord == MeterCoord(0, 0); }),
+                           peopleNearby.end());
 
         std::sort(peopleNearby.begin(), peopleNearby.end(),
                   [](const Person& p1, const Person& p2) { return p1.distanceToWork() < p2.distanceToWork(); });
