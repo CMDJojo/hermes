@@ -5,6 +5,7 @@ cmake-build-release-coverage
 cmake-build-relwithdebinfo
 cmake-build-debug-visual-studio
 data/raw/
+data/gtfs/
 data/caches
 
 .vs

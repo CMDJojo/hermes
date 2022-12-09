@@ -121,8 +121,7 @@ std::vector<StopId> extractPath(Timetable& timetable, StopId stopId, std::unorde
     return legs;
 }
 
-E2EE::E2EE(const People& people, Timetable timetable)
-    : people(people), timetable(std::move(timetable)), prox("data/raw") {}
+E2EE::E2EE(const People& people, Timetable& timetable, Prox& prox) : people(people), timetable(timetable), prox(prox) {}
 
 E2EE::Stats E2EE::evaluatePerformanceAtPoint(MeterCoord origin, E2EE::Options opts) {
     // The Stats struct to return, fields will be updated throughout
@@ -322,7 +321,8 @@ void E2EE::test() {
     RoutingOptions ropts = {60 * 60 * 10, 20221118, 30 * 60, 5 * 60};
     E2EE::Options opts = {target, 0.6, 600, 600, 0, COLLECT_ALL & (~COLLECT_AGGREGATED_SHAPES), ropts};
 
-    E2EE obj(people, timetable);
+    Prox prox("data/raw");
+    E2EE obj(people, timetable, prox);
 
     std::cout << "[TEST] Calculating..." << std::endl;
 

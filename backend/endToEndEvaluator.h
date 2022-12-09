@@ -99,9 +99,9 @@ class E2EE {
                                         COLLECT_ALL_OPTIMAL_FIRST_STOPS | INCLUDE_TT_OPTS_POINTERS;
 
     const People& people;
-    const Prox prox;
-    mutable routing::Timetable timetable;
-    E2EE(const People& people, routing::Timetable timetable);
+    const Prox& prox;
+    routing::Timetable& timetable;
+    E2EE(const People& people, routing::Timetable& timetable, Prox& prox);
     Stats evaluatePerformanceAtPoint(MeterCoord origin, Options opts);
     static void test();
 };

@@ -108,12 +108,20 @@ class Timetable {
     std::unordered_map<ShapeId, std::vector<std::pair<double, DMSCoord>>> shapes;
     std::unordered_map<StopId, DMSCoord> stopPoints;
 
+    gtfs::Date startDate = {std::numeric_limits<int32_t>::max()};
+    gtfs::Date endDate = {0};
+
+    std::string name;
+
     explicit Timetable(const std::string& gtfsPath);
 
     std::unordered_map<StopId, StopState> dijkstra(StopId start, const RoutingOptions& options);
     std::unordered_map<StopId, StopState> dijkstra(
         StopId start, const RoutingOptions& options,
         std::unordered_map<StopId, std::vector<DestinationEdge>>& destinationEdges);
+
+   private:
+    Timetable(const Timetable&);
 };
 
 class StopNode {

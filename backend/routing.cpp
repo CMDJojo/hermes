@@ -212,6 +212,8 @@ Timetable::Timetable(const std::string& gtfsPath) {
 
     for (auto& cd : gtfs::CalendarDate::load(gtfsPath)) {
         calendarDates[cd.serviceId].insert(cd.date.original);
+        if (cd.date.original < startDate.original) startDate = {cd.date.original};
+        if (cd.date.original > endDate.original) endDate = {cd.date.original};
     }
 
     for (auto& s : gtfs::Stop::load(gtfsPath)) {
@@ -255,6 +257,10 @@ Timetable::Timetable(const std::string& gtfsPath) {
     for (gtfs::Shape& s : gtfs::Shape::load(gtfsPath)) {
         shapes[s.shapeId].emplace_back(s.shapeDistTravelled, DMSCoord(s.shapePtLat, s.shapePtLon));
     }
+
+    auto feedInfo = gtfs::FeedInfo::load(gtfsPath)[0];
+    feedInfo.feedVersion.pop_back();  // Remove '\r'
+    name = feedInfo.feedId + " " + feedInfo.feedVersion;
 }
 
 std::string routing::prettyTravelTime(int32_t time) {

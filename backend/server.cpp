@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <boost/json/src.hpp>
 #include <boost/url/src.hpp>
+#include <filesystem>
 #include <iostream>
 
 #include "binarySearch.h"
@@ -15,6 +16,8 @@ const auto address = net::ip::make_address("0.0.0.0");
 const auto port = static_cast<unsigned short>(8080);
 const auto doc_root = std::make_shared<std::string>(".");
 const auto threads = 4;
+
+std::vector<std::shared_ptr<routing::Timetable>> timetables;
 
 using namespace boost::urls;
 
@@ -69,10 +72,34 @@ routing::RoutingOptions routingOptionsFromParams(const params_view& params) {
     return options;
 }
 
+routing::Timetable& timetableFromParams(const params_view& params) {
+    if (params.contains("timetable")) {
+        int32_t id = std::stoi((*params.find("timetable")).value);
+        return *timetables.at(id);
+    }
+    return *timetables.front();
+}
+
 int main() {
     std::cout << "Starting server..." << std::endl;
-    std::cout << "Loading timetable (1/6)" << std::endl;
-    routing::Timetable timetable("data/raw");
+    std::cout << "Loading timetables (1/6)" << std::endl;
+
+    for (const auto& gtfsEntry : std::filesystem::directory_iterator("data/gtfs")) {
+        if (!gtfsEntry.is_directory()) continue;
+
+        std::cout << "Loading timetable from " << gtfsEntry.path() << "..." << std::endl;
+        timetables.emplace_back(new routing::Timetable(gtfsEntry.path()));
+        std::cout << timetables.back()->name << " is loaded" << std::endl;
+    }
+
+    // Order timetables by start date
+    std::sort(timetables.begin(), timetables.end(),
+              [](const auto& a, const auto& b) { return a->startDate.original > b->startDate.original; });
+
+    if (timetables.empty()) {
+        std::cout << "No timetable found in data/gtfs, loading timetable from data/raw instead..." << std::endl;
+        timetables.emplace_back(new routing::Timetable("data/raw"));
+    }
 
     std::cout << "Loading lineregister (2/6)" << std::endl;
     LineRegister lineRegister("data/raw/lineregister.json");
@@ -80,30 +107,52 @@ int main() {
     std::cout << "Loading people data (3/6)" << std::endl;
     People people("data/raw/Ast_bost.txt");
 
-    std::cout << "Loading end to end evaulator (4/6)" << std::endl;
-    E2EE endToEndEval(people, timetable);
+    std::cout << "Loading prox (4/6)" << std::endl;
+    Prox prox("data/raw");
 
     std::cout << "Configuring routes (5/6)" << std::endl;
     get("/", [](auto context) { return "Hello World!"; });
 
-    get((std::regex) "/graphFrom/(\\d+).*", [&timetable](auto context) {
+    get((std::regex) "/graphFrom/(\\d+).*", [](auto context) {
         context.response.set(http::field::content_type, "application/json");
         context.response.set(http::field::access_control_allow_origin, "*");
 
         auto params = getParams(context.request);
         auto routingOptions = routingOptionsFromParams(params);
+        auto& timetable = timetableFromParams(params);
 
         auto match = std::stoull(context.match[1].str());
         auto result = timetable.dijkstra(match, routingOptions);
         return routingCacher::toJson(result);
     });
 
-    get((std::regex) "/travelTimeLayer/(\\d+).*", [&timetable](auto context) {
+    get((std::regex) "/timetables", [](auto context) {
+        context.response.set(http::field::content_type, "application/json");
+        context.response.set(http::field::access_control_allow_origin, "*");
+
+        std::vector<boost::json::value> tables;
+        
+        for (size_t i = 0; i < timetables.size(); i++) {
+            auto& timetable = timetables[i];
+            boost::json::value table = {
+                {"name", timetable->name},
+                {"id", i},
+                {"startDate", timetable->startDate.original},
+                {"endDate", timetable->endDate.original},
+            };
+            tables.push_back(table);
+        }
+
+        return serialize((boost::json::value){{"timetables", tables}});
+    });
+
+    get((std::regex) "/travelTimeLayer/(\\d+).*", [](auto context) {
         context.response.set(http::field::content_type, "application/geo+json");
         context.response.set(http::field::access_control_allow_origin, "*");
 
         auto params = getParams(context.request);
         auto routingOptions = routingOptionsFromParams(params);
+        auto& timetable = timetableFromParams(params);
 
         auto match = std::stoull(context.match[1].str());
         auto graph = timetable.dijkstra(match, routingOptions);
@@ -134,9 +183,12 @@ int main() {
         return serialize(geoJson);
     });
 
-    get("/stops", [&timetable](auto context) {
+    get("/stops", [](auto context) {
         context.response.set(http::field::content_type, "application/geo+json");
         context.response.set(http::field::access_control_allow_origin, "*");
+        
+        auto params = getParams(context.request);
+        auto& timetable = timetableFromParams(params);
 
         std::vector<boost::json::value> stops;
         std::transform(timetable.stops.begin(), timetable.stops.end(), std::back_inserter(stops),
@@ -166,16 +218,18 @@ int main() {
         context.response.set(http::field::access_control_allow_origin, "*");
         context.response.set(http::field::content_type, "application/json");
 
+        auto params = getParams(context.request);
+        auto routingOptions = routingOptionsFromParams(params);
+        auto& timetable = timetableFromParams(params);
+
         auto stopId = std::stoull(context.match[1].str());
         auto& stop = timetable.stops[stopId];
         auto stopCoord = DMSCoord(stop.lat, stop.lon);
 
-        auto params = getParams(context.request);
-        auto routingOptions = routingOptionsFromParams(params);
-
         E2EE::Options options = {
             stopId, 0.6, 500, 500, 500, E2EE::COLLECT_ALL & (~E2EE::COLLECT_EXTRACTED_PATHS), routingOptions};
 
+        E2EE endToEndEval(people, timetable, prox);
         E2EE::Stats stats = endToEndEval.evaluatePerformanceAtPoint(stopCoord.toMeter(), options);
 
         uint32_t medianTravelTime = 0;
@@ -315,9 +369,12 @@ int main() {
     });
 
     // Generate an info report for a given stop (basically what gets shown in the sidebar).
-    get((std::regex) "/travelDistance/(\\d+)", [&timetable, &people](auto context) {
+    get((std::regex) "/travelDistance/(\\d+)", [&people](auto context) {
         context.response.set(http::field::access_control_allow_origin, "*");
         context.response.set(http::field::content_type, "application/json");
+
+        auto params = getParams(context.request);
+        auto& timetable = timetableFromParams(params);
 
         auto stopId = std::stoull(context.match[1].str());
         auto& stop = timetable.stops[stopId];
