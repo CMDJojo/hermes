@@ -114,27 +114,42 @@ function Map({
     // Add the stops
     api.current.stops().then(stops => {
       map.current?.on('load', () => {
-        map.current?.loadImage('./bus.png', (error, image) => {
-          if (error) throw error;
-          map.current?.addImage('custom-marker', image!, { sdf: true });
-          map.current?.addSource('stops', { type: 'geojson', data: stops });
-          map.current?.addLayer({
-            id: 'stops',
-            type: 'symbol',
-            source: 'stops',
-            paint: {
-              'icon-color': '#1565C0',
-            },
-            layout: {
-              'icon-image': 'custom-marker',
-              'icon-allow-overlap': false,
-              'icon-anchor': 'bottom',
-              'icon-size': 0.2,
-              'text-field': ['get', 'name'],
-              'text-font': ['Inter', 'Arial Unicode MS Bold'],
-              'text-anchor': 'top',
-              'text-size': 11,
-            },
+        map.current?.loadImage('./bus.png', (busError, busImage) => {
+          map.current?.loadImage('./tram.png', (tramError, tramImage) => {
+            map.current?.loadImage('./train.png', (trainError, trainImage) => {
+              map.current?.loadImage('./boat.png', (boatError, boatImage) => {
+                if (busError) throw busError;
+                if (tramError) throw tramError;
+                if (trainError) throw trainError;
+                if (boatError) throw boatError;
+                map.current?.addImage('bus', busImage!, { sdf: true });
+                map.current?.addImage('tram', tramImage!, { sdf: true });
+                map.current?.addImage('train', trainImage!, { sdf: true });
+                map.current?.addImage('boat', boatImage!, { sdf: true });
+                map.current?.addSource('stops', {
+                  type: 'geojson',
+                  data: stops,
+                });
+                map.current?.addLayer({
+                  id: 'stops',
+                  type: 'symbol',
+                  source: 'stops',
+                  paint: {
+                    'icon-color': '#1565C0',
+                  },
+                  layout: {
+                    'icon-image': ['coalesce', ['get', 'icon'], 'bus'],
+                    'icon-allow-overlap': false,
+                    'icon-anchor': 'bottom',
+                    'icon-size': 0.2,
+                    'text-field': ['get', 'name'],
+                    'text-font': ['Inter', 'Arial Unicode MS Bold'],
+                    'text-anchor': 'top',
+                    'text-size': 11,
+                  },
+                });
+              });
+            });
           });
         });
 
