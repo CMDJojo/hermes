@@ -187,9 +187,10 @@ class API {
       const day = options.date.getDate().toString().padStart(2, '0');
       query.set('date', `${year}${month}${day}`);
 
-      // The "time" is ms since midnight
-      const time = options.date.getTime().toString();
-      query.set('time', time);
+      // The "time" is the number of seconds since midnight
+      const time =
+        options.date.getHours() * 3600 + options.date.getMinutes() * 60;
+      query.set('time', time.toString());
     }
 
     if (options.timetableId !== undefined && options.timetableId !== null) {
