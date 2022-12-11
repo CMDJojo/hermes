@@ -34,7 +34,7 @@ std::unordered_map<StopId, StopState> Timetable::dijkstra(
 
     state[start].travelTime = 0;
 
-    queue.emplace(&stops[start], &state[start]);
+    queue.emplace(&stops.at(start), &state[start]);
 
     while (!queue.empty()) {
         auto [node, nodeState] = queue.top();

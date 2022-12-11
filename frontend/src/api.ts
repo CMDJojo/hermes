@@ -50,6 +50,12 @@ export type TravelTime = {
   medianTravelTimeFormatted: string;
   lines: FeatureCollection;
   walks: FeatureCollection;
+  numberOfTransfers: number;
+  transfers: {
+    stopID: StopID;
+    stopName: string;
+    percentage: number;
+  }[];
 };
 
 export type GraphEntry = {

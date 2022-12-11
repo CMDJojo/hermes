@@ -66,6 +66,8 @@ export default function Sidebar({
       : null;
 
   const [displayAllStops, setDisplayAllStops] = useState(false);
+  const [displayAllTransferStops, setDisplayAllTransferStops] =
+    useState(false);
 
   const defaultStopsToShow = 3;
 
@@ -86,6 +88,17 @@ export default function Sidebar({
     return overflow > 1
       ? `Visa ytterligare ${toNumberLiteral(overflow)} alternativa hållplatser`
       : `Visa ytterligare en alternativ hållplats`;
+  };
+
+  const expansionTextTransfers: () => string = () => {
+    if (displayAllTransferStops)
+      return `Visa endast ${toNumberLiteral(defaultStopsToShow)}`;
+
+    const overflow =
+      (timeInfo?.transfers.length ?? defaultStopsToShow) - defaultStopsToShow;
+    return overflow > 1
+      ? `Visa ytterligare ${toNumberLiteral(overflow)} hållplatser`
+      : `Visa ytterligare en hållplats`;
   };
 
   return (
@@ -222,6 +235,52 @@ export default function Sidebar({
                           >
                             {expansionText()}{' '}
                             {displayAllStops ? (
+                              <MdExpandLess size={20} />
+                            ) : (
+                              <MdExpandMore size={20} />
+                            )}
+                          </button>
+                        )}
+                      </div>
+                    )}
+                </InfoBox>
+              )}
+
+              {timeInfo !== null && (
+                <InfoBox
+                  title="Medelantalet byten per resa till arbetet"
+                  color="#CEA07E"
+                >
+                  <h1>
+                    {(timeInfo.numberOfTransfers / timeInfo.peopleCanGoByBus)
+                      .toFixed(2)
+                      .replace('.', ',')}
+                  </h1>
+                  {timeInfo.transfers !== null &&
+                    timeInfo.transfers.length > 0 && (
+                      <div className="optimalStopListContainer">
+                        Vanligaste hållplatserna för byten
+                        {timeInfo.transfers
+                          .map(stat => (
+                            <div
+                              key={stat.stopID}
+                              className="optimalStopList"
+                              style={{ opacity: displayAllTransferStops ? 1 : 0.6 }}
+                            >
+                              <div>
+                                <strong>{stat.stopName}</strong>
+                              </div>
+                              <div>{formatPercent(stat.percentage, 100)}</div>
+                            </div>
+                          ))
+                          .slice(0, displayAllTransferStops ? 100 : 3)}
+                        {timeInfo.transfers.length > defaultStopsToShow && (
+                          <button
+                            type="button"
+                            onClick={() => setDisplayAllTransferStops(!displayAllTransferStops)}
+                          >
+                            {expansionTextTransfers()}{' '}
+                            {displayAllTransferStops ? (
                               <MdExpandLess size={20} />
                             ) : (
                               <MdExpandMore size={20} />

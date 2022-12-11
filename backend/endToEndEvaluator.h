@@ -66,6 +66,8 @@ class E2EE {
         E2EE::Options* opts = nullptr;
 
         std::unordered_map<SegmentId, ShapeSegment> shapeSegments;
+        std::unordered_map<StopId, int32_t> transfers;
+        uint64_t numberOfTransfers = 0;
 
         Stats() = default;
         friend std::ostream& operator<<(std::ostream& os, const Stats& stats);

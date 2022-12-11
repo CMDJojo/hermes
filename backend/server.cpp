@@ -267,7 +267,7 @@ int main() {
         auto& timetable = *timetables.at(timetableId);
 
         auto stopId = std::stoull(context.match[1].str());
-        auto& stop = timetable.stops[stopId];
+        auto& stop = timetable.stops.at(stopId);
         auto stopCoord = DMSCoord(stop.lat, stop.lon);
 
         E2EE::Options options = {
@@ -317,6 +317,24 @@ int main() {
 
         std::vector<boost::json::value> segments;
         std::vector<boost::json::value> walks;
+
+        std::vector<std::pair<StopId, float>> sortedTransfers;
+        for (const auto& [transferStopId, count] : stats.transfers) {
+            float percentage = (float)count / (float)stats.allPaths.size() * 100.0f;
+            if (count <= 1 || percentage < 1) continue;
+            sortedTransfers.emplace_back(transferStopId, percentage);
+        }
+        std::sort(sortedTransfers.begin(), sortedTransfers.end(), [](auto& a, auto& b) { return a.second > b.second; });
+
+        std::vector<boost::json::value> transfers;
+        std::transform(sortedTransfers.begin(), sortedTransfers.end(), std::back_inserter(transfers),
+                       [&timetable](auto& pair) {
+                           auto [stopID, percentage] = pair;
+                           auto& name = timetable.stops.at(stopID).name;
+
+                           return boost::json::value{
+                               {"stopID", std::to_string(stopID)}, {"stopName", name}, {"percentage", percentage}};
+                       });
 
         for (const auto& [segmentId, segment] : stats.shapeSegments) {
             std::vector<boost::json::value> lineString;
@@ -385,9 +403,8 @@ int main() {
             auto name = timetable.stops.contains(stopID) ? (timetable.stops.at(stopID).name)
                                                          : "[ID:" + std::to_string(stopID) + "]";
 
-            return boost::json::value{{"stopID", std::to_string(stopID)},
-                                      {"stopName", stopID == routing::WALK ? "Walk" : name},
-                                      {"numberOfPersons", numberOfPeople}};
+            return boost::json::value{
+                {"stopID", std::to_string(stopID)}, {"stopName", name}, {"numberOfPersons", numberOfPeople}};
         });
 
         boost::json::value response = {
@@ -397,6 +414,8 @@ int main() {
             {"interestingStopID", std::to_string(stats.interestingStop)},
             {"medianTravelTime", medianTravelTime},
             {"medianTravelTimeFormatted", medianTravelTimeFormatted},
+            {"numberOfTransfers", stats.numberOfTransfers},
+            {"transfers", transfers},
             {"peopleTravelFrom", pplTravelFrom},
             {"travelTimeStats",
              {{{"name", "< 15 min"}, {"data", time15min}},
@@ -413,7 +432,7 @@ int main() {
     });
 
     // Generate an info report for a given stop (basically what gets shown in the sidebar).
-    get((std::regex) "/travelDistance/(\\d+)", [&people](auto context) {
+    get((std::regex) "/travelDistance/(\\d+).*", [&people](auto context) {
         context.response.set(http::field::access_control_allow_origin, "*");
         context.response.set(http::field::content_type, "application/json");
 
@@ -421,7 +440,7 @@ int main() {
         auto& timetable = timetableFromParams(params);
 
         auto stopId = std::stoull(context.match[1].str());
-        auto& stop = timetable.stops[stopId];
+        auto& stop = timetable.stops.at(stopId);
         auto stopCoord = DMSCoord(stop.lat, stop.lon);
 
         // Find every person that lives close (500 meter) to this given stop

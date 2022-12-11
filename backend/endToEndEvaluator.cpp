@@ -8,7 +8,8 @@
 using namespace routing;
 
 static void extractShape(Timetable& tt, StopId to, std::unordered_map<StopId, StopState>& graph,
-                         std::unordered_map<SegmentId, E2EE::ShapeSegment>& segments) {
+                         std::unordered_map<SegmentId, E2EE::ShapeSegment>& segments,
+                         std::unordered_map<StopId, int32_t>& transfers, uint64_t& numberOfTransfers) {
     if (graph.find(to) == graph.end()) return;
 
     StopState* current = &graph.at(to);
@@ -25,6 +26,11 @@ static void extractShape(Timetable& tt, StopId to, std::unordered_map<StopId, St
                 from = node;
                 break;
             }
+        }
+
+        if (from.tripId != currentTrip) {
+            if (currentTrip != WALK) numberOfTransfers++;
+            transfers[currentId]++;
         }
 
         if (from.tripId != WALK) {
@@ -238,7 +244,8 @@ E2EE::Stats E2EE::evaluatePerformanceAtPoint(MeterCoord origin, E2EE::Options op
 
         if (opts.statsToCollect & COLLECT_AGGREGATED_SHAPES) {
             if (fastest.firstStop != 0 && fastest.firstStop != fastest.secondStop) {
-                extractShape(timetable, fastest.secondStop, dijkstraCache.at(fastest.firstStop), ret.shapeSegments);
+                extractShape(timetable, fastest.secondStop, dijkstraCache.at(fastest.firstStop), ret.shapeSegments,
+                             ret.transfers, ret.numberOfTransfers);
             }
         }
 
