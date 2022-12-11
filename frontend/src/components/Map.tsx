@@ -7,7 +7,7 @@ import {
   Geometry,
 } from 'geojson';
 
-import API, { Stops } from '../api';
+import API, { Stops, Timetable } from '../api';
 import Stop from '../types/Stop';
 
 import '../styles/Map.css';
@@ -35,6 +35,8 @@ export interface MapProps {
   onShowDetailInfo: (info: DetailInfoData) => void;
   onHideDetailInfo: () => void;
   showTrafficLines: boolean;
+  date: Date;
+  timetable: Timetable;
 }
 
 // stackoverflow.com/questions/37599561/drawing-a-circle-with-the-radius-in-miles-meters-with-mapbox-gl-js
@@ -91,6 +93,8 @@ function Map({
   onShowDetailInfo,
   onHideDetailInfo,
   showTrafficLines,
+  date,
+  timetable,
 }: MapProps) {
   const mapContainer = useRef<string | HTMLElement | null>(null);
   const api = useRef<API | null>(null);
@@ -286,6 +290,11 @@ function Map({
             properties: { name },
           } = features[0];
           const [lon, lat] = coordinates;
+
+          map.current?.flyTo({
+            center: [lon, lat],
+            padding: { right: 300 },
+          });
           onClick({ id, name, lat, lon });
         });
 
@@ -320,11 +329,6 @@ function Map({
     }
 
     // When the user selects a stop
-    map.current?.flyTo({
-      center: [activeStop.lon, activeStop.lat],
-      padding: { right: 300 },
-    });
-
     (map.current?.getSource('activeCircle') as GeoJSONSource).setData(
       createGeoJSONCircle([activeStop.lon, activeStop.lat], 0.5)
     );
@@ -337,12 +341,28 @@ function Map({
       activeWalks ?? EMPTY_GEOJSON_DATA
     );
 
-    api.current?.relativeTravelTime(activeStop.id.toString()).then(data => {
-      (map.current?.getSource('relativeTravelTime') as GeoJSONSource).setData(
-        data as FeatureCollection
-      );
-    });
-  }, [activeStop, activeLines, activeWalks, api, map, mapLoaded]);
+    const options = {
+      date: date ?? undefined,
+      timetableId: timetable?.id ?? undefined,
+    };
+
+    api.current
+      ?.relativeTravelTime(activeStop.id.toString(), options)
+      .then(data => {
+        (map.current?.getSource('relativeTravelTime') as GeoJSONSource).setData(
+          data as FeatureCollection
+        );
+      });
+  }, [
+    activeStop,
+    activeLines,
+    activeWalks,
+    api,
+    map,
+    mapLoaded,
+    date,
+    timetable,
+  ]);
 
   useEffect(() => {
     if (!mapLoaded) return;

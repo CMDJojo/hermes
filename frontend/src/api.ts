@@ -18,6 +18,11 @@ export type Stops = {
 export type StopID = string;
 export type TripID = string;
 
+export type APIOptions = {
+  timetableId?: number;
+  date?: Date;
+};
+
 export type GraphIncomingEntry = {
   fromStr: StopID;
   tripStr: TripID;
@@ -162,23 +167,62 @@ class API {
     return this.getJson<Stops>('/stops');
   }
 
-  async relativeTravelTime(stopId: StopID): Promise<FeatureCollection> {
+  optionsToQuery(options?: APIOptions): string {
+    if (options === undefined) return '';
+
+    const query = new URLSearchParams();
+    /*
+    The backend supports the following params
+    date
+    time
+    searchTime
+    minTransferTime
+    timetable
+    */
+
+    // The "date" param is stored in the format YYYYMMDD
+    if (options.date !== undefined && options.date !== null) {
+      const year = options.date.getFullYear().toString();
+      const month = (options.date.getMonth() + 1).toString().padStart(2, '0');
+      const day = options.date.getDate().toString().padStart(2, '0');
+      query.set('date', `${year}${month}${day}`);
+
+      // The "time" is ms since midnight
+      const time = options.date.getTime().toString();
+      query.set('time', time);
+    }
+
+    if (options.timetableId !== undefined && options.timetableId !== null) {
+      query.set('timetable', options.timetableId.toString());
+    }
+
+    return query.toString();
+  }
+
+  async relativeTravelTime(
+    stopId: StopID,
+    options?: APIOptions
+  ): Promise<FeatureCollection> {
     return this.getJson<FeatureCollection>(`/travelTimeLayer/${stopId}`);
   }
 
-  async graphFrom(stopId: StopID): Promise<Graph> {
+  async graphFrom(stopId: StopID, options?: APIOptions): Promise<Graph> {
     return this.getJson<Graph>(`/graphFrom/${stopId}`);
   }
 
-  async travelDistance(stopId: StopID): Promise<TravelDistance> {
+  async travelDistance(
+    stopId: StopID,
+    options?: APIOptions
+  ): Promise<TravelDistance> {
     return this.getJson<TravelDistance>(`/travelDistance/${stopId}`);
   }
 
-  async travelTime(stopId: StopID): Promise<TravelTime> {
+  async travelTime(stopId: StopID, options?: APIOptions): Promise<TravelTime> {
     return this.getJson<TravelTime>(`/travelTime/${stopId}`);
   }
 
-  async timetables(): Promise<Timetable[]> {
+  async timetables(options?: APIOptions): Promise<Timetable[]> {
+    console.log(this.optionsToQuery(options));
     return this.getJson<Timetable[]>('/timetables', data => {
       return data.timetables.map((timetable: any) => ({
         name: timetable.name,

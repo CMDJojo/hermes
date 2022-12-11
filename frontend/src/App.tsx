@@ -29,10 +29,10 @@ function App() {
 
   const [date, setDate] = useState<Date | null>(null);
 
-  const api = new API();
-
   // Fetch the timetable and set the time and currently used timetable
   useEffect(() => {
+    const api = new API();
+
     api
       .timetables()
       .then(data => {
@@ -56,19 +56,31 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const updateSidebar = (stop: Stop) => {
-    setActiveStop(stop);
-    setIsSidebarActive(true);
+  // GEt new data for the sidebar
+  useEffect(() => {
+    const api = new API();
+
+    if (activeStop === null) return;
+
+    const options = {
+      date: date ?? undefined,
+      timetableId: currentTimetable?.id ?? undefined,
+    };
 
     api
-      .travelDistance(stop.id.toString())
+      .travelDistance(activeStop.id.toString(), options)
       .then(setDistanceInfo)
       .catch(() => setDistanceInfo(null));
 
     api
-      .travelTime(stop.id.toString())
+      .travelTime(activeStop.id.toString(), options)
       .then(setTimeInfo)
       .catch(() => setTimeInfo(null));
+  }, [activeStop, currentTimetable, date]);
+
+  const updateSidebar = (stop: Stop) => {
+    setActiveStop(stop);
+    setIsSidebarActive(true);
   };
 
   const closeSidebar = () => {
@@ -102,6 +114,8 @@ function App() {
         }}
         onShowDetailInfo={setDetailedInfo}
         onHideDetailInfo={() => setDetailedInfo(null)}
+        date={date}
+        timetable={currentTimetable}
       />
       <Sidebar
         onClose={closeSidebar}
