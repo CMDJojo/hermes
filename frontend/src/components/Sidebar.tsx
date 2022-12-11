@@ -113,44 +113,13 @@ export default function Sidebar({
 
             <div className="infoBoxes">
               {distanceInfo !== null && (
-                <InfoBox color="#84ACCE" title="Medianavstånd till arbete">
+                <InfoBox color="#6c8e79" title="Medianavstånd till arbete">
                   <h1>{formatDistance(distanceInfo?.medianDistance)}</h1>
                   <ResponsiveContainer width="100%" height={150}>
                     <BarChart
                       width={800}
                       height={300}
                       data={distanceInfo?.distanceStats}
-                    >
-                      <XAxis
-                        dataKey="name"
-                        stroke="#284867"
-                        axisLine={{ stroke: '#284867' }}
-                      />
-                      <Tooltip
-                        cursor={{ fill: 'rgba(0,0,0,0.15)' }}
-                        content={<TooltipContent />}
-                      />
-                      <YAxis
-                        width={40}
-                        stroke="#284867"
-                        axisLine={{ stroke: '#284867' }}
-                      />
-                      <Bar dataKey="data" fill="#284867" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </InfoBox>
-              )}
-              {timeInfo !== null && (
-                <InfoBox
-                  color="#6c8e79"
-                  title="Medianrestid till arbete via kollektivtrafik"
-                >
-                  <h1>{timeInfo?.medianTravelTimeFormatted}</h1>
-                  <ResponsiveContainer width="100%" height={150}>
-                    <BarChart
-                      width={800}
-                      height={300}
-                      data={timeInfo?.travelTimeStats}
                     >
                       <XAxis
                         dataKey="name"
@@ -167,6 +136,37 @@ export default function Sidebar({
                         axisLine={{ stroke: '#314137' }}
                       />
                       <Bar dataKey="data" fill="#314137" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </InfoBox>
+              )}
+              {timeInfo !== null && (
+                <InfoBox
+                  color="#84ACCE"
+                  title="Medianrestid till arbete via kollektivtrafik"
+                >
+                  <h1>{timeInfo?.medianTravelTimeFormatted}</h1>
+                  <ResponsiveContainer width="100%" height={150}>
+                    <BarChart
+                      width={800}
+                      height={300}
+                      data={timeInfo?.travelTimeStats}
+                    >
+                      <XAxis
+                        dataKey="name"
+                        stroke="#284867"
+                        axisLine={{ stroke: '#284867' }}
+                      />
+                      <Tooltip
+                        cursor={{ fill: 'rgba(0,0,0,0.15)' }}
+                        content={<TooltipContent />}
+                      />
+                      <YAxis
+                        width={40}
+                        stroke="#284867"
+                        axisLine={{ stroke: '#284867' }}
+                      />
+                      <Bar dataKey="data" fill="#284867" />
                     </BarChart>
                   </ResponsiveContainer>
                 </InfoBox>
@@ -233,7 +233,7 @@ export default function Sidebar({
                 </InfoBox>
               )}
 
-              <InfoBox title="Debug" color="#FA6607" textColor="black">
+              <InfoBox title="Debug" color="#eeeeee" textColor="black">
                 Stop ID: {stop.id}
                 <br />
                 Time info: {timeInfo === null ? 'null' : 'not null'}
