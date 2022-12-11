@@ -9,26 +9,55 @@
     box-shadow: 0 3px 3px rgba(0, 0, 0, 0.351);
     box-sizing: border-box;
     border-radius: 0.5rem;
+    font-size: 90%;
 }
 
 
 .Controls .container {
     display: flex;
-    gap: 1rem;  
-}
-
-.Controls .container > *:hover {
-    background: #f4f4f4;
-}
-
-.Controls .timetable {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+    gap: 1.5rem;  
+    align-items: center;
 }
 
 .Controls .timetable > * {
     display: flex;
     gap: 1rem;
     justify-content: space-between;
+}
+
+.Controls .timetable {
+    display: flex;
+    gap: 1.5rem;
+    flex-direction: column;
+}
+
+.Controls .timetable input {
+    width: 11rem;
+}
+
+
+.Controls .traficLines img {
+    border-radius: 0.2rem;
+    width: 4rem;
+    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.261);
+    transition: all 0.2s;
+}
+
+
+.Controls .traficLines {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+    background: inherit;
+    border:none;
+    box-shadow: none;
+    cursor:pointer;
+    font-size: inherit;
+}
+
+
+.Controls .traficLines:hover img {
+    transform: scale(1.09);
+    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
 }

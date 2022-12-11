@@ -34,6 +34,7 @@ export interface MapProps {
   onClick: (event: Stop) => void;
   onShowDetailInfo: (info: DetailInfoData) => void;
   onHideDetailInfo: () => void;
+  showTrafficLines: boolean;
 }
 
 // stackoverflow.com/questions/37599561/drawing-a-circle-with-the-radius-in-miles-meters-with-mapbox-gl-js
@@ -89,6 +90,7 @@ function Map({
   activeWalks,
   onShowDetailInfo,
   onHideDetailInfo,
+  showTrafficLines,
 }: MapProps) {
   const mapContainer = useRef<string | HTMLElement | null>(null);
   const api = useRef<API | null>(null);
@@ -341,6 +343,32 @@ function Map({
       );
     });
   }, [activeStop, activeLines, activeWalks, api, map, mapLoaded]);
+
+  useEffect(() => {
+    if (!mapLoaded) return;
+
+    if (showTrafficLines) {
+      (map.current?.getSource('activeLines') as GeoJSONSource).setData(
+        activeLines ?? EMPTY_GEOJSON_DATA
+      );
+
+      (map.current?.getSource('activeWalks') as GeoJSONSource).setData(
+        activeWalks ?? EMPTY_GEOJSON_DATA
+      );
+    } else {
+      // FIXME: Note that we don't stop fetching data even when setTrafficLines is set to false.
+      // This is a somewhat lazy solution but it lets us avoid having to re-request the calculations to be done
+      // if a user presses the button to toggle traffic lines multiple times.
+      (map.current?.getSource('activeLines') as GeoJSONSource).setData(
+        EMPTY_GEOJSON_DATA
+      );
+
+      (map.current?.getSource('activeWalks') as GeoJSONSource).setData(
+        EMPTY_GEOJSON_DATA
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showTrafficLines]);
 
   return (
     <div className="Map">
