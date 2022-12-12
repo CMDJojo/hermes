@@ -35,8 +35,8 @@ export interface MapProps {
   onShowDetailInfo: (info: DetailInfoData) => void;
   onHideDetailInfo: () => void;
   showTrafficLines: boolean;
-  date: Date;
-  timetable: Timetable;
+  date: Date | null;
+  timetable: Timetable | null;
 }
 
 // stackoverflow.com/questions/37599561/drawing-a-circle-with-the-radius-in-miles-meters-with-mapbox-gl-js
