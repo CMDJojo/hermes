@@ -98,6 +98,7 @@ function App() {
           currentDate={date}
           show={!showMenu}
           onDateChange={setDate}
+          onTimetableChange={setCurrentTimetable}
           timetables={timetables}
           showTrafficLines={showTrafficLines}
           toggleTrafficLines={() => setShowTrafficLines(!showTrafficLines)}

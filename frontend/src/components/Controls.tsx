@@ -16,6 +16,7 @@ interface ControlsProps {
   onDateChange: (date: Date) => void;
   showTrafficLines: boolean;
   toggleTrafficLines: () => void;
+  onTimetableChange: (timetable: Timetable) => void;
 }
 
 export default function Controls({
@@ -23,6 +24,7 @@ export default function Controls({
   timetables,
   currentTimetable,
   onDateChange,
+  onTimetableChange,
   currentDate,
   showTrafficLines,
   toggleTrafficLines,
@@ -81,7 +83,15 @@ export default function Controls({
               </div>
               <div>
                 <span>Tidtabell</span>
-                <select>
+                <select
+                  onChange={event => {
+                    const newTimetable = timetables.find(
+                      t => t.id === parseInt(event.target.value, 10)
+                    );
+                    if (newTimetable !== undefined)
+                      onTimetableChange(newTimetable);
+                  }}
+                >
                   {timetables.map(t => (
                     <option value={t.id} key={t.id}>
                       {t.name}
