@@ -3,7 +3,6 @@ import { AnimatePresence, motion } from 'framer-motion';
 import DatePicker, { registerLocale } from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import sv from 'date-fns/locale/sv';
-import { useState } from 'react';
 import { Timetable } from '../api';
 
 registerLocale('sv', sv);

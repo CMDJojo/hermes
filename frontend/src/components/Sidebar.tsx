@@ -297,7 +297,7 @@ export default function Sidebar({
                 </InfoBox>
               )}
 
-              {timeInfo !== null && (
+              {timeInfo !== null && timeInfo.distStopsFrom.length > 0 && (
                 <InfoBox
                   color="#B84E5C"
                   title="Antal hållplatser personerna inom cirkeln bor nära"
@@ -329,7 +329,7 @@ export default function Sidebar({
                 </InfoBox>
               )}
 
-              {timeInfo !== null && (
+              {timeInfo !== null && timeInfo.distStopsTo.length > 0 && (
                 <InfoBox
                   color="#EEB902"
                   title="Antal hållplatser personerna inom cirkeln har nära sitt jobb"
