@@ -1,10 +1,9 @@
 import '../styles/Controls.css';
-import { AnimatePresence, motion } from 'framer-motion';
-import DatePicker, { registerLocale } from 'react-datepicker';
+import {AnimatePresence, motion} from 'framer-motion';
+import DatePicker, {registerLocale} from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import sv from 'date-fns/locale/sv';
-import { useState } from 'react';
-import { Timetable } from '../api';
+import {Timetable} from '../api';
 
 registerLocale('sv', sv);
 
@@ -22,47 +21,47 @@ interface ControlsProps {
 }
 
 export default function Controls({
-  show,
-  timetables,
-  currentTimetable,
-  onDateChange,
-  onTimetableChange,
-  currentDate,
-  showTrafficLines,
-  toggleTrafficLines,
-  changeMargin,
-  onChangeMargin,
-}: ControlsProps) {
+                                   show,
+                                   timetables,
+                                   currentTimetable,
+                                   onDateChange,
+                                   onTimetableChange,
+                                   currentDate,
+                                   showTrafficLines,
+                                   toggleTrafficLines,
+                                   changeMargin,
+                                   onChangeMargin,
+                                 }: ControlsProps) {
   const minDate =
     currentTimetable !== null
       ? new Date(
-          currentTimetable.startDate.year,
-          currentTimetable.startDate.month - 1,
-          currentTimetable.startDate.day,
-          8,
-          0
-        )
+        currentTimetable.startDate.year,
+        currentTimetable.startDate.month - 1,
+        currentTimetable.startDate.day,
+        8,
+        0
+      )
       : new Date();
 
   const maxDate =
     currentTimetable !== null
       ? new Date(
-          currentTimetable.endDate.year,
-          currentTimetable.endDate.month - 1,
-          currentTimetable.endDate.day,
-          8,
-          0
-        )
+        currentTimetable.endDate.year,
+        currentTimetable.endDate.month - 1,
+        currentTimetable.endDate.day,
+        8,
+        0
+      )
       : new Date();
 
   return (
     <AnimatePresence>
       {show && (
         <motion.div
-          initial={{ translateY: '150%' }}
-          animate={{ translateY: 0 }}
-          exit={{ translateY: '150%' }}
-          transition={{ delay: 0.5 }}
+          initial={{translateY: '150%'}}
+          animate={{translateY: 0}}
+          exit={{translateY: '150%'}}
+          transition={{delay: 0.5}}
           className="Controls"
         >
           <div className="container">
@@ -120,7 +119,7 @@ export default function Controls({
               type="button"
               className="traficLines"
             >
-              <img src="map_icon.png" alt="icon" />
+              <img src="map_icon.png" alt="icon"/>
               <span>{showTrafficLines ? 'Dölj' : 'Visa'} trafiklinjer</span>
             </button>
           </div>

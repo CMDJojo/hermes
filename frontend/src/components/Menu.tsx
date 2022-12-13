@@ -1,24 +1,24 @@
 import '../styles/Menu.css';
-import { MdTram } from 'react-icons/md';
-import { AnimatePresence, motion } from 'framer-motion';
+import {MdTram} from 'react-icons/md';
+import {AnimatePresence, motion} from 'framer-motion';
 
 interface MenuProps {
   show: boolean;
   onHide: () => void;
 }
 
-export default function Menu({ show, onHide }: MenuProps) {
+export default function Menu({show, onHide}: MenuProps) {
   return (
     <AnimatePresence>
       {show && (
         <motion.div
-          initial={{ translateY: '-150%' }}
-          animate={{ translateY: 0 }}
-          exit={{ translateY: '-150%' }}
+          initial={{translateY: '-150%'}}
+          animate={{translateY: 0}}
+          exit={{translateY: '-150%'}}
           className="Menu"
         >
           <div className="logo">
-            <MdTram size={63} />
+            <MdTram size={63}/>
             <h1>Utforska Göteborgs kollektivtrafik</h1>
           </div>
 

@@ -1,6 +1,6 @@
 import '../styles/DetailInfo.css';
-import { AnimatePresence, motion } from 'framer-motion';
-import { DetailInfoData } from './Map';
+import {AnimatePresence, motion} from 'framer-motion';
+import {DetailInfoData} from './Map';
 
 interface DetailInfoProps {
   info: DetailInfoData | null;
@@ -15,17 +15,17 @@ interface RouteProps {
 }
 
 function Route({
-  passengerCount,
-  routeName,
-  bgColor,
-  fgColor,
-  headsign,
-}: RouteProps) {
+                 passengerCount,
+                 routeName,
+                 bgColor,
+                 fgColor,
+                 headsign,
+               }: RouteProps) {
   return (
     <div className="Route">
       <div
         className="icon"
-        style={{ color: fgColor, backgroundColor: bgColor }}
+        style={{color: fgColor, backgroundColor: bgColor}}
       >
         {routeName}
       </div>
@@ -35,7 +35,7 @@ function Route({
   );
 }
 
-export default function DetailInfo({ info }: DetailInfoProps) {
+export default function DetailInfo({info}: DetailInfoProps) {
   const total = info?.map(r => r.passengerCount).reduce((acc, a) => acc + a, 0);
 
   const routes = info?.map(r => (
@@ -53,10 +53,10 @@ export default function DetailInfo({ info }: DetailInfoProps) {
     <AnimatePresence>
       {info !== null && (
         <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.1, scale: 0.5 }}
+          initial={{opacity: 0, scale: 0.8}}
+          animate={{opacity: 1, scale: 1}}
+          exit={{opacity: 0}}
+          transition={{duration: 0.1, scale: 0.5}}
           className="DetailInfo"
         >
           {routes}
