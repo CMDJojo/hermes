@@ -210,44 +210,54 @@ class API {
     stopId: StopID,
     options?: APIOptions
   ): Promise<FeatureCollection> {
-    return this.getJson<FeatureCollection>(`/travelTimeLayer/${stopId}`);
+    return this.getJson<FeatureCollection>(
+      `/travelTimeLayer/${stopId}?${this.optionsToQuery(options)}`
+    );
   }
 
   async graphFrom(stopId: StopID, options?: APIOptions): Promise<Graph> {
-    return this.getJson<Graph>(`/graphFrom/${stopId}`);
+    return this.getJson<Graph>(
+      `/graphFrom/${stopId}?${this.optionsToQuery(options)}`
+    );
   }
 
   async travelDistance(
     stopId: StopID,
     options?: APIOptions
   ): Promise<TravelDistance> {
-    return this.getJson<TravelDistance>(`/travelDistance/${stopId}`);
+    return this.getJson<TravelDistance>(
+      `/travelDistance/${stopId}?${this.optionsToQuery(options)}`
+    );
   }
 
   async travelTime(stopId: StopID, options?: APIOptions): Promise<TravelTime> {
-    return this.getJson<TravelTime>(`/travelTime/${stopId}`);
+    return this.getJson<TravelTime>(
+      `/travelTime/${stopId}?${this.optionsToQuery(options)}`
+    );
   }
 
   async timetables(options?: APIOptions): Promise<Timetable[]> {
-    console.log(this.optionsToQuery(options));
-    return this.getJson<Timetable[]>('/timetables', data => {
-      return data.timetables.map((timetable: any) => ({
-        name: timetable.name,
-        id: timetable.id,
-        // startDate stored in a number on the form of YYYYMMDD
-        startDate: {
-          year: parseInt(timetable.startDate.toString().slice(0, 4), 10),
-          month: parseInt(timetable.startDate.toString().slice(4, 6), 10),
-          day: parseInt(timetable.startDate.toString().slice(6, 8), 10),
-        },
-        // endDate stored in a number on the form of YYYYMMDD
-        endDate: {
-          year: parseInt(timetable.endDate.toString().slice(0, 4), 10),
-          month: parseInt(timetable.endDate.toString().slice(4, 6), 10),
-          day: parseInt(timetable.endDate.toString().slice(6, 8), 10),
-        },
-      }));
-    });
+    return this.getJson<Timetable[]>(
+      `/timetables?${this.optionsToQuery(options)}`,
+      data => {
+        return data.timetables.map((timetable: any) => ({
+          name: timetable.name,
+          id: timetable.id,
+          // startDate stored in a number on the form of YYYYMMDD
+          startDate: {
+            year: parseInt(timetable.startDate.toString().slice(0, 4), 10),
+            month: parseInt(timetable.startDate.toString().slice(4, 6), 10),
+            day: parseInt(timetable.startDate.toString().slice(6, 8), 10),
+          },
+          // endDate stored in a number on the form of YYYYMMDD
+          endDate: {
+            year: parseInt(timetable.endDate.toString().slice(0, 4), 10),
+            month: parseInt(timetable.endDate.toString().slice(4, 6), 10),
+            day: parseInt(timetable.endDate.toString().slice(6, 8), 10),
+          },
+        }));
+      }
+    );
   }
 }
 
