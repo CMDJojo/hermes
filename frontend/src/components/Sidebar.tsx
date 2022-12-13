@@ -18,7 +18,7 @@ import Stop from '../types/Stop';
 import '../styles/Sidebar.css';
 import InfoBox from './InfoBox';
 import { TravelDistance, TravelTime } from '../api';
-import { formatDistance, formatPercent } from '../utils/format';
+import {formatDistance, formatPercent, formatTime} from '../utils/format';
 
 function TooltipContent({
   active,
@@ -292,6 +292,15 @@ export default function Sidebar({
                 </InfoBox>
               )}
 
+              {distanceInfo !== null && (
+                  <InfoBox title="Hållplatsinformation" color="#84ACCE">
+                    {distanceInfo.boardings != null &&
+                        `Dagliga påstigningar: ${distanceInfo.boardings?.toLocaleString()}`}
+                    {distanceInfo.boardings != null && <br />}
+                    Bytesmarginal: {formatTime(distanceInfo.minTransferTime)}
+                  </InfoBox>
+              )}
+              
               <InfoBox title="Debug" color="#eeeeee" textColor="black">
                 Stop ID: {stop.id}
                 <br />

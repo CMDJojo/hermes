@@ -70,6 +70,8 @@ export type TravelDistance = {
   peopleRange: number;
   distanceStats: { name: string; distance: number }[];
   medianDistance: number;
+  minTransferTime: number;
+  boardings: number | null;
 };
 
 class APIError extends Error {
