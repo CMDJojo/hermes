@@ -66,8 +66,7 @@ export default function Sidebar({
       : null;
 
   const [displayAllStops, setDisplayAllStops] = useState(false);
-  const [displayAllTransferStops, setDisplayAllTransferStops] =
-    useState(false);
+  const [displayAllTransferStops, setDisplayAllTransferStops] = useState(false);
 
   const defaultStopsToShow = 3;
 
@@ -265,7 +264,9 @@ export default function Sidebar({
                             <div
                               key={stat.stopID}
                               className="optimalStopList"
-                              style={{ opacity: displayAllTransferStops ? 1 : 0.6 }}
+                              style={{
+                                opacity: displayAllTransferStops ? 1 : 0.6,
+                              }}
                             >
                               <div>
                                 <strong>{stat.stopName}</strong>
@@ -277,7 +278,11 @@ export default function Sidebar({
                         {timeInfo.transfers.length > defaultStopsToShow && (
                           <button
                             type="button"
-                            onClick={() => setDisplayAllTransferStops(!displayAllTransferStops)}
+                            onClick={() =>
+                              setDisplayAllTransferStops(
+                                !displayAllTransferStops
+                              )
+                            }
                           >
                             {expansionTextTransfers()}{' '}
                             {displayAllTransferStops ? (
@@ -289,6 +294,70 @@ export default function Sidebar({
                         )}
                       </div>
                     )}
+                </InfoBox>
+              )}
+
+              {timeInfo !== null && (
+                <InfoBox
+                  color="#B84E5C"
+                  title="Antal hållplatser personerna inom cirkeln bor nära"
+                >
+                  <h1>{`${timeInfo.avgStopsFrom}`.slice(0, 3)}</h1>
+                  <ResponsiveContainer width="100%" height={150}>
+                    <BarChart
+                      width={800}
+                      height={300}
+                      data={timeInfo.distStopsFrom}
+                    >
+                      <XAxis
+                        dataKey="name"
+                        stroke="#602830"
+                        axisLine={{ stroke: '#602830' }}
+                      />
+                      <Tooltip
+                        cursor={{ fill: 'rgba(0,0,0,0.15)' }}
+                        content={<TooltipContent />}
+                      />
+                      <YAxis
+                        width={40}
+                        stroke="#602830"
+                        axisLine={{ stroke: '#602830' }}
+                      />
+                      <Bar dataKey="data" fill="#602830" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </InfoBox>
+              )}
+
+              {timeInfo !== null && (
+                <InfoBox
+                  color="#EEB902"
+                  title="Antal hållplatser personerna inom cirkeln har nära sitt jobb"
+                >
+                  <h1>{`${timeInfo.avgStopsTo}`.slice(0, 3)}</h1>
+                  <ResponsiveContainer width="100%" height={150}>
+                    <BarChart
+                      width={800}
+                      height={300}
+                      data={timeInfo.distStopsTo}
+                    >
+                      <XAxis
+                        dataKey="name"
+                        stroke="#644E02"
+                        axisLine={{ stroke: '#644E02' }}
+                      />
+                      <Tooltip
+                        cursor={{ fill: 'rgba(0,0,0,0.15)' }}
+                        content={<TooltipContent />}
+                      />
+                      <YAxis
+                        width={40}
+                        stroke="#644E02"
+                        axisLine={{ stroke: '#644E02' }}
+                      />
+                      <Bar dataKey="data" fill="#644E02" />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </InfoBox>
               )}
 

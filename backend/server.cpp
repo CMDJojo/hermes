@@ -407,6 +407,42 @@ int main() {
                 {"stopID", std::to_string(stopID)}, {"stopName", name}, {"numberOfPersons", numberOfPeople}};
         });
 
+        double avgStopsFrom = 0;
+        double numGoingFrom = 0;
+
+        double avgStopsTo = 0;
+        double numGoingTo = 0;
+
+        std::for_each(stats.distNumberOfStartStops.begin(), stats.distNumberOfStartStops.end(),
+                      [&avgStopsFrom, &numGoingFrom](auto pair) {
+                          auto [noStops, noPpl] = pair;
+                          avgStopsFrom += noStops * noPpl;
+                          numGoingFrom += noPpl;
+                      });
+        avgStopsFrom /= numGoingFrom;
+
+        std::for_each(stats.distNumberOfEndStops.begin(), stats.distNumberOfEndStops.end(),
+                      [&avgStopsTo, &numGoingTo](auto pair) {
+                          auto [noStops, noPpl] = pair;
+                          avgStopsTo += noStops * noPpl;
+                          numGoingTo += noPpl;
+                      });
+        avgStopsTo /= numGoingTo;
+
+        std::vector<boost::json::value> distStopsFrom;
+        std::transform(stats.distNumberOfStartStops.begin(), stats.distNumberOfStartStops.end(),
+                       std::back_inserter(distStopsFrom), [](auto pair) {
+                           auto [noStops, noPpl] = pair;
+                           return boost::json::value{{"name", std::to_string(noStops)}, {"data", noPpl}};
+                       });
+
+        std::vector<boost::json::value> distStopsTo;
+        std::transform(stats.distNumberOfEndStops.begin(), stats.distNumberOfEndStops.end(),
+                       std::back_inserter(distStopsTo), [](auto pair) {
+                           auto [noStops, noPpl] = pair;
+                           return boost::json::value{{"name", std::to_string(noStops)}, {"data", noPpl}};
+                       });
+
         boost::json::value response = {
             {"totalNrPeople", stats.personsWithinRange},
             {"peopleCanGoByBus", stats.personsCanGoWithBus},
@@ -417,6 +453,10 @@ int main() {
             {"numberOfTransfers", stats.numberOfTransfers},
             {"transfers", transfers},
             {"peopleTravelFrom", pplTravelFrom},
+            {"avgStopsFrom", avgStopsFrom},
+            {"avgStopsTo", avgStopsTo},
+            {"distStopsFrom", distStopsFrom},
+            {"distStopsTo", distStopsTo},
             {"travelTimeStats",
              {{{"name", "< 15 min"}, {"data", time15min}},
               {{"name", "15-30 min"}, {"data", time30min - time15min}},
