@@ -5,7 +5,7 @@
 #include "gtfsTypes.h"
 
 namespace boarding {
-std::unordered_map<StopId, int> getStats();
+std::unordered_map<StopId, int>& getStats();
 
 void load(const std::string& path);
 

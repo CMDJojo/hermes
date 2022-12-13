@@ -5,6 +5,7 @@
 #include <iostream>
 
 #include "binarySearch.h"
+#include "boardingStatistics.h"
 #include "endToEndEvaluator.h"
 #include "lineRegister.h"
 #include "people.h"
@@ -122,7 +123,7 @@ routing::Timetable& timetableFromParams(const params_view& params) {
 
 int main() {
     std::cout << "Starting server..." << std::endl;
-    std::cout << "Loading timetables (1/6)" << std::endl;
+    std::cout << "Loading timetables (1/7)" << std::endl;
 
     for (const auto& gtfsEntry : std::filesystem::directory_iterator("data/gtfs")) {
         if (!gtfsEntry.is_directory()) continue;
@@ -141,16 +142,19 @@ int main() {
         timetables.emplace_back(new routing::Timetable("data/raw"));
     }
 
-    std::cout << "Loading lineregister (2/6)" << std::endl;
+    std::cout << "Loading lineregister (2/7)" << std::endl;
     LineRegister lineRegister("data/raw/lineregister.json");
 
-    std::cout << "Loading people data (3/6)" << std::endl;
+    std::cout << "Loading people data (3/7)" << std::endl;
     People people("data/raw/Ast_bost.txt");
 
-    std::cout << "Loading prox (4/6)" << std::endl;
+    std::cout << "Loading prox (4/7)" << std::endl;
     for (const auto& timetable : timetables) proxes.emplace_back(new Prox(*timetable));
+    
+    std::cout << "Loading boarding statistics (5/7)" << std::endl;
+    boarding::load("data/raw/boarding_statistics.txt");
 
-    std::cout << "Configuring routes (5/6)" << std::endl;
+    std::cout << "Configuring routes (6/7)" << std::endl;
     get("/", [](auto context) { return "Hello World!"; });
 
     get((std::regex) "/graphFrom/(\\d+).*", [](auto context) {
@@ -514,15 +518,19 @@ int main() {
             distanceMore = peopleNearby.size() - distance50km;
         }
 
-        boost::json::value info = {{"nrPeople", nrPeople},
+        boost::json::object info = {{"nrPeople", nrPeople},
                                    {"peopleRange", nearbyPeopleRangeMeter},
                                    {"medianDistance", pseudoMedian},
+                                   {"minTransferTime", stop.minTransferTime},
                                    {"distanceStats",
                                     {{{"name", "< 1 km"}, {"data", distance1km}},
                                      {{"name", "1-5 km"}, {"data", distance5km - distance1km}},
                                      {{"name", "5-10 km"}, {"data", distance10km - distance5km}},
                                      {{"name", "10-50 km"}, {"data", distance50km - distance10km}},
                                      {{"name", "> 50 km"}, {"data", distanceMore}}}}};
+        
+        auto& boardingStats = boarding::getStats();
+        if (boardingStats.contains(stopId)) info["boardings"] = boardingStats.at(stopId);
 
         return serialize(info);
     });
@@ -532,6 +540,6 @@ int main() {
         return "Not found";
     });
 
-    std::cout << "Starting server at " << address << ":" << port << " (6/6)" << std::endl;
+    std::cout << "Starting server at " << address << ":" << port << " (7/7)" << std::endl;
     startServer(address, port, doc_root, threads);
 }

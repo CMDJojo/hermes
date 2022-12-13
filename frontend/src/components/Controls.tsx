@@ -17,6 +17,8 @@ interface ControlsProps {
   showTrafficLines: boolean;
   toggleTrafficLines: () => void;
   onTimetableChange: (timetable: Timetable) => void;
+  changeMargin: string;
+  onChangeMargin: (margin: string) => void;
 }
 
 export default function Controls({
@@ -28,6 +30,8 @@ export default function Controls({
   currentDate,
   showTrafficLines,
   toggleTrafficLines,
+  changeMargin,
+  onChangeMargin,
 }: ControlsProps) {
   const minDate =
     currentTimetable !== null
@@ -97,6 +101,17 @@ export default function Controls({
                       {t.name}
                     </option>
                   ))}
+                </select>
+              </div>
+              <div>
+                <span>Bytesmarginal</span>
+                <select
+                  value={changeMargin}
+                  onChange={event => onChangeMargin(event.target.value)}
+                >
+                  <option value="2">2 minuter</option>
+                  <option value="5">5 minuter</option>
+                  <option value="standard">Standard</option>
                 </select>
               </div>
             </div>

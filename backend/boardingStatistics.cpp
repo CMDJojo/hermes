@@ -31,5 +31,5 @@ bool isImportant(StopId stopId) {
     return rawStats.contains(stopId);
 }
 
-std::unordered_map<StopId, int> getStats() { return rawStats; }
+std::unordered_map<StopId, int>& getStats() { return rawStats; }
 }  // namespace boarding

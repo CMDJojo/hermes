@@ -21,6 +21,7 @@ export type TripID = string;
 export type APIOptions = {
   timetableId?: number;
   date?: Date;
+  minTransferTime?: string;
 };
 
 export type GraphIncomingEntry = {
@@ -74,6 +75,8 @@ export type TravelDistance = {
   peopleRange: number;
   distanceStats: { name: string; distance: number }[];
   medianDistance: number;
+  minTransferTime: number;
+  boardings: number | null;
 };
 
 class APIError extends Error {
@@ -205,6 +208,14 @@ class API {
 
     if (options.timetableId !== undefined && options.timetableId !== null) {
       query.set('timetable', options.timetableId.toString());
+    }
+
+    if (
+      options.minTransferTime !== undefined &&
+      options.minTransferTime !== null &&
+      options.minTransferTime !== 'standard'
+    ) {
+      query.set('minTransferTime', options.minTransferTime.toString());
     }
 
     return query.toString();
