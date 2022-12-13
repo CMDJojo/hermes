@@ -5,9 +5,8 @@
     z-index: 1000;
     box-sizing: border-box;
     padding: 0.75rem;
-    background:#fefefe;
+    background: #fefefe;
     box-shadow: 0 3px 3px rgba(0, 0, 0, 0.351);
-    box-sizing: border-box;
     border-radius: 0.75rem;
     font-size: 1.15rem;
 }
@@ -16,10 +15,9 @@
     font-weight: 500;
 }
 
-
 .Controls .container {
     display: flex;
-    gap: 1.5rem;  
+    gap: 1.5rem;
     align-items: center;
 }
 
@@ -35,10 +33,18 @@
     flex-direction: column;
 }
 
-.Controls .timetable input {
+.Controls .timetable input, select {
+    text-align: center;
+    text-align-last: center;
+    font-family: inherit;
     width: 11rem;
 }
 
+.Controls .timetable input {
+    border-radius: 5px;
+    border-color: rgba(0, 0, 0, 0.1);
+    border-style: solid
+}
 
 .Controls .traficLines img {
     border-radius: 0.2rem;
@@ -54,29 +60,13 @@
     gap: 0.5rem;
     align-items: center;
     background: inherit;
-    border:none;
+    border: none;
     box-shadow: none;
-    cursor:pointer;
+    cursor: pointer;
     font-size: inherit;
 }
-
 
 .Controls .traficLines:hover img {
     transform: scale(1.09);
     box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
-}
-
-.Controls .timetable input {
-    border: solid 2px rgba(0, 0, 0, 0.1);
-    border-radius: 0.5rem;
-    text-align: center;
-    font-family: inherit;
-}
-
-.Controls .timetable select {
-    border: solid 2px rgba(0, 0, 0, 0.1);
-    border-radius: 0.5rem;
-    text-align: center;
-    font-family: inherit;
-    background: #FFFFFF;
 }
