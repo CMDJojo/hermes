@@ -53,6 +53,10 @@ function App() {
         }
       })
       .catch(() => setTimetables([]));
+
+    const showLines =
+      Boolean(localStorage.getItem('showTrafficLines')) ?? showTrafficLines;
+    setShowTrafficLines(showLines);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

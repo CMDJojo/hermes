@@ -333,13 +333,15 @@ function Map({
       createGeoJSONCircle([activeStop.lon, activeStop.lat], 0.5)
     );
 
-    (map.current?.getSource('activeLines') as GeoJSONSource).setData(
-      activeLines ?? EMPTY_GEOJSON_DATA
-    );
+    if (showTrafficLines) {
+      (map.current?.getSource('activeLines') as GeoJSONSource).setData(
+        activeLines ?? EMPTY_GEOJSON_DATA
+      );
 
-    (map.current?.getSource('activeWalks') as GeoJSONSource).setData(
-      activeWalks ?? EMPTY_GEOJSON_DATA
-    );
+      (map.current?.getSource('activeWalks') as GeoJSONSource).setData(
+        activeWalks ?? EMPTY_GEOJSON_DATA
+      );
+    }
 
     const options = {
       date: date ?? undefined,
@@ -362,6 +364,7 @@ function Map({
     mapLoaded,
     date,
     timetable,
+    showTrafficLines,
   ]);
 
   useEffect(() => {
