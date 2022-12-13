@@ -423,7 +423,9 @@ int main() {
                           avgStopsFrom += noStops * noPpl;
                           numGoingFrom += noPpl;
                       });
-        avgStopsFrom /= numGoingFrom;
+        if (numGoingFrom != 0) {
+            avgStopsFrom /= numGoingFrom;
+        }
 
         std::for_each(stats.distNumberOfEndStops.begin(), stats.distNumberOfEndStops.end(),
                       [&avgStopsTo, &numGoingTo](auto pair) {
@@ -431,7 +433,9 @@ int main() {
                           avgStopsTo += noStops * noPpl;
                           numGoingTo += noPpl;
                       });
-        avgStopsTo /= numGoingTo;
+        if (numGoingTo != 0) {
+            avgStopsTo /= numGoingTo;
+        }
 
         std::vector<boost::json::value> distStopsFrom;
         std::transform(stats.distNumberOfStartStops.begin(), stats.distNumberOfStartStops.end(),
