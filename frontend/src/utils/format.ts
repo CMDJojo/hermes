@@ -25,3 +25,9 @@ export function formatPercent(
   const divided = rounded / factor;
   return `${divided}%`;
 }
+
+export function formatTime(seconds: number): string {
+  const minutes = Math.floor(seconds / 60);
+  const remainder = seconds % 60;
+  return `${minutes.toString()} min${remainder !== 0 ? ` ${remainder} s` : ''}`;
+}

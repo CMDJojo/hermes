@@ -28,6 +28,7 @@ function App() {
   const [showMenu, setShowMenu] = useState<boolean>(true);
 
   const [date, setDate] = useState<Date | null>(null);
+  const [changeMargin, setChangeMargin] = useState<string>('standard');
 
   // Fetch the timetable and set the time and currently used timetable
   useEffect(() => {
@@ -69,6 +70,7 @@ function App() {
     const options = {
       date: date ?? undefined,
       timetableId: currentTimetable?.id ?? undefined,
+      minTransferTime: changeMargin ?? undefined,
     };
 
     api
@@ -80,7 +82,7 @@ function App() {
       .travelTime(activeStop.id.toString(), options)
       .then(setTimeInfo)
       .catch(() => setTimeInfo(null));
-  }, [activeStop, currentTimetable, date]);
+  }, [activeStop, currentTimetable, date, changeMargin]);
 
   const updateSidebar = (stop: Stop) => {
     setActiveStop(stop);
@@ -106,6 +108,8 @@ function App() {
           timetables={timetables}
           showTrafficLines={showTrafficLines}
           toggleTrafficLines={() => setShowTrafficLines(!showTrafficLines)}
+          changeMargin={changeMargin}
+          onChangeMargin={setChangeMargin}
         />
       )}
       <Map
@@ -120,6 +124,7 @@ function App() {
         onShowDetailInfo={setDetailedInfo}
         onHideDetailInfo={() => setDetailedInfo(null)}
         date={date}
+        changeMargin={changeMargin}
         timetable={currentTimetable}
       />
       <Sidebar

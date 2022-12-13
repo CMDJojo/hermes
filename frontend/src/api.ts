@@ -21,6 +21,7 @@ export type TripID = string;
 export type APIOptions = {
   timetableId?: number;
   date?: Date;
+  minTransferTime?: string;
 };
 
 export type GraphIncomingEntry = {
@@ -40,12 +41,16 @@ export type TravelTime = {
   peopleCanGoByBus: number;
   optimalNrPeople: number;
   interestingStopID: string;
-  travelTimeStats: { name: string; people: number }[];
+  travelTimeStats: { name: string; data: number }[];
   peopleTravelFrom: {
     stopID: StopID;
     stopName: string;
     numberOfPersons: number;
   }[];
+  avgStopsFrom: number;
+  avgStopsTo: number;
+  distStopsFrom: {name: string, data: number}[];
+  distStopsTo: {name: string, data: number}[];
   medianTravelTime: number;
   medianTravelTimeFormatted: string;
   lines: FeatureCollection;
@@ -70,6 +75,8 @@ export type TravelDistance = {
   peopleRange: number;
   distanceStats: { name: string; distance: number }[];
   medianDistance: number;
+  minTransferTime: number;
+  boardings: number | null;
 };
 
 class APIError extends Error {
@@ -201,6 +208,14 @@ class API {
 
     if (options.timetableId !== undefined && options.timetableId !== null) {
       query.set('timetable', options.timetableId.toString());
+    }
+
+    if (
+      options.minTransferTime !== undefined &&
+      options.minTransferTime !== null &&
+      options.minTransferTime !== 'standard'
+    ) {
+      query.set('minTransferTime', options.minTransferTime.toString());
     }
 
     return query.toString();

@@ -37,6 +37,7 @@ export interface MapProps {
   showTrafficLines: boolean;
   date: Date | null;
   timetable: Timetable | null;
+  changeMargin: string;
 }
 
 // stackoverflow.com/questions/37599561/drawing-a-circle-with-the-radius-in-miles-meters-with-mapbox-gl-js
@@ -93,6 +94,7 @@ function Map({
   onShowDetailInfo,
   onHideDetailInfo,
   showTrafficLines,
+  changeMargin,
   date,
   timetable,
 }: MapProps) {
@@ -346,6 +348,7 @@ function Map({
     const options = {
       date: date ?? undefined,
       timetableId: timetable?.id ?? undefined,
+      minTransferTime: changeMargin ?? undefined,
     };
 
     api.current
@@ -364,6 +367,7 @@ function Map({
     mapLoaded,
     date,
     timetable,
+    changeMargin,
     showTrafficLines,
   ]);
 
