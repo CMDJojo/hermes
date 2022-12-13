@@ -55,8 +55,7 @@ function App() {
       })
       .catch(() => setTimetables([]));
 
-    const showLines =
-      Boolean(localStorage.getItem('showTrafficLines')) ?? showTrafficLines;
+    const showLines = localStorage.getItem('showTrafficLines') === 'true';
     setShowTrafficLines(showLines);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -94,6 +93,11 @@ function App() {
     setActiveStop(null);
   };
 
+  const toggleTrafficLines = () => {
+    localStorage.setItem('showTrafficLines', (!showTrafficLines).toString());
+    setShowTrafficLines(!showTrafficLines);
+  };
+
   return (
     <div className="App">
       <Menu show={showMenu} onHide={() => setShowMenu(false)} />
@@ -107,7 +111,7 @@ function App() {
           onTimetableChange={setCurrentTimetable}
           timetables={timetables}
           showTrafficLines={showTrafficLines}
-          toggleTrafficLines={() => setShowTrafficLines(!showTrafficLines)}
+          toggleTrafficLines={toggleTrafficLines}
           changeMargin={changeMargin}
           onChangeMargin={setChangeMargin}
         />
