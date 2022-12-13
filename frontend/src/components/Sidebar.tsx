@@ -181,6 +181,8 @@ export default function Sidebar({
                       <Bar dataKey="data" fill="#284867" />
                     </BarChart>
                   </ResponsiveContainer>
+                  Genomsnittlig väntetid från angiven tid:{' '}
+                  {timeInfo?.avgWaitTimeFormatted}
                 </InfoBox>
               )}
 

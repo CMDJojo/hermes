@@ -53,6 +53,8 @@ export type TravelTime = {
   distStopsTo: {name: string, data: number}[];
   medianTravelTime: number;
   medianTravelTimeFormatted: string;
+  avgWaitTime: number;
+  avgWaitTimeFormatted: string;
   lines: FeatureCollection;
   walks: FeatureCollection;
   numberOfTransfers: number;

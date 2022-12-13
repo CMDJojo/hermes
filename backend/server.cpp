@@ -3,6 +3,7 @@
 #include <boost/url/src.hpp>
 #include <filesystem>
 #include <iostream>
+#include <numeric>
 
 #include "binarySearch.h"
 #include "boardingStatistics.h"
@@ -34,7 +35,7 @@ std::function<BinarySearch::ComparatorResult(const Person&)> constructClosurePer
 
 std::function<BinarySearch::ComparatorResult(const E2EE::PersonPath&)> constructClosurePersonPath(float time) {
     return [=](const E2EE::PersonPath& p) {
-        auto t = p.timeAtGoal;
+        auto t = p.timeAtGoal - p.initialWaitTime;
         if (t > time) return BinarySearch::ComparatorResult::LT;
         if (t < time) return BinarySearch::ComparatorResult::GT;
         return BinarySearch::ComparatorResult::EQ;
@@ -150,7 +151,7 @@ int main() {
 
     std::cout << "Loading prox (4/7)" << std::endl;
     for (const auto& timetable : timetables) proxes.emplace_back(new Prox(*timetable));
-    
+
     std::cout << "Loading boarding statistics (5/7)" << std::endl;
     boarding::load("data/raw/boarding_statistics.txt");
 
@@ -288,11 +289,14 @@ int main() {
         size_t time90min = 0;
         size_t time180min = 0;
         size_t timeMore = 0;
+        float avgWaitTime = 0;
+        std::string avgWaitTimeFormatted = {};
 
         if (stats.allPaths.size() != 0) {
             // Find the mean travel time (I assume that it is okay to mutate the stats object?)
-            std::sort(stats.allPaths.begin(), stats.allPaths.end(),
-                      [](auto const& a, auto const& b) { return a.timeAtGoal < b.timeAtGoal; });
+            std::sort(stats.allPaths.begin(), stats.allPaths.end(), [](auto const& a, auto const& b) {
+                return a.timeAtGoal - a.initialWaitTime < b.timeAtGoal - b.initialWaitTime;
+            });
 
             time15min =
                 BinarySearch::binarySearch<E2EE::PersonPath>(stats.allPaths, constructClosurePersonPath(60 * 15)).index;
@@ -310,8 +314,16 @@ int main() {
                              .index;
             timeMore = stats.allPaths.size() - time180min;
 
-            medianTravelTime = stats.allPaths[stats.allPaths.size() / 2].timeAtGoal;
+            auto& path = stats.allPaths[stats.allPaths.size() / 2];
+
+            medianTravelTime = path.timeAtGoal - path.initialWaitTime;
             medianTravelTimeFormatted = routing::prettyTravelTime(medianTravelTime);
+
+            uint64_t totalInitialWaitTime =
+                std::accumulate(stats.allPaths.begin(), stats.allPaths.end(), 0,
+                                [](uint64_t sum, const auto& path) { return sum + path.initialWaitTime; });
+            avgWaitTime = totalInitialWaitTime / stats.allPaths.size();
+            avgWaitTimeFormatted = routing::prettyTravelTime(avgWaitTime);
         }
 
         //        if (stats.allPaths.size() != 0) {
@@ -458,6 +470,8 @@ int main() {
             {"interestingStopID", std::to_string(stats.interestingStop)},
             {"medianTravelTime", medianTravelTime},
             {"medianTravelTimeFormatted", medianTravelTimeFormatted},
+            {"avgWaitTime", avgWaitTime},
+            {"avgWaitTimeFormatted", avgWaitTimeFormatted},
             {"numberOfTransfers", stats.numberOfTransfers},
             {"transfers", transfers},
             {"peopleTravelFrom", pplTravelFrom},
@@ -523,16 +537,16 @@ int main() {
         }
 
         boost::json::object info = {{"nrPeople", nrPeople},
-                                   {"peopleRange", nearbyPeopleRangeMeter},
-                                   {"medianDistance", pseudoMedian},
-                                   {"minTransferTime", stop.minTransferTime},
-                                   {"distanceStats",
-                                    {{{"name", "< 1 km"}, {"data", distance1km}},
-                                     {{"name", "1-5 km"}, {"data", distance5km - distance1km}},
-                                     {{"name", "5-10 km"}, {"data", distance10km - distance5km}},
-                                     {{"name", "10-50 km"}, {"data", distance50km - distance10km}},
-                                     {{"name", "> 50 km"}, {"data", distanceMore}}}}};
-        
+                                    {"peopleRange", nearbyPeopleRangeMeter},
+                                    {"medianDistance", pseudoMedian},
+                                    {"minTransferTime", stop.minTransferTime},
+                                    {"distanceStats",
+                                     {{{"name", "< 1 km"}, {"data", distance1km}},
+                                      {{"name", "1-5 km"}, {"data", distance5km - distance1km}},
+                                      {{"name", "5-10 km"}, {"data", distance10km - distance5km}},
+                                      {{"name", "10-50 km"}, {"data", distance50km - distance10km}},
+                                      {{"name", "> 50 km"}, {"data", distanceMore}}}}};
+
         auto& boardingStats = boarding::getStats();
         if (boardingStats.contains(stopId)) info["boardings"] = boardingStats.at(stopId);
 

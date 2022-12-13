@@ -21,6 +21,7 @@ class E2EE {
         int32_t timeAtGoal;        // total time taken, home->goal
         int32_t timestampAtGoal;   // timestamp at goal
         std::vector<StopId> extractedPath;
+        int32_t initialWaitTime;
 
         friend std::ostream& operator<<(std::ostream& os, const PersonPath& path);
         [[nodiscard]] std::string toNiceString(const routing::Timetable& tt) const;

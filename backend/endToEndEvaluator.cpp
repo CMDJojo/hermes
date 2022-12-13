@@ -197,22 +197,23 @@ E2EE::Stats E2EE::evaluatePerformanceAtPoint(MeterCoord origin, E2EE::Options op
             for (auto [endStopId, timeToGoal] : possibleVTGoals) {
                 // if second is reachable from firsts
                 if (dijRes.contains(endStopId)) {
-                    int32_t timeToEndStop = dijRes.at(endStopId).travelTime;
+                    auto& timeToEndStop = dijRes.at(endStopId);
 
                     auto firstStopTimeInt = static_cast<int32_t>(firstStopTime);
                     auto timeToGoalInt = static_cast<int32_t>(timeToGoal);
 
-                    int32_t timeAtGoal = firstStopTimeInt + timeToEndStop + timeToGoalInt;
+                    int32_t timeAtGoal = firstStopTimeInt + timeToEndStop.travelTime + timeToGoalInt;
 
                     if (timeAtGoal < fastest.timeAtGoal) {
                         fastest = {firstStopId,
                                    firstStopTimeInt,
                                    endStopId,
-                                   timeToEndStop,
+                                   timeToEndStop.travelTime,
                                    timeToGoalInt,
                                    timeAtGoal,
                                    timeAtGoal + opts.routingOptions.startTime,
-                                   {}};
+                                   {},
+                                   timeToEndStop.initialWaitTime};
                     }
                 }
             }
