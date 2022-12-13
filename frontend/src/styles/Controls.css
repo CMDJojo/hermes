@@ -4,12 +4,16 @@
     position: absolute;
     z-index: 1000;
     box-sizing: border-box;
-    padding: 0.5rem;
+    padding: 0.75rem;
     background:#fefefe;
     box-shadow: 0 3px 3px rgba(0, 0, 0, 0.351);
     box-sizing: border-box;
-    border-radius: 0.5rem;
-    font-size: 90%;
+    border-radius: 0.75rem;
+    font-size: 1.15rem;
+}
+
+.Controls .timetable span {
+    font-weight: 500;
 }
 
 
@@ -60,4 +64,19 @@
 .Controls .traficLines:hover img {
     transform: scale(1.09);
     box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
+}
+
+.Controls .timetable input {
+    border: solid 2px rgba(0, 0, 0, 0.1);
+    border-radius: 0.5rem;
+    text-align: center;
+    font-family: inherit;
+}
+
+.Controls .timetable select {
+    border: solid 2px rgba(0, 0, 0, 0.1);
+    border-radius: 0.5rem;
+    text-align: center;
+    font-family: inherit;
+    background: #FFFFFF;
 }
