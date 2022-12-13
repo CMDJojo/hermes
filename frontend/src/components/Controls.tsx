@@ -108,8 +108,8 @@ export default function Controls({
                   value={changeMargin}
                   onChange={event => onChangeMargin(event.target.value)}
                 >
-                  <option value="2">2 minuter</option>
-                  <option value="5">5 minuter</option>
+                  <option value="120">2 minuter</option>
+                  <option value="300">5 minuter</option>
                   <option value="standard">Standard</option>
                 </select>
               </div>
