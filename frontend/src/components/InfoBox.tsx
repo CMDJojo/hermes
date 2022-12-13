@@ -1,4 +1,4 @@
-import {motion} from 'framer-motion';
+import { motion } from 'framer-motion';
 import React from 'react';
 
 import '../styles/InfoBox.css';
@@ -11,14 +11,14 @@ interface InfoBoxProps {
 }
 
 export default function InfoBox({
-                                  title,
-                                  children,
-                                  color,
-                                  textColor,
-                                }: InfoBoxProps) {
+  title,
+  children,
+  color,
+  textColor,
+}: InfoBoxProps) {
   return (
     <motion.div
-      style={{background: color, color: textColor ?? 'white'}}
+      style={{ background: color, color: textColor ?? 'white' }}
       className="InfoBox"
     >
       <h2>{title}</h2>

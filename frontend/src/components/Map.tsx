@@ -1,8 +1,13 @@
-import {LegacyRef, useEffect, useRef, useState} from 'react';
-import {GeoJSONSource, Map as MapLibreGL} from 'maplibre-gl';
-import {Feature, FeatureCollection, GeoJsonProperties, Geometry,} from 'geojson';
+import { LegacyRef, useEffect, useRef, useState } from 'react';
+import { GeoJSONSource, Map as MapLibreGL } from 'maplibre-gl';
+import {
+  Feature,
+  FeatureCollection,
+  GeoJsonProperties,
+  Geometry,
+} from 'geojson';
 
-import API, {Stops, Timetable} from '../api';
+import API, { Stops, Timetable } from '../api';
 import Stop from '../types/Stop';
 
 import '../styles/Map.css';
@@ -82,21 +87,21 @@ const createGeoJSONCircle = (
 };
 
 function Map({
-               onClick,
-               activeStop,
-               activeLines,
-               activeWalks,
-               onShowDetailInfo,
-               onHideDetailInfo,
-               showTrafficLines,
-               changeMargin,
-               date,
-               timetable,
-             }: MapProps) {
+  onClick,
+  activeStop,
+  activeLines,
+  activeWalks,
+  onShowDetailInfo,
+  onHideDetailInfo,
+  showTrafficLines,
+  changeMargin,
+  date,
+  timetable,
+}: MapProps) {
   const mapContainer = useRef<string | HTMLElement | null>(null);
   const api = useRef<API | null>(null);
   const map = useRef<MapLibreGL | null>(null);
-  const [view] = useState({lat: 57.7071367, lon: 11.9662978, zoom: 11});
+  const [view] = useState({ lat: 57.7071367, lon: 11.9662978, zoom: 11 });
 
   const [mapLoaded, setMapLoaded] = useState(false);
 
@@ -125,10 +130,10 @@ function Map({
                 if (tramError) throw tramError;
                 if (trainError) throw trainError;
                 if (boatError) throw boatError;
-                map.current?.addImage('bus', busImage!, {sdf: true});
-                map.current?.addImage('tram', tramImage!, {sdf: true});
-                map.current?.addImage('train', trainImage!, {sdf: true});
-                map.current?.addImage('boat', boatImage!, {sdf: true});
+                map.current?.addImage('bus', busImage!, { sdf: true });
+                map.current?.addImage('tram', tramImage!, { sdf: true });
+                map.current?.addImage('train', trainImage!, { sdf: true });
+                map.current?.addImage('boat', boatImage!, { sdf: true });
                 map.current?.addSource('stops', {
                   type: 'geojson',
                   data: stops,
@@ -249,7 +254,7 @@ function Map({
               headsign: f.properties.headsign as string,
             })) ?? [];
 
-          info.sort(({passengerCount: p1}, {passengerCount: p2}) => {
+          info.sort(({ passengerCount: p1 }, { passengerCount: p2 }) => {
             return p2 - p1;
           });
 
@@ -280,19 +285,19 @@ function Map({
 
         // Center the map on the coordinates of any clicked symbol from the 'symbols' layer.
         map.current?.on('click', 'stops', e => {
-          const {features} = e as unknown as Stops;
+          const { features } = e as unknown as Stops;
           const {
             id,
-            geometry: {coordinates},
-            properties: {name},
+            geometry: { coordinates },
+            properties: { name },
           } = features[0];
           const [lon, lat] = coordinates;
 
           map.current?.flyTo({
             center: [lon, lat],
-            padding: {right: 300},
+            padding: { right: 300 },
           });
-          onClick({id, name, lat, lon});
+          onClick({ id, name, lat, lon });
         });
 
         setMapLoaded(true);
@@ -394,7 +399,7 @@ function Map({
 
   return (
     <div className="Map">
-      <div ref={mapContainer as LegacyRef<HTMLDivElement>} className="map"/>
+      <div ref={mapContainer as LegacyRef<HTMLDivElement>} className="map" />
     </div>
   );
 }
