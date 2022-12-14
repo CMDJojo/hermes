@@ -107,7 +107,7 @@ std::vector<Edge> StopNode::getEdges(Timetable& timetable, const RoutingOptions&
         if (trip.tripId == WALK) continue;
 
         // Transfers to trips that is waiting for this trip to arrive
-        handleTransferType1(timetable, options, state, outgoingEdges, trip);
+        handleTransferType1(timetable, options, state, outgoingEdges, trip.tripId);
 
         auto& stopTimes = timetable.trips[trip.tripId].stopTimes;
 
@@ -160,11 +160,12 @@ std::vector<Edge> StopNode::getEdges(Timetable& timetable, const RoutingOptions&
 }
 
 inline void StopNode::handleTransferType1(Timetable& timetable, const RoutingOptions& options, const StopState* state,
-                                          std::vector<Edge>& outgoingEdges, const IncomingTrip& trip) {
-    auto transfers = transfersType1.find(trip.tripId);
+                                          std::vector<Edge>& outgoingEdges, TripId tripId) {
+    auto transfers = transfersType1.find(tripId);
     if (transfers != transfersType1.end()) {
         for (TripId toTripId : transfers->second) {
-            auto& stopTimes = timetable.trips[toTripId].stopTimes;
+            auto& trip = timetable.trips[toTripId];
+            auto& stopTimes = trip.stopTimes;
             int32_t stopSequence = 0;
             for (int i = 0; i < stopTimes.size(); i++) {
                 if (stopTimes[i].stopId == stopId &&
@@ -178,6 +179,9 @@ inline void StopNode::handleTransferType1(Timetable& timetable, const RoutingOpt
 
             // If there are several stop times at the same stop area in a row, use the last one.
             while (next.stopId == stopId) next = stopTimes[++stopSequence];
+            
+            // Check date for departure
+            if (!timetable.calendarDates[trip.serviceId].contains(options.date)) continue;
 
             outgoingEdges.emplace_back(&timetable.stops[next.stopId],
                                        next.arrivalTime - options.startTime - state->travelTime, toTripId,

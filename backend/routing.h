@@ -142,7 +142,7 @@ class StopNode {
 
    private:
     void handleTransferType1(Timetable& timetable, const RoutingOptions& options, const StopState* state,
-                             std::vector<Edge>& outgoingEdges, const IncomingTrip& trip);
+                             std::vector<Edge>& outgoingEdges, TripId tripId);
 };
 
 std::string prettyTravelTime(int32_t time);
