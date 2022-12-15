@@ -55,7 +55,7 @@ function App() {
       })
       .catch(() => setTimetables([]));
 
-    const showLines = localStorage.getItem('showTrafficLines') === 'true';
+    const showLines = localStorage.getItem('showTrafficLines') !== 'false';
     setShowTrafficLines(showLines);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
