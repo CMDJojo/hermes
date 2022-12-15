@@ -129,7 +129,7 @@ class API {
       method: 'GET',
       baseURL: import.meta.env.VITE_API_ENDPOINT,
       responseType: 'json',
-      timeout: 3000,
+      timeout: 10000,
     });
   }
 
