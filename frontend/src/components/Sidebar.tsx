@@ -371,14 +371,6 @@ export default function Sidebar({
                   Bytesmarginal: {formatTime(distanceInfo.minTransferTime)}
                 </InfoBox>
               )}
-
-              <InfoBox title="Debug" color="#eeeeee" textColor="black">
-                Stop ID: {stop.id}
-                <br />
-                Time info: {timeInfo === null ? 'null' : 'not null'}
-                <br />
-                Distance info: {distanceInfo === null ? 'null' : 'not null'}
-              </InfoBox>
             </div>
           </div>
         </motion.div>
