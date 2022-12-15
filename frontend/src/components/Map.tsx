@@ -214,10 +214,11 @@ function Map({
           layout: {
             'line-join': 'round',
             'line-cap': 'round',
+            'line-sort-key': ['-', ['get', 'passengerCount']],
           },
           paint: {
             'line-color': ['get', 'bgColor'],
-            'line-width': ['*', 3, ['ln', ['+', 1, ['get', 'passengerCount']]]],
+            'line-width': ['*', 4, ['ln', ['+', 1, ['/', ['get', 'passengerCount'], 4]]]],
           },
         });
 
