@@ -157,7 +157,7 @@ int main() {
     boarding::load("data/raw/boarding_statistics.txt");
 
     std::cout << "Configuring routes (6/7)" << std::endl;
-    
+
     get("/", [](auto context) {
         std::ifstream s("public/index.html");
         std::string str((std::istreambuf_iterator<char>(s)), std::istreambuf_iterator<char>());
@@ -297,7 +297,7 @@ int main() {
         size_t timeMore = 0;
         float avgWaitTime = 0;
         std::string avgWaitTimeFormatted = {};
-        
+
         if (stats.allPaths.size() < 10) {
             context.response.result(http::status::forbidden);
             return (std::string) "";
@@ -309,8 +309,10 @@ int main() {
                 return a.timeAtGoal - a.initialWaitTime < b.timeAtGoal - b.initialWaitTime;
             });
 
-            time15min =
-                BinarySearch::binarySearch<E2EE::PersonPath>(stats.allPaths, constructClosurePersonPath(60 * 15)).index;
+            time15min = BinarySearch::binarySearch<E2EE::PersonPath>(
+                            stats.allPaths,
+                            constructClosurePersonPath(60 * 15)
+                            ).index;
             time30min = BinarySearch::binarySearch<E2EE::PersonPath>(
                             stats.allPaths, constructClosurePersonPath(60 * 30), time15min, stats.allPaths.size())
                             .index;
@@ -321,7 +323,7 @@ int main() {
                             stats.allPaths, constructClosurePersonPath(60 * 90), time60min, stats.allPaths.size())
                             .index;
             time180min = BinarySearch::binarySearch<E2EE::PersonPath>(
-                             stats.allPaths, constructClosurePersonPath(180 * 90), time90min, stats.allPaths.size())
+                             stats.allPaths, constructClosurePersonPath(60 * 180), time90min, stats.allPaths.size())
                              .index;
             timeMore = stats.allPaths.size() - time180min;
 
@@ -365,7 +367,7 @@ int main() {
 
         for (const auto& [segmentId, segment] : stats.shapeSegments) {
             if (segment.passengerCount <= 1) continue;
-            
+
             std::vector<boost::json::value> lineString;
 
             boost::json::object properties = {
@@ -523,7 +525,7 @@ int main() {
         auto peopleNearby = people.personsInCircle(stopCoord, nearbyPeopleRangeMeter);
 
         int32_t nrPeople = peopleNearby.size();
-        
+
         if (nrPeople < 10) {
             context.response.result(http::status::forbidden);
             return (std::string) "";
