@@ -297,6 +297,11 @@ int main() {
         size_t timeMore = 0;
         float avgWaitTime = 0;
         std::string avgWaitTimeFormatted = {};
+        
+        if (stats.allPaths.size() < 10) {
+            context.response.result(http::status::forbidden);
+            return (std::string) "";
+        }
 
         if (stats.allPaths.size() != 0) {
             // Find the mean travel time (I assume that it is okay to mutate the stats object?)
@@ -359,6 +364,8 @@ int main() {
                        });
 
         for (const auto& [segmentId, segment] : stats.shapeSegments) {
+            if (segment.passengerCount <= 1) continue;
+            
             std::vector<boost::json::value> lineString;
 
             boost::json::object properties = {
@@ -516,6 +523,11 @@ int main() {
         auto peopleNearby = people.personsInCircle(stopCoord, nearbyPeopleRangeMeter);
 
         int32_t nrPeople = peopleNearby.size();
+        
+        if (nrPeople < 10) {
+            context.response.result(http::status::forbidden);
+            return (std::string) "";
+        }
 
         peopleNearby.erase(std::remove_if(peopleNearby.begin(), peopleNearby.end(),
                                           [](const Person& p) { return p.work_coord == MeterCoord(0, 0); }),
