@@ -2,6 +2,7 @@
 #include <boost/json/src.hpp>
 #include <boost/url/src.hpp>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <numeric>
 
@@ -156,7 +157,12 @@ int main() {
     boarding::load("data/raw/boarding_statistics.txt");
 
     std::cout << "Configuring routes (6/7)" << std::endl;
-    get("/", [](auto context) { return "Hello World!"; });
+    
+    get("/", [](auto context) {
+        std::ifstream s("public/index.html");
+        std::string str((std::istreambuf_iterator<char>(s)), std::istreambuf_iterator<char>());
+        return str;
+    });
 
     get((std::regex) "/graphFrom/(\\d+).*", [](auto context) {
         context.response.set(http::field::content_type, "application/json");
